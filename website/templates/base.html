@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name ="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X=UA-COmpatible" content="ie=edge">
-    <link rel="stlesheet" href= "{{ url_for('static', filename='css/style.css')}}">
-    {% block head %}{% endblock %}
+    <link rel="stylesheet" 
+      href= "{{ url_for('static', 
+      filename='css/style.css')}}"
+    />
+    <h1 style="text-align: center;">{% block head %}{% endblock %}</h1>
   </head>
   <br>
-  <body>
-    {% block body %}{% endblock %}
-  </body>
+  {% block body %}{% endblock %}
   <br>
-  <body>
-    {% block body2 %}{% endblock %}
-  </body>
+  {% block body2 %}{% endblock %}
 </html>
