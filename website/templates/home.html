@@ -1,7 +1,15 @@
 {% extends 'base.html' %}
 
-{% block head %} <b>I can code a website!!</b> {% endblock %}
+{% block header %} <b>I can code a website!!</b> {% endblock %}
 
-{% block body %}<body><a href="/helloworld/">I'm feeling excited!!</a></body>{% endblock %}
+{% block head %}{% endblock %}
 
-{% block body2 %}<body><a href="/supworld/">feeling nonchalant ngl</a></body>{% endblock %}
+{% block body %}
+<body>
+    <a href="/helloworld/">I'm feeling excited!!</a>
+    <br>
+    <a href="/supworld/">feeling nonchalant ngl</a>
+    <br>
+    <a href="/clickergame/">my first app!!</a>
+</body>
+{% endblock %}
