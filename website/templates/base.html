@@ -8,10 +8,9 @@
       href= "{{ url_for('static', 
       filename='css/style.css')}}"
     />
-    <h1 style="text-align: center;">{% block head %}{% endblock %}</h1>
+    <h1 style="text-align: center;">{% block header %}{% endblock %}</h1>
+    {% block head %}{% endblock %}
   </head>
   <br>
   {% block body %}{% endblock %}
-  <br>
-  {% block body2 %}{% endblock %}
 </html>

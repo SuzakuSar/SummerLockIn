@@ -6,8 +6,10 @@ def create_app():
 
     from .home import home
     from .helloWorld import helloWorld
+    from .clickerGame import clickerGame
 
     app.register_blueprint(home, url_prefix='/')
     app.register_blueprint(helloWorld, url_prefix='/')
+    app.register_blueprint(clickerGame, url_prefix='/clickergame')
 
     return app

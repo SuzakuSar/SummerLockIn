@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block header %}{% endblock %}
+
+{% block head %}
+    <title>Cookie Clicker</title>
+    <!-- Text that appears in the browser tab -->
+    
+    <style>
+        /* CSS styles - these control how everything looks */
+        
+        body {
+            /* Styles the entire page background */
+            font-family: Arial, sans-serif;  /* Use Arial font, fallback to any sans-serif */
+            text-align: center;              /* Center all text */
+            background-color: #f0f0f0;       /* Light gray background */
+            margin: 0;                       /* Remove default spacing around page */
+            padding: 20px;                   /* Add 20px of inner spacing */
+        }
+        
+        .game-container {
+            /* Styles the main game box */
+            max-width: 600px;                /* Maximum width of 600 pixels */
+            margin: 0 auto;                  /* Center the container horizontally */
+            background: white;               /* White background */
+            border-radius: 10px;             /* Rounded corners */
+            padding: 20px;                   /* 20px spacing inside the box */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);  /* Drop shadow effect */
+            /* box-shadow: horizontal, vertical, blur, color with transparency */
+        }
+        
+        .cookie-display {
+            /* Styles the "Cookies: X" text */
+            font-size: 28px;                 /* Large text */
+            margin: 30px 0;                  /* 30px space above and below */
+            font-weight: bold;               /* Make text bold */
+            color: #8B4513;                  /* Brown color (saddle brown) */
+        }
+        
+        .cookie-button {
+            /* Styles the clickable cookie */
+            width: 200px;                    /* 200 pixels wide */
+            height: 200px;                   /* 200 pixels tall (makes it square) */
+            border-radius: 50%;              /* 50% makes it perfectly round */
+            background: linear-gradient(45deg, #D4A574, #F4E4BC);  /* Gradient background */
+            /* linear-gradient: smooth color transition at 45 degree angle */
+            /* From tan (#D4A574) to light beige (#F4E4BC) */
+            border: 5px solid #8B4513;       /* 5px solid brown border */
+            font-size: 60px;                 /* Large emoji size */
+            cursor: pointer;                 /* Show hand cursor when hovering */
+            margin: 20px;                    /* 20px space around the button */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);  /* Drop shadow */
+            transition: transform 0.1s;      /* Smooth animation when size changes */
+            display: inline-block;           /* Allow transforms to work properly */
+        }
+        
+        .cookie-button:hover {
+            /* What happens when mouse hovers over cookie */
+            transform: scale(1.05);          /* Make 5% bigger */
+        }
+        
+        .cookie-button:active {
+            /* What happens when cookie is being clicked */
+            transform: scale(0.95);          /* Make 5% smaller */
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- <body> contains everything visible on the page -->
+    
+    <div class="game-container">
+        <!-- A div with the class "game-container" - gets styled by CSS above -->
+        
+        <h1>Cookie Clicker</h1>
+        <!-- Main heading - <h1> is the largest heading -->
+        
+        <div class="cookie-display">
+            <!-- Container for the cookie count display -->
+            Cookies: <span id="cookie-count">0</span>
+            <!-- <span> is inline text with an ID so JavaScript can find it -->
+            <!-- id="cookie-count" lets us target this specific element -->
+        </div>
+        
+        <button class="cookie-button" onclick="clickCookie()">🍪</button>
+        <!-- <button> creates a clickable button -->
+        <!-- class="cookie-button" applies our CSS styles -->
+        <!-- onclick="clickCookie()" runs JavaScript function when clicked -->
+        <!-- 🍪 is the cookie emoji that appears on the button -->
+    </div>
+
+    <script>
+        /* JavaScript code - this makes the page interactive */
+        
+        let cookies = 0;
+        /* Declare a variable to store the cookie count */
+        /* 'let' creates a variable that can change */
+        /* Initialize to 0 */
+        
+        // Load initial cookie count from server
+        window.onload = function() {
+            /* window.onload runs when the page finishes loading */
+            /* This is an anonymous function (function without a name) */
+            
+            // Just set to 0 initially, no need to fetch
+            cookies = 0;           /* Set our variable to 0 */
+            updateDisplay();       /* Call function to update what user sees */
+        };
+        
+        function updateDisplay() {
+            /* This function updates the number shown on screen */
+            
+            document.getElementById('cookie-count').textContent = cookies;
+            /* document.getElementById('cookie-count') finds the <span> with id="cookie-count" */
+            /* .textContent sets the text inside that element */
+            /* = cookies puts our current cookie count there */
+        }
+        
+        function clickCookie() {
+            /* This function runs when the cookie button is clicked */
+            
+            console.log("Cookie clicked! Current count:", cookies);  // Debug message
+            
+            fetch("{{ url_for('clickerGame.click_cookie') }}", {  // Use Flask's url_for
+                /* fetch() sends a request to our Flask server */
+                /* '/click' is the URL endpoint we defined in Flask */
+                
+                method: 'POST',
+                /* Use POST method (sending data, not just getting) */
+                
+                headers: {
+                    /* Headers provide extra information about our request */
+                    'Content-Type': 'application/json',
+                    /* Tells server we're sending JSON data */
+                }
+            })
+            .then(response => {
+                console.log("Server responded:", response.status);  // Debug
+                return response.json();
+            })
+            /* .then() handles what happens when server responds */
+            /* response.json() converts the response to JavaScript object */
+            
+            .then(data => {
+                /* This runs when we successfully get data back */
+                /* 'data' contains the JSON from our Flask server */
+                
+                console.log("Data received:", data);  // Debug message
+                cookies = data.cookies;
+                /* Update our cookie variable with the new count from server */
+                
+                updateDisplay();
+                /* Update what the user sees on screen */
+            })
+            .catch(error => {
+                /* .catch() handles any errors that occur */
+                console.error('Error:', error);
+                /* Log the error to browser's developer console */
+            });
+        }
+    </script>
+{% endblock %}
