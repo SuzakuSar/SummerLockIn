@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block header %}{% endblock %}
+
+{% block head %}
+    <title>Joke of the Day</title>
+    <style>
+        /* Basic styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .joke-container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <h1>Joke of the Day</h1>
+    
+    <!-- Container to display the joke -->
+    <div class="joke-container">
+        <p id="joke-text">{{ joke }}</p>
+    </div>
+    
+    <!-- Button to get a new joke -->
+    <button id="new-joke-btn">Get New Joke</button>
+
+    <!-- JavaScript to handle the button click -->
+    <script>
+        // Wait for the page to fully load before running JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get references to the button and joke text elements
+            const newJokeBtn = document.getElementById('new-joke-btn');
+            const jokeText = document.getElementById('joke-text');
+            
+            // Add a click event listener to the button
+            newJokeBtn.addEventListener('click', function() {
+                // Make an AJAX request to our API endpoint
+                fetch('/randomjokes/api/joke')
+                    .then(response => response.json())  // Convert response to JSON
+                    .then(data => {
+                        // Update the joke text with the new joke
+                        jokeText.textContent = data.joke;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching new joke:', error);
+                    });
+            });
+        });
+    </script>
+{% endblock %}
