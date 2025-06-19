@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block header %}{% endblock %}
+
+{% block head %}
+    <style>
+        /* Basic styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button, input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover, input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin: 10px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .hint {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .attempts {
+            margin: 15px 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Welcome to the Guessing Game!</h1>
+        <!-- Form submits to the current URL when no action is specified -->
+        <form method="post">
+            <input type="submit" value="Press Enter to Play">
+        </form>
+    </div>
+{% endblock %}
