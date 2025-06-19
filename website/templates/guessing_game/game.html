@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block header %}{% endblock %}
+
+{% block head %}
+    <title>Guessing Game - Play</title>
+    <style>
+        /* Basic styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button, input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover, input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin: 10px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .hint {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px 0;
+            color: #2196F3;
+        }
+        .attempts {
+            margin: 15px 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Guessing Game</h1>
+        <!-- Display appropriate range based on difficulty level -->
+        <p>
+            {% if level == 1 %}
+                Guess a number from 0 to 20:
+            {% else %}
+                Guess a number from 0 to 30:
+            {% endif %}
+        </p>
+        
+        <!-- Display hint if provided -->
+        {% if hint %}
+        <p class="hint">{{ hint }}</p>
+        {% endif %}
+        
+        <!-- Form to submit a guess -->
+        <form method="post">
+            <input type="number" name="guess" autofocus>
+            <input type="submit" value="Submit Guess">
+        </form>
+        
+        <!-- Display current game statistics -->
+        <div class="attempts">
+            <p>Number of attempts: {{ num_attempts }}</p>
+            <p>Your attempts: {{ attempts | join(', ') }}</p>
+        </div>
+        
+        <!-- Form to reset the game -->
+        <form method="post">
+            <input type="hidden" name="reset" value="true">
+            <input type="submit" value="Start Over">
+        </form>
+    </div>
+{% endblock %}
