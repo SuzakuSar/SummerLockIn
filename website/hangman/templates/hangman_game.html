@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block header %}Hangman Game{% endblock %}
+
+{% block head %}
+<style>
+    body {
+        font-family: 'Courier New', monospace;
+        background-color: #1a1a2e;
+        color: #e94560;
+        text-align: center;
+        padding: 40px;
+        margin: 0;
+    }
+    h1 {
+        font-size: 36px;
+        margin-bottom: 20px;
+        text-shadow: 0 0 10px #e94560;
+        color: #e94560;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #16213e;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+    }
+    .hangman-display {
+        font-family: monospace;
+        background-color: #0f3460;
+        color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px auto;
+        white-space: pre;
+        display: inline-block;
+        text-align: left;
+    }
+    .word-display {
+        font-size: 36px;
+        letter-spacing: 10px;
+        margin: 30px 0;
+        color: #fff;
+    }
+    .message {
+        background-color: #0f3460;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        color: #fff;
+    }
+    .used-letters {
+        margin: 20px 0;
+        font-size: 18px;
+        color: #fff;
+    }
+    .lives {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+    .lives-high {
+        color: #4CAF50;
+    }
+    .lives-medium {
+        color: #FFC107;
+    }
+    .lives-low {
+        color: #f44336;
+    }
+    .letter-input {
+        background-color: #0f3460;
+        color: #fff;
+        border: 2px solid #e94560;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 20px;
+        width: 50px;
+        text-align: center;
+        margin-right: 10px;
+        text-transform: uppercase;
+    }
+    .btn {
+        display: inline-block;
+        background-color: #e94560;
+        color: #fff;
+        padding: 10px 20px;
+        margin: 10px;
+        border: none;
+        border-radius: 50px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Courier New', monospace;
+    }
+    .btn:hover {
+        background-color: #fff;
+        color: #e94560;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 10px rgba(233, 69, 96, 0.3);
+    }
+    .game-over {
+        font-size: 48px;
+        animation: pulse 1.5s infinite;
+        margin: 30px 0;
+    }
+    .win-message {
+        color: #4CAF50;
+    }
+    .lose-message {
+        color: #f44336;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    .home-link {
+        color: #e94560;
+        text-decoration: none;
+        margin-top: 20px;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1>H A N G M A N</h1>
+    
+    <div class="hangman-display">{{ visual }}</div>
+    
+    {% if not game_over %}
+        <div class="lives {% if lives > 2 %}lives-high{% elif lives > 0 %}lives-medium{% else %}lives-low{% endif %}">
+            Lives: {{ lives }}
+        </div>
+    {% endif %}
+    
+    {% if game_over %}
+        <div class="game-over {% if won %}win-message{% else %}lose-message{% endif %}">
+            {{ "YOU WON!" if won else "GAME OVER" }}
+        </div>
+    {% endif %}
+    
+    <div class="word-display">{{ word }}</div>
+    
+    {% if message %}
+        <div class="message">{{ message }}</div>
+    {% endif %}
+    
+    <div class="used-letters">
+        Letters used: {{ used_letters|join(', ') if used_letters else 'None' }}
+    </div>
+    
+    {% if not game_over %}
+        <form method="post">
+            <input type="text" name="letter" class="letter-input" maxlength="1" pattern="[A-Za-z]" required autofocus>
+            <button type="submit" class="btn">Guess</button>
+        </form>
+    {% endif %}
+    
+    <form method="post" action="{{ url_for('hangman.index') }}">
+        <input type="hidden" name="reset" value="true">
+        <button type="submit" class="btn">{{ 'Play Again' if game_over else 'New Game' }}</button>
+    </form>
+    
+    <a href="{{ url_for('home.index') }}" class="home-link">Return to Home</a>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block header %}Hangman Game{% endblock %}
+
+{% block head %}
+<style>
+    body {
+        font-family: 'Courier New', monospace;
+        background-color: #1a1a2e;
+        color: #e94560;
+        text-align: center;
+        padding: 40px;
+        margin: 0;
+    }
+    h1 {
+        font-size: 48px;
+        margin-bottom: 30px;
+        text-shadow: 0 0 10px #e94560;
+        color: #e94560;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #16213e;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+    }
+    p {
+        font-size: 18px;
+        margin-bottom: 30px;
+        line-height: 1.6;
+        color: #fff;
+    }
+    .btn {
+        display: inline-block;
+        background-color: #e94560;
+        color: #fff;
+        padding: 15px 30px;
+        margin: 10px;
+        border: none;
+        border-radius: 50px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Courier New', monospace;
+    }
+    .btn:hover {
+        background-color: #fff;
+        color: #e94560;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3);
+    }
+    .home-link {
+        margin-top: 40px;
+        color: #e94560;
+        text-decoration: none;
+        font-size: 16px;
+    }
+    .home-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1>H A N G M A N</h1>
+    <p>Test your vocabulary skills with this classic word guessing game. 
+       Try to guess the hidden word before the hangman is complete!</p>
+    
+    <div>
+        <form method="post">
+            <input type="hidden" name="difficulty" value="1">
+            <button type="submit" class="btn">Easy Mode (3-6 letters)</button>
+        </form>
+        
+        <form method="post">
+            <input type="hidden" name="difficulty" value="2">
+            <button type="submit" class="btn">Hard Mode (7-10 letters)</button>
+        </form>
+    </div>
+    
+    <a href="{{ url_for('home.index') }}" class="home-link">Return to Home</a>
+</div>
+{% endblock %}
