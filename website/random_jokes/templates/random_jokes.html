@@ -60,7 +60,7 @@
             // Add a click event listener to the button
             newJokeBtn.addEventListener('click', function() {
                 // Make an AJAX request to our API endpoint
-                fetch('/randomjokes/api/joke')
+                fetch("{{ url_for('random_jokes.api_joke') }}")
                     .then(response => response.json())  // Convert response to JSON
                     .then(data => {
                         // Update the joke text with the new joke

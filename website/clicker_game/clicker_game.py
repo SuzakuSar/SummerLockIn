@@ -5,16 +5,14 @@ from flask import Blueprint, render_template, request, jsonify, session
 # jsonify - converts Python data to JSON format for sending back to browser
 # session - stores data for each user's visit (like cookies between page loads)
 
+# Create blueprint with template folder (no URL prefix since it's set in init.py)
+clicker_game = Blueprint('clicker_game', __name__, template_folder='templates')
 
-
-clickerGame = Blueprint('clickerGame', __name__)
-
-@clickerGame.route('/')
-# @clickerGame.route('/') means "when someone visits the homepage (just the domain)"
+@clicker_game.route('/')
+# @clicker_game.route('/') means "when someone visits the homepage of this blueprint"
 # This is a decorator - it modifies the function below it
-
-def clicker_Game():
-    
+def index():
+    # Function name changed to index to avoid name conflict with blueprint
 
     if 'cookies' not in session:
         # Check if 'cookies' key exists in the user's session
@@ -22,9 +20,9 @@ def clicker_Game():
         # If not, create it and set to 0
         # session is like a dictionary that remembers data for each user
     
-    return render_template('clickerGame.html')  
+    return render_template('clicker_game.html')  
 
-@clickerGame.route('/click', methods=['POST'])
+@clicker_game.route('/click', methods=['POST'])
 # This route only accepts POST requests (not GET)
 # POST is used when we're sending data or making changes
 def click_cookie():

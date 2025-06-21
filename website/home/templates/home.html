@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block header %} <b>I can code a website!!</b> {% endblock %}
+
+{% block head %}{% endblock %}
+
+{% block body %}
+<body>
+    <div class="links-container">
+        <a href="{{ url_for('helloWorld.hello_World') }}">I'm feeling excited!!</a>
+        <br>
+        <a href="{{ url_for('helloWorld.sup_World') }}">feeling nonchalant ngl</a>
+        <br>
+        <a href="{{ url_for('clicker_game.index') }}">my first app!!</a>
+        <br>
+        <a href="{{ url_for('random_jokes.index') }}">Joke of the Day</a>
+        <br>
+        <a href="{{ url_for('guessing_game.index') }}">PAIN</a>
+    </div>
+</body>
+{% endblock %}

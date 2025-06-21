@@ -1,15 +1,15 @@
-# guessing_game_blueprint.py
+# website/guessing_game/guessing_game.py
 
 from flask import Blueprint, render_template, request, session, redirect, url_for
 import random
 
-# Create a Blueprint named 'guessing_game_bp'
-# First parameter is the blueprint's name
+# Create a Blueprint named 'guessing_game'
+# First parameter is the blueprint's name (matching the folder name)
 # Second parameter is the import name (usually __name__)
-# url_prefix will be prepended to all routes in this blueprint
-guessing_game_bp = Blueprint('guessing_game_bp', __name__)
+guessing_game = Blueprint('guessing_game', __name__, 
+                          template_folder='templates')  # Point to blueprint's templates folder
 
-@guessing_game_bp.route('/', methods=['GET', 'POST'])
+@guessing_game.route('/', methods=['GET', 'POST'])
 def index():
     """
     Main route handler for the guessing game blueprint.
@@ -25,13 +25,13 @@ def index():
         session['attempts'] = []  # Empty list to track attempts
         session['num_of_attempts'] = 0  # Counter for number of attempts
         # Render the welcome screen
-        return render_template('guessing_game/index.html')
+        return render_template('index.html')  # Note: no folder prefix needed
     
     # Handle welcome screen submission - move to level selection
     if not session.get('game_started') and request.method == 'POST':
         session['game_started'] = True  # Mark game as started
         # Render the level selection screen
-        return render_template('guessing_game/level.html')
+        return render_template('level.html')
     
     # Handle difficulty level selection
     if session.get('game_started') and not session.get('level_chosen') and request.method == 'POST':
@@ -49,14 +49,14 @@ def index():
                 session['max_range'] = 30  # Set the max range for validation
             
             # Render the main game screen with initial game state
-            return render_template('guessing_game/game.html', 
+            return render_template('game.html', 
                                   level=session['level'], 
                                   max_range=session['max_range'],
                                   attempts=session['attempts'],
                                   num_attempts=session['num_of_attempts'])
         else:
             # If invalid level, ask again with error message
-            return render_template('guessing_game/level.html', error="Please choose 1 or 2.")
+            return render_template('level.html', error="Please choose 1 or 2.")
     
     # Handle guess submissions during the game
     if session.get('level_chosen') and request.method == 'POST' and 'guess' in request.form:
@@ -77,7 +77,7 @@ def index():
             if guess == session['target_number']:
                 result = "correct"
                 # Render the result screen with game outcome
-                return render_template('guessing_game/result.html',
+                return render_template('result.html',
                                       result=result,
                                       target_number=session['target_number'],
                                       num_attempts=session['num_of_attempts'],
@@ -95,7 +95,7 @@ def index():
                 hint = "Higher"
             
             # Render game screen with updated state and hint
-            return render_template('guessing_game/game.html', 
+            return render_template('game.html', 
                                   level=session['level'], 
                                   max_range=session['max_range'],
                                   attempts=session['attempts'],
@@ -104,7 +104,7 @@ def index():
             
         except ValueError:
             # Handle non-numeric input with appropriate error message
-            return render_template('guessing_game/game.html', 
+            return render_template('game.html', 
                                   level=session['level'], 
                                   max_range=session['max_range'],
                                   attempts=session['attempts'],
@@ -114,14 +114,14 @@ def index():
     # Default behavior: redirect based on current game state
     if session.get('level_chosen'):
         # If level is chosen but not handling a POST request, show the game screen
-        return render_template('guessing_game/game.html', 
+        return render_template('game.html', 
                               level=session['level'], 
                               max_range=session['max_range'],
                               attempts=session['attempts'],
                               num_attempts=session['num_of_attempts'])
     elif session.get('game_started'):
         # If game started but level not chosen, show level selection
-        return render_template('guessing_game/level.html')
+        return render_template('level.html')
     else:
         # Default to welcome screen
-        return render_template('guessing_game/index.html')
+        return render_template('index.html')
