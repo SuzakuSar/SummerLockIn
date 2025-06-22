@@ -8,6 +8,16 @@
       href= "{{ url_for('static', 
       filename='css/style.css')}}"
     />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V9PCNMN899"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-V9PCNMN899');
+    </script>
+    <a href ="{{ url_for('home.index')}} " style="color: blue; font-weight: bold"><- Go Back Home</a>
     <h1 style="text-align: center;">{% block header %}{% endblock %}</h1>
     {% block head %}{% endblock %}
   </head>

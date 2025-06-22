@@ -1,10 +1,25 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X=UA-COmpatible" content="ie=edge">
+    <link rel="stylesheet" 
+      href= "{{ url_for('static', 
+      filename='css/style.css')}}"
+    />
+    <h1 style="text-align: center;">I Can Code a Website!!</h1>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V9PCNMN899"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-{% block header %} <b>I can code a website!!</b> {% endblock %}
+      gtag('config', 'G-V9PCNMN899');
+    </script>
+  </head>
 
-{% block head %}{% endblock %}
-
-{% block body %}
 <div class="links-container">
     <a href="{{ url_for('helloWorld.hello_World') }}">I'm feeling excited!!</a>
     <br>
@@ -19,4 +34,3 @@
     <a href="{{ url_for('hangman.index') }}" style="color: red; font-weight: bold;">HANGMAN GAME PS I STAYED UP TILL 2:34 AM GODAMNIT</a>
     <br>
 </div>
-{% endblock %}
