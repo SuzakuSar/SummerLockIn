@@ -18,19 +18,378 @@
 
       gtag('config', 'G-V9PCNMN899');
     </script>
+    
+    <!-- Experimental Homepage Styling -->
+    <style>
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+      }
+      
+      /* Animated background particles */
+      .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+      }
+      
+      .particle {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+        50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+      }
+      
+      .links-container {
+        max-width: 700px;
+        margin: 3rem auto;
+        padding: 3rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 25px;
+        backdrop-filter: blur(20px);
+        box-shadow: 
+          0 8px 32px rgba(0, 0, 0, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .links-container::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+        border-radius: 25px;
+        z-index: -1;
+        animation: rainbow 3s linear infinite;
+      }
+      
+      @keyframes rainbow {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+      }
+      
+      .links-container a {
+        display: block;
+        margin: 1.5rem 0;
+        padding: 1.2rem 2rem;
+        text-decoration: none;
+        border-radius: 15px;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        font-weight: 600;
+        text-align: center;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+        transform-style: preserve-3d;
+      }
+      
+      .links-container a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.6s;
+        z-index: 1;
+      }
+      
+      .links-container a:hover::before {
+        left: 100%;
+      }
+      
+      .links-container a:hover {
+        transform: translateY(-8px) rotateX(5deg);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      }
+      
+      .links-container a:active {
+        transform: translateY(-4px) rotateX(2deg);
+      }
+      
+      /* EXCITED THEME - Vibrant party vibes */
+      .mood-excited {
+        background: linear-gradient(45deg, #ff6b6b, #ff8e53, #ff6b9d);
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        animation: excitedPulse 2s ease-in-out infinite;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      @keyframes excitedPulse {
+        0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
+        50% { box-shadow: 0 0 30px rgba(255, 107, 107, 0.8), 0 0 40px rgba(255, 142, 83, 0.6); }
+      }
+      
+      .mood-excited:hover {
+        background: linear-gradient(45deg, #ff8e53, #ff6b9d, #ff6b6b);
+        animation: excitedHover 0.3s ease;
+      }
+      
+      @keyframes excitedHover {
+        0% { transform: translateY(-8px) rotateX(5deg) scale(1); }
+        50% { transform: translateY(-8px) rotateX(5deg) scale(1.05); }
+        100% { transform: translateY(-8px) rotateX(5deg) scale(1); }
+      }
+      
+      /* NONCHALANT THEME - Cool, chill vibes */
+      .mood-nonchalant {
+        background: linear-gradient(45deg, #4ecdc4, #45b7d1, #96ceb4);
+        color: #2c3e50;
+        font-style: italic;
+        text-transform: lowercase;
+        position: relative;
+      }
+      
+      .mood-nonchalant::after {
+        content: '😴';
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5rem;
+        animation: sleepy 3s ease-in-out infinite;
+      }
+      
+      @keyframes sleepy {
+        0%, 100% { transform: translateY(-50%) rotate(-5deg); }
+        50% { transform: translateY(-50%) rotate(5deg); }
+      }
+      
+      .mood-nonchalant:hover {
+        background: linear-gradient(45deg, #45b7d1, #96ceb4, #4ecdc4);
+        font-style: normal;
+      }
+      
+      /* FIRST APP THEME - Playful beginner energy */
+      .first-app {
+        background: linear-gradient(45deg, #feca57, #ff9ff3, #54a0ff);
+        color: #2c2c2c;
+        position: relative;
+        font-weight: bold;
+        text-transform: capitalize;
+      }
+      
+      .first-app::before {
+        content: '🎮🎉🎨';
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        animation: bounce 2s ease-in-out infinite;
+      }
+      
+      @keyframes bounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-5px); }
+      }
+      
+      .first-app:hover {
+        background: linear-gradient(45deg, #ff9ff3, #54a0ff, #feca57);
+        transform: translateY(-8px) rotateX(5deg) scale(1.02);
+      }
+      
+      /* JOKES THEME - Fun comedy vibes */
+      .jokes {
+        background: linear-gradient(45deg, #f093fb, #f5576c, #4facfe);
+        color: white;
+        position: relative;
+      }
+      
+      .jokes::after {
+        content: '😂';
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5rem;
+        animation: laugh 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes laugh {
+        0%, 100% { transform: translateY(-50%) scale(1); }
+        50% { transform: translateY(-50%) scale(1.2); }
+      }
+      
+      .jokes:hover {
+        background: linear-gradient(45deg, #f5576c, #4facfe, #f093fb);
+        animation: shake 0.5s ease-in-out;
+      }
+      
+      @keyframes shake {
+        0%, 100% { transform: translateY(-8px) rotateX(5deg) translateX(0); }
+        25% { transform: translateY(-8px) rotateX(5deg) translateX(-2px); }
+        75% { transform: translateY(-8px) rotateX(5deg) translateX(2px); }
+      }
+      
+      /* GUESSING GAME THEME - Intense challenge vibes */
+      .guessing-game {
+        background: linear-gradient(45deg, #ff4757, #ff3838, #ff6348);
+        color: white;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        position: relative;
+      }
+      
+      .guessing-game::before {
+        content: '💀';
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5rem;
+        animation: skull 2s ease-in-out infinite;
+      }
+      
+      @keyframes skull {
+        0%, 100% { filter: drop-shadow(0 0 5px #ff4757); }
+        50% { filter: drop-shadow(0 0 15px #ff4757) drop-shadow(0 0 25px #ff3838); }
+      }
+      
+      .guessing-game:hover {
+        background: linear-gradient(45deg, #ff3838, #ff6348, #ff4757);
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+      }
+      
+      /* HANGMAN THEME - Neon pink cyberpunk */
+      .hangman {
+        background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
+        color: #ff1493;
+        border: 2px solid #ff1493;
+        text-shadow: 0 0 10px #ff1493;
+        font-family: 'Courier New', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .hangman::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 20, 147, 0.2), transparent);
+        transition: left 0.5s;
+      }
+      
+      .hangman:hover::before {
+        left: 100%;
+      }
+      
+      .hangman:hover {
+        box-shadow: 
+          0 0 20px rgba(255, 20, 147, 0.5),
+          0 15px 35px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 0 15px #ff1493, 0 0 25px #ff1493;
+        border-color: #ff69b4;
+        color: #ff69b4;
+      }
+      
+      /* TIME PREDICT THEME - Neon green cyberpunk */
+      .time-predict {
+        background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
+        color: #00ff88;
+        border: 2px solid #00ff88;
+        text-shadow: 0 0 10px #00ff88;
+        font-family: 'Courier New', monospace;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .time-predict::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+        transition: left 0.5s;
+      }
+      
+      .time-predict:hover::before {
+        left: 100%;
+      }
+      
+      .time-predict:hover {
+        box-shadow: 
+          0 0 20px rgba(0, 255, 136, 0.5),
+          0 15px 35px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 0 15px #00ff88, 0 0 25px #00ff88;
+      }
+      
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .links-container {
+          margin: 1rem;
+          padding: 1.5rem;
+        }
+        
+        .links-container a {
+          padding: 1rem 1.5rem;
+          font-size: 0.9rem;
+        }
+        
+        .links-container a::before,
+        .links-container a::after {
+          font-size: 1.2rem;
+        }
+      }
+    </style>
   </head>
 
-<div class="links-container">
-    <a href="{{ url_for('helloWorld.hello_World') }}">I'm feeling excited!!</a>
-    <br>
-    <a href="{{ url_for('helloWorld.sup_World') }}">feeling nonchalant ngl</a>
-    <br>
-    <a href="{{ url_for('clicker_game.index') }}">my first app!!</a>
-    <br>
-    <a href="{{ url_for('random_jokes.index') }}">Joke of the Day</a>
-    <br>
-    <a href="{{ url_for('guessing_game.index') }}">PAIN</a>
-    <br>
-    <a href="{{ url_for('hangman.index') }}" style="color: red; font-weight: bold;">HANGMAN GAME PS I STAYED UP TILL 2:34 AM GODAMNIT</a>
-    <br>
-</div>
+<body>
+  <!-- Animated background -->
+  <div class="bg-animation">
+    <div class="particle" style="width: 6px; height: 6px; top: 20%; left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="width: 8px; height: 8px; top: 60%; left: 20%; animation-delay: 1s;"></div>
+    <div class="particle" style="width: 4px; height: 4px; top: 40%; left: 70%; animation-delay: 2s;"></div>
+    <div class="particle" style="width: 10px; height: 10px; top: 80%; left: 80%; animation-delay: 3s;"></div>
+    <div class="particle" style="width: 5px; height: 5px; top: 30%; left: 90%; animation-delay: 4s;"></div>
+    <div class="particle" style="width: 7px; height: 7px; top: 70%; left: 50%; animation-delay: 5s;"></div>
+  </div>
+
+  <div class="links-container">
+      <a href="{{ url_for('helloWorld.hello_World') }}" class="mood-excited">I'm feeling excited!!</a>
+      
+      <a href="{{ url_for('helloWorld.sup_World') }}" class="mood-nonchalant">feeling nonchalant ngl</a>
+      
+      <a href="{{ url_for('clicker_game.index') }}" class="first-app">my first app!!</a>
+      
+      <a href="{{ url_for('random_jokes.index') }}" class="jokes">Joke of the Day</a>
+      
+      <a href="{{ url_for('guessing_game.index') }}" class="guessing-game">PAIN</a>
+      
+      <a href="{{ url_for('hangman.index') }}" class="hangman">HANGMAN GAME PS I STAYED UP TILL 2:34 AM GODAMNIT</a>
+      
+      <a href="{{ url_for('time_predict.index') }}" class="time-predict">
+          ⏱️ TIME PREDICT CHALLENGE - Test Your Perfect Timing! ⏱️
+      </a>
+  </div>
+
+</body>
+</html>
