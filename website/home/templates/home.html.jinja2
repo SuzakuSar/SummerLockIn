@@ -1,0 +1,751 @@
+{% extends 'base.html' %}
+
+{% block title %}SUMMERLOCKIN - Cosmic Command Center{% endblock %}
+
+{% block header %}Welcome to the Cosmic Web{% endblock %}
+
+{% block head %}
+<style>
+    /* Enhanced Space Background */
+    .deep-space-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: -1;
+    }
+    
+    /* Multi-layer parallax background */
+    .space-layer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .space-layer.far {
+        transform: translateZ(-300px) scale(4);
+    }
+    
+    .space-layer.mid {
+        transform: translateZ(-150px) scale(2.5);
+    }
+    
+    .space-layer.near {
+        transform: translateZ(-50px) scale(1.5);
+    }
+    
+    /* Enhanced constellation stars */
+    .constellation-star {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        
+        /* Multi-layer glow effect */
+        box-shadow: 
+            0 0 2px rgba(255,255,255,1),
+            0 0 4px rgba(255,255,255,0.8),
+            0 0 8px rgba(255,255,255,0.6),
+            0 0 16px rgba(255,255,255,0.4);
+        
+        /* Subtle color based on temperature */
+        background: radial-gradient(circle, 
+            rgba(255,255,255,1) 0%, 
+            rgba(255,255,255,0.9) 40%, 
+            rgba(255,255,255,0) 100%);
+    }
+    
+    .constellation-star.warm {
+        background: radial-gradient(circle, 
+            rgba(255,245,200,1) 0%, 
+            rgba(255,235,180,0.9) 40%, 
+            rgba(255,225,160,0) 100%);
+    }
+    
+    .constellation-star.cool {
+        background: radial-gradient(circle, 
+            rgba(200,220,255,1) 0%, 
+            rgba(180,200,255,0.9) 40%, 
+            rgba(160,180,255,0) 100%);
+    }
+    
+    /* Advanced star animation */
+    @keyframes starPulse {
+        0%, 100% { 
+            opacity: var(--star-min-opacity);
+            transform: scale(1);
+        }
+        50% { 
+            opacity: var(--star-max-opacity);
+            transform: scale(var(--star-pulse-scale));
+        }
+    }
+    
+    /* Constellation lines with glow */
+    .constellation-line {
+        position: absolute;
+        height: 1px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255,255,255,0.2) 10%,
+            rgba(255,255,255,0.8) 50%, 
+            rgba(255,255,255,0.2) 90%,
+            transparent 100%);
+        transform-origin: left center;
+        
+        /* Glowing line effect */
+        box-shadow: 
+            0 0 2px rgba(255,255,255,0.8),
+            0 0 4px rgba(138,43,226,0.6),
+            0 0 8px rgba(138,43,226,0.4);
+    }
+    
+    @keyframes lineFlow {
+        0% { 
+            opacity: 0;
+            background-position: -100% 0;
+        }
+        50% { 
+            opacity: 1;
+        }
+        100% { 
+            opacity: 0;
+            background-position: 200% 0;
+        }
+    }
+    
+    /* Complex nebula layers */
+    .nebula-container {
+        position: absolute;
+        pointer-events: none;
+    }
+    
+    .nebula-layer {
+        position: absolute;
+        border-radius: 50%;
+        mix-blend-mode: screen;
+        animation: nebulaFloat 30s ease-in-out infinite;
+    }
+    
+    @keyframes nebulaFloat {
+        0%, 100% { 
+            transform: translate(0, 0) rotate(0deg) scale(1);
+            opacity: var(--nebula-opacity);
+        }
+        25% { 
+            transform: translate(10px, -15px) rotate(90deg) scale(1.1);
+            opacity: calc(var(--nebula-opacity) * 1.2);
+        }
+        50% { 
+            transform: translate(-10px, -20px) rotate(180deg) scale(0.95);
+            opacity: calc(var(--nebula-opacity) * 0.8);
+        }
+        75% { 
+            transform: translate(-15px, 10px) rotate(270deg) scale(1.05);
+            opacity: calc(var(--nebula-opacity) * 1.1);
+        }
+    }
+    
+    /* Nebula bright spots */
+    .nebula-bright-spot {
+        position: absolute;
+        border-radius: 50%;
+        mix-blend-mode: screen;
+        filter: blur(3px);
+    }
+    
+    /* Shooting stars */
+    .shooting-star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: white;
+        border-radius: 50%;
+        animation: shootingStar var(--duration) linear;
+        
+        /* Tail effect */
+        box-shadow: 
+            -10px 0 5px rgba(255,255,255,0.8),
+            -20px 0 10px rgba(255,255,255,0.6),
+            -40px 0 20px rgba(255,255,255,0.4),
+            -80px 0 40px rgba(255,255,255,0.2),
+            -120px 0 60px rgba(255,255,255,0.1);
+    }
+    
+    @keyframes shootingStar {
+        0% {
+            transform: translateX(0) translateY(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateX(var(--end-x)) translateY(var(--end-y));
+            opacity: 0;
+        }
+    }
+    
+    /* Pulsar effect */
+    .pulsar {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, 
+            rgba(255,255,255,1) 0%, 
+            rgba(138,43,226,0.8) 30%, 
+            transparent 70%);
+        animation: pulsarBeat var(--period) ease-in-out infinite;
+    }
+    
+    @keyframes pulsarBeat {
+        0%, 100% { 
+            transform: scale(0.1);
+            opacity: 0;
+        }
+        50% { 
+            transform: scale(1);
+            opacity: 0.8;
+        }
+    }
+    
+    /* Cosmic dust particles */
+    .cosmic-dust {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        background: rgba(255,255,255,0.5);
+        border-radius: 50%;
+        animation: dustDrift 60s linear infinite;
+    }
+    
+    @keyframes dustDrift {
+        from {
+            transform: translateX(-100px) translateY(0);
+        }
+        to {
+            transform: translateX(calc(100vw + 100px)) translateY(50px);
+        }
+    }
+    
+    /* Main content styling */
+    .cosmic-content {
+        position: relative;
+        z-index: 100;
+        min-height: calc(100vh - 150px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    
+    .cosmic-panel {
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 20, 0.8) 0%, 
+            rgba(20, 20, 40, 0.6) 50%, 
+            rgba(40, 20, 60, 0.4) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 3rem;
+        max-width: 800px;
+        width: 100%;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Holographic border effect */
+    .cosmic-panel::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            #ff0080, #ff8000, #00ff00, #00ffff, 
+            #0080ff, #8000ff, #ff0080);
+        background-size: 400% 400%;
+        border-radius: 20px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+        animation: holographicBorder 3s ease infinite;
+    }
+    
+    .cosmic-panel:hover::before {
+        opacity: 0.3;
+    }
+    
+    @keyframes holographicBorder {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    
+    .space-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(138, 43, 226, 0.3);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 300;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    /* Action buttons */
+    .cosmic-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .cosmic-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: 'Times New Roman', Times, serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cosmic-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .cosmic-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 10px 30px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .cosmic-btn:hover::after {
+        width: 300px;
+        height: 300px;
+    }
+    
+    /* Loading animation */
+    .loading-stars {
+        display: inline-block;
+    }
+    
+    .loading-stars::after {
+        content: '✦';
+        animation: loadingPulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes loadingPulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .cosmic-panel {
+            padding: 2rem 1.5rem;
+        }
+        
+        .space-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .cosmic-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .cosmic-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Deep Space Background Container -->
+<div class="deep-space-container" id="deepSpace">
+    <!-- Far background layer -->
+    <div class="space-layer far" id="farLayer"></div>
+    
+    <!-- Nebulae layer -->
+    <div class="space-layer mid" id="nebulaLayer">
+        {% if nebulae %}
+            {% for nebula in nebulae %}
+            <div class="nebula-container" 
+                 style="left: {{ nebula.x }}%; top: {{ nebula.y }}%;">
+                {% for layer in nebula.layers %}
+                <div class="nebula-layer"
+                     style="width: {{ layer.size }}px;
+                            height: {{ layer.size }}px;
+                            left: {{ layer.offset_x }}px;
+                            top: {{ layer.offset_y }}px;
+                            background: {{ layer.gradient }};
+                            filter: blur({{ layer.blur }}px);
+                            --nebula-opacity: {{ layer.opacity }};
+                            animation-duration: {{ layer.animation_duration }}s;
+                            animation-delay: {{ layer.animation_delay }}s;">
+                </div>
+                {% endfor %}
+                
+                {% for spot in nebula.bright_spots %}
+                <div class="nebula-bright-spot"
+                     style="width: {{ spot.size }}px;
+                            height: {{ spot.size }}px;
+                            left: calc(50% + {{ spot.offset_x }}px);
+                            top: calc(50% + {{ spot.offset_y }}px);
+                            background: radial-gradient(circle, {{ spot.color }}, transparent);
+                            opacity: {{ spot.brightness }};">
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    
+    <!-- Constellation layer -->
+    <div class="space-layer near" id="constellationLayer">
+        <!-- Stars and lines will be added here by JavaScript -->
+    </div>
+    
+    <!-- Dynamic effects layer -->
+    <div class="space-layer" id="effectsLayer">
+        <!-- Shooting stars, pulsars, etc. will be added here -->
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="cosmic-content">
+    <div class="cosmic-panel">
+        <h2 style="text-align: center; margin-bottom: 2rem;">
+            🌌 Deep Space Navigation Hub 🌌
+        </h2>
+        
+        <p style="text-align: center; opacity: 0.9; line-height: 1.6;">
+            Welcome to your cosmic command center. Navigate through the stellar collection
+            of projects and explore the universe of possibilities.
+        </p>
+        
+        <!-- Space Statistics -->
+        <div class="space-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total_stars }}</div>
+                <div class="stat-label">Visible Stars</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total_connections }}</div>
+                <div class="stat-label">Connections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.nebula_count }}</div>
+                <div class="stat-label">Nebulae</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">∞</div>
+                <div class="stat-label">Possibilities</div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="cosmic-actions">
+            <button class="cosmic-btn" onclick="regenerateConstellation()">
+                <span class="loading-stars" style="display: none;"></span>
+                <span class="btn-text">Generate New Star Map</span>
+            </button>
+            <button class="cosmic-btn" onclick="regenerateNebulae()">
+                <span class="loading-stars" style="display: none;"></span>
+                <span class="btn-text">Shift Nebula Clouds</span>
+            </button>
+            <button class="cosmic-btn" onclick="fullSpaceRegenerate()">
+                <span class="loading-stars" style="display: none;"></span>
+                <span class="btn-text">New Universe</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Pass data to JavaScript -->
+<script type="application/json" id="constellationData">
+{{ constellation|tojson if constellation else '{}' }}
+</script>
+
+<script type="application/json" id="effectsData">
+{{ effects|tojson if effects else '{}' }}
+</script>
+
+<script>
+// Get server data
+const constellationData = JSON.parse(document.getElementById('constellationData').textContent || '{}');
+const effectsData = JSON.parse(document.getElementById('effectsData').textContent || '{}');
+
+// Render constellation with enhanced effects
+function renderConstellation(data) {
+    const container = document.getElementById('constellationLayer');
+    
+    // Clear existing elements
+    container.innerHTML = '';
+    
+    if (!data.stars || !data.lines) return;
+    
+    // Render constellation lines first (behind stars)
+    data.lines.forEach((line, index) => {
+        const lineEl = document.createElement('div');
+        lineEl.className = 'constellation-line';
+        lineEl.style.left = line.x1 + '%';
+        lineEl.style.top = line.y1 + '%';
+        lineEl.style.width = (line.length * 5) + 'px';
+        lineEl.style.transform = `rotate(${line.angle}deg)`;
+        lineEl.style.opacity = line.brightness;
+        lineEl.style.animationName = 'lineFlow';
+        lineEl.style.animationDuration = line.animation_duration + 's';
+        lineEl.style.animationDelay = line.animation_delay + 's';
+        lineEl.style.animationIterationCount = 'infinite';
+        container.appendChild(lineEl);
+    });
+    
+    // Render stars
+    data.stars.forEach((star, index) => {
+        const starEl = document.createElement('div');
+        starEl.className = 'constellation-star ' + star.color_temp;
+        starEl.style.left = star.x + '%';
+        starEl.style.top = star.y + '%';
+        starEl.style.width = star.size + 'px';
+        starEl.style.height = star.size + 'px';
+        starEl.style.setProperty('--star-min-opacity', star.brightness * 0.5);
+        starEl.style.setProperty('--star-max-opacity', star.brightness);
+        starEl.style.setProperty('--star-pulse-scale', 1 + (star.size / 20));
+        starEl.style.animationName = 'starPulse';
+        starEl.style.animationDuration = star.animation_duration + 's';
+        starEl.style.animationDelay = star.animation_delay + 's';
+        starEl.style.animationIterationCount = 'infinite';
+        container.appendChild(starEl);
+    });
+}
+
+// Initialize dynamic effects
+function initializeEffects() {
+    const container = document.getElementById('effectsLayer');
+    
+    // Shooting stars
+    if (effectsData.shooting_stars && effectsData.shooting_stars.enabled) {
+        setInterval(() => {
+            if (Math.random() < effectsData.shooting_stars.frequency) {
+                createShootingStar();
+            }
+        }, effectsData.shooting_stars.interval);
+    }
+    
+    // Pulsars
+    if (effectsData.pulsars && effectsData.pulsars.enabled) {
+        effectsData.pulsars.positions.forEach(pulsar => {
+            const pulsarEl = document.createElement('div');
+            pulsarEl.className = 'pulsar';
+            pulsarEl.style.left = pulsar.x + '%';
+            pulsarEl.style.top = pulsar.y + '%';
+            pulsarEl.style.width = pulsar.size + 'px';
+            pulsarEl.style.height = pulsar.size + 'px';
+            pulsarEl.style.setProperty('--period', pulsar.period + 's');
+            container.appendChild(pulsarEl);
+        });
+    }
+    
+    // Cosmic dust
+    if (effectsData.cosmic_dust && effectsData.cosmic_dust.enabled) {
+        for (let i = 0; i < effectsData.cosmic_dust.particle_count; i++) {
+            const dustEl = document.createElement('div');
+            dustEl.className = 'cosmic-dust';
+            dustEl.style.left = Math.random() * 100 + '%';
+            dustEl.style.top = Math.random() * 100 + '%';
+            dustEl.style.animationDelay = Math.random() * 60 + 's';
+            dustEl.style.animationDuration = (40 + Math.random() * 40) + 's';
+            container.appendChild(dustEl);
+        }
+    }
+    
+    // Background stars
+    const farLayer = document.getElementById('farLayer');
+    for (let i = 0; i < 200; i++) {
+        const bgStar = document.createElement('div');
+        bgStar.style.position = 'absolute';
+        bgStar.style.width = Math.random() * 2 + 'px';
+        bgStar.style.height = bgStar.style.width;
+        bgStar.style.background = 'white';
+        bgStar.style.borderRadius = '50%';
+        bgStar.style.left = Math.random() * 100 + '%';
+        bgStar.style.top = Math.random() * 100 + '%';
+        bgStar.style.opacity = Math.random() * 0.8 + 0.2;
+        farLayer.appendChild(bgStar);
+    }
+}
+
+// Create shooting star
+function createShootingStar() {
+    const container = document.getElementById('effectsLayer');
+    const star = document.createElement('div');
+    star.className = 'shooting-star';
+    
+    // Random start position
+    const startLeft = Math.random() < 0.5;
+    const startX = startLeft ? -100 : window.innerWidth + 100;
+    const startY = Math.random() * window.innerHeight * 0.5;
+    
+    // Random end position
+    const endX = startLeft ? 
+        window.innerWidth + 200 : 
+        -200;
+    const endY = startY + (Math.random() * 300 + 100);
+    
+    star.style.left = startX + 'px';
+    star.style.top = startY + 'px';
+    star.style.setProperty('--end-x', (endX - startX) + 'px');
+    star.style.setProperty('--end-y', (endY - startY) + 'px');
+    star.style.setProperty('--duration', (Math.random() * 2 + 2) + 's');
+    
+    container.appendChild(star);
+    
+    // Remove after animation
+    setTimeout(() => {
+        star.remove();
+    }, 4000);
+}
+
+// API interaction functions
+async function regenerateConstellation() {
+    const btn = event.target.closest('.cosmic-btn');
+    const loader = btn.querySelector('.loading-stars');
+    const text = btn.querySelector('.btn-text');
+    
+    loader.style.display = 'inline-block';
+    text.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/constellation/new');
+        const data = await response.json();
+        renderConstellation(data);
+    } catch (error) {
+        console.error('Error regenerating constellation:', error);
+    }
+    
+    loader.style.display = 'none';
+    text.style.display = 'inline';
+}
+
+async function regenerateNebulae() {
+    const btn = event.target.closest('.cosmic-btn');
+    const loader = btn.querySelector('.loading-stars');
+    const text = btn.querySelector('.btn-text');
+    
+    loader.style.display = 'inline-block';
+    text.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/nebulae/new');
+        const data = await response.json();
+        
+        // Reload page to render new nebulae (server-side rendering)
+        location.reload();
+    } catch (error) {
+        console.error('Error regenerating nebulae:', error);
+    }
+    
+    loader.style.display = 'none';
+    text.style.display = 'inline';
+}
+
+async function fullSpaceRegenerate() {
+    const btn = event.target.closest('.cosmic-btn');
+    const loader = btn.querySelector('.loading-stars');
+    const text = btn.querySelector('.btn-text');
+    
+    loader.style.display = 'inline-block';
+    text.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/space/full-regenerate');
+        const data = await response.json();
+        
+        // Reload page for complete regeneration
+        location.reload();
+    } catch (error) {
+        console.error('Error regenerating space:', error);
+    }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    renderConstellation(constellationData);
+    initializeEffects();
+    
+    console.log('🌌 Deep Space Navigation initialized');
+    console.log(`✨ Rendering ${constellationData.stars?.length || 0} stars`);
+    console.log(`🔗 Creating ${constellationData.lines?.length || 0} connections`);
+});
+
+// Parallax effect on mouse move
+document.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX / window.innerWidth - 0.5;
+    const mouseY = e.clientY / window.innerHeight - 0.5;
+    
+    const layers = document.querySelectorAll('.space-layer');
+    layers.forEach((layer, index) => {
+        const depth = (index + 1) * 10;
+        const moveX = mouseX * depth;
+        const moveY = mouseY * depth;
+        
+        layer.style.transform = `translateX(${moveX}px) translateY(${moveY}px)`;
+    });
+});
+</script>
+{% endblock %}
