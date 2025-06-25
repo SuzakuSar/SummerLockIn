@@ -1,162 +1,465 @@
 {% extends 'base.html' %}
 
-{% block header %}{% endblock %}
+{% block title %}Cosmic Clicker - Harvest Stars{% endblock %}
+
+{% block header %}⭐ Cosmic Star Harvester ⭐{% endblock %}
 
 {% block head %}
-    <title>Cookie Clicker</title>
-    <!-- Text that appears in the browser tab -->
+<style>
+    .clicker-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
     
-    <style>
-        /* CSS styles - these control how everything looks */
-        
-        body {
-            /* Styles the entire page background */
-            font-family: Arial, sans-serif;  /* Use Arial font, fallback to any sans-serif */
-            text-align: center;              /* Center all text */
-            background-color: #f0f0f0;       /* Light gray background */
-            margin: 0;                       /* Remove default spacing around page */
-            padding: 20px;                   /* Add 20px of inner spacing */
+    .game-panel {
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+    }
+    
+    /* Star counter display */
+    .star-counter {
+        font-size: clamp(3rem, 8vw, 5rem);
+        font-weight: 100;
+        margin: 2rem 0;
+        background: linear-gradient(45deg, #ffd700, #ffed4b, #fff59d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 
+            0 0 30px rgba(255, 215, 0, 0.5),
+            0 0 60px rgba(255, 215, 0, 0.3);
+        animation: starCounterGlow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes starCounterGlow {
+        from { filter: brightness(1); }
+        to { filter: brightness(1.2); }
+    }
+    
+    /* The main star button */
+    .star-clicker {
+        width: 200px;
+        height: 200px;
+        margin: 2rem auto;
+        background: radial-gradient(circle, #ffd700, #ffed4b);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        box-shadow: 
+            0 0 50px rgba(255, 215, 0, 0.5),
+            0 0 100px rgba(255, 215, 0, 0.3),
+            inset 0 0 50px rgba(255, 255, 255, 0.5);
+        animation: starFloat 4s ease-in-out infinite;
+    }
+    
+    @keyframes starFloat {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-10px) scale(1.05); }
+    }
+    
+    /* Star points around the circle */
+    .star-clicker::before {
+        content: '⭐';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 100px;
+        animation: starRotate 20s linear infinite;
+    }
+    
+    @keyframes starRotate {
+        from { transform: translate(-50%, -50%) rotate(0deg); }
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    .star-clicker:hover {
+        transform: scale(1.1);
+        box-shadow: 
+            0 0 70px rgba(255, 215, 0, 0.7),
+            0 0 140px rgba(255, 215, 0, 0.5);
+    }
+    
+    .star-clicker:active {
+        transform: scale(0.95);
+    }
+    
+    /* Click effect particles */
+    .click-particle {
+        position: absolute;
+        pointer-events: none;
+        font-size: 24px;
+        animation: particleFly 1s ease-out forwards;
+        z-index: 1000;
+    }
+    
+    @keyframes particleFly {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(0);
         }
-        
-        .game-container {
-            /* Styles the main game box */
-            max-width: 600px;                /* Maximum width of 600 pixels */
-            margin: 0 auto;                  /* Center the container horizontally */
-            background: white;               /* White background */
-            border-radius: 10px;             /* Rounded corners */
-            padding: 20px;                   /* 20px spacing inside the box */
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);  /* Drop shadow effect */
-            /* box-shadow: horizontal, vertical, blur, color with transparency */
+        50% {
+            opacity: 1;
+            transform: translate(-50%, -200%) scale(1);
         }
-        
-        .cookie-display {
-            /* Styles the "Cookies: X" text */
-            font-size: 28px;                 /* Large text */
-            margin: 30px 0;                  /* 30px space above and below */
-            font-weight: bold;               /* Make text bold */
-            color: #8B4513;                  /* Brown color (saddle brown) */
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -300%) scale(0.5);
         }
-        
-        .cookie-button {
-            /* Styles the clickable cookie */
-            width: 200px;                    /* 200 pixels wide */
-            height: 200px;                   /* 200 pixels tall (makes it square) */
-            border-radius: 50%;              /* 50% makes it perfectly round */
-            background: linear-gradient(45deg, #D4A574, #F4E4BC);  /* Gradient background */
-            /* linear-gradient: smooth color transition at 45 degree angle */
-            /* From tan (#D4A574) to light beige (#F4E4BC) */
-            border: 5px solid #8B4513;       /* 5px solid brown border */
-            font-size: 60px;                 /* Large emoji size */
-            cursor: pointer;                 /* Show hand cursor when hovering */
-            margin: 20px;                    /* 20px space around the button */
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);  /* Drop shadow */
-            transition: transform 0.1s;      /* Smooth animation when size changes */
-            display: inline-block;           /* Allow transforms to work properly */
+    }
+    
+    /* Stats grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 3rem;
+    }
+    
+    .stat-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-box:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: #ffd700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    
+    /* Upgrades section */
+    .upgrades-section {
+        margin-top: 3rem;
+    }
+    
+    .upgrade-btn {
+        width: 100%;
+        margin: 0.5rem 0;
+        padding: 1rem;
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.2), 
+            rgba(255, 237, 75, 0.2));
+        border: 1px solid rgba(255, 215, 0, 0.4);
+        color: white;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .upgrade-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.4), 
+            rgba(255, 237, 75, 0.4));
+        transform: translateX(5px);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+    
+    .upgrade-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .upgrade-cost {
+        color: #ffd700;
+        font-weight: bold;
+    }
+    
+    /* Achievements */
+    .achievement-popup {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.9), 
+            rgba(255, 237, 75, 0.9));
+        color: black;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        animation: achievementSlide 0.5s ease-out;
+        z-index: 2000;
+    }
+    
+    @keyframes achievementSlide {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
         }
-        
-        .cookie-button:hover {
-            /* What happens when mouse hovers over cookie */
-            transform: scale(1.05);          /* Make 5% bigger */
+        to {
+            transform: translateX(0);
+            opacity: 1;
         }
-        
-        .cookie-button:active {
-            /* What happens when cookie is being clicked */
-            transform: scale(0.95);          /* Make 5% smaller */
-        }
-    </style>
+    }
+</style>
 {% endblock %}
 
 {% block body %}
-    <!-- <body> contains everything visible on the page -->
-    
-    <div class="game-container">
-        <!-- A div with the class "game-container" - gets styled by CSS above -->
+<div class="clicker-container">
+    <div class="game-panel glass-panel-dark">
+        <h2 class="glow-text space-mb-3">Harvest Stars from the Cosmos</h2>
         
-        <h1>Cookie Clicker</h1>
-        <!-- Main heading - <h1> is the largest heading -->
+        <!-- Star Counter -->
+        <div class="star-counter" id="starCount">0</div>
+        <p class="space-mb-4">Stars Collected</p>
         
-        <div class="cookie-display">
-            <!-- Container for the cookie count display -->
-            Cookies: <span id="cookie-count">0</span>
-            <!-- <span> is inline text with an ID so JavaScript can find it -->
-            <!-- id="cookie-count" lets us target this specific element -->
+        <!-- Main Clicker Button -->
+        <button class="star-clicker" id="starButton" onclick="clickStar()">
+        </button>
+        
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Stars per Click</div>
+                <div class="stat-value" id="starsPerClick">1</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Stars per Second</div>
+                <div class="stat-value" id="starsPerSecond">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Clicks</div>
+                <div class="stat-value" id="totalClicks">0</div>
+            </div>
         </div>
         
-        <button class="cookie-button" onclick="clickCookie()">🍪</button>
-        <!-- <button> creates a clickable button -->
-        <!-- class="cookie-button" applies our CSS styles -->
-        <!-- onclick="clickCookie()" runs JavaScript function when clicked -->
-        <!-- 🍪 is the cookie emoji that appears on the button -->
+        <!-- Upgrades -->
+        <div class="upgrades-section">
+            <h3 class="glow-text space-mb-2">🚀 Cosmic Upgrades</h3>
+            
+            <button class="upgrade-btn" id="upgrade1" onclick="buyUpgrade('telescope')">
+                <div>
+                    <strong>🔭 Telescope</strong><br>
+                    <small>+1 star per click</small>
+                </div>
+                <span class="upgrade-cost">Cost: 10 ⭐</span>
+            </button>
+            
+            <button class="upgrade-btn" id="upgrade2" onclick="buyUpgrade('satellite')">
+                <div>
+                    <strong>🛰️ Satellite</strong><br>
+                    <small>+1 star per second</small>
+                </div>
+                <span class="upgrade-cost">Cost: 50 ⭐</span>
+            </button>
+            
+            <button class="upgrade-btn" id="upgrade3" onclick="buyUpgrade('spacestation')">
+                <div>
+                    <strong>🏗️ Space Station</strong><br>
+                    <small>+5 stars per second</small>
+                </div>
+                <span class="upgrade-cost">Cost: 200 ⭐</span>
+            </button>
+        </div>
     </div>
+</div>
 
-    <script>
-        /* JavaScript code - this makes the page interactive */
+<script>
+// Game state
+let gameState = {
+    stars: 0,
+    starsPerClick: 1,
+    starsPerSecond: 0,
+    totalClicks: 0,
+    upgrades: {
+        telescope: { owned: 0, cost: 10, multiplier: 1 },
+        satellite: { owned: 0, cost: 50, multiplier: 1 },
+        spacestation: { owned: 0, cost: 200, multiplier: 5 }
+    }
+};
+
+// Load saved game
+function loadGame() {
+    const saved = localStorage.getItem('cosmicClickerSave');
+    if (saved) {
+        gameState = JSON.parse(saved);
+        updateDisplay();
+    }
+}
+
+// Save game
+function saveGame() {
+    localStorage.setItem('cosmicClickerSave', JSON.stringify(gameState));
+}
+
+// Update display
+function updateDisplay() {
+    document.getElementById('starCount').textContent = Math.floor(gameState.stars);
+    document.getElementById('starsPerClick').textContent = gameState.starsPerClick;
+    document.getElementById('starsPerSecond').textContent = gameState.starsPerSecond;
+    document.getElementById('totalClicks').textContent = gameState.totalClicks;
+    
+    // Update upgrade buttons
+    updateUpgradeButtons();
+}
+
+// Update upgrade button states
+function updateUpgradeButtons() {
+    const upgrades = ['telescope', 'satellite', 'spacestation'];
+    upgrades.forEach((upgrade, index) => {
+        const btn = document.getElementById(`upgrade${index + 1}`);
+        const cost = gameState.upgrades[upgrade].cost;
+        btn.disabled = gameState.stars < cost;
+        btn.querySelector('.upgrade-cost').textContent = `Cost: ${cost} ⭐`;
+    });
+}
+
+// Click the star
+function clickStar() {
+    gameState.stars += gameState.starsPerClick;
+    gameState.totalClicks++;
+    updateDisplay();
+    saveGame();
+    
+    // Create particle effect
+    createClickParticle(event);
+    
+    // Check achievements
+    checkAchievements();
+}
+
+// Create click particle
+function createClickParticle(event) {
+    const particle = document.createElement('div');
+    particle.className = 'click-particle';
+    particle.textContent = '+' + gameState.starsPerClick + '⭐';
+    particle.style.left = event.clientX + 'px';
+    particle.style.top = event.clientY + 'px';
+    document.body.appendChild(particle);
+    
+    setTimeout(() => particle.remove(), 1000);
+}
+
+// Buy upgrade
+function buyUpgrade(type) {
+    const upgrade = gameState.upgrades[type];
+    
+    if (gameState.stars >= upgrade.cost) {
+        gameState.stars -= upgrade.cost;
+        upgrade.owned++;
         
-        let cookies = 0;
-        /* Declare a variable to store the cookie count */
-        /* 'let' creates a variable that can change */
-        /* Initialize to 0 */
-        
-        // Load initial cookie count from server
-        window.onload = function() {
-            /* window.onload runs when the page finishes loading */
-            /* This is an anonymous function (function without a name) */
-            
-            // Just set to 0 initially, no need to fetch
-            cookies = 0;           /* Set our variable to 0 */
-            updateDisplay();       /* Call function to update what user sees */
-        };
-        
-        function updateDisplay() {
-            /* This function updates the number shown on screen */
-            
-            document.getElementById('cookie-count').textContent = cookies;
-            /* document.getElementById('cookie-count') finds the <span> with id="cookie-count" */
-            /* .textContent sets the text inside that element */
-            /* = cookies puts our current cookie count there */
+        // Apply upgrade effects
+        switch(type) {
+            case 'telescope':
+                gameState.starsPerClick += upgrade.multiplier;
+                break;
+            case 'satellite':
+                gameState.starsPerSecond += upgrade.multiplier;
+                break;
+            case 'spacestation':
+                gameState.starsPerSecond += upgrade.multiplier;
+                break;
         }
         
-        function clickCookie() {
-            /* This function runs when the cookie button is clicked */
-            
-            console.log("Cookie clicked! Current count:", cookies);  // Debug message
-            
-            fetch("{{ url_for('clicker_game.click_cookie') }}", {  // Use Flask's url_for
-                /* fetch() sends a request to our Flask server */
-                /* '/click' is the URL endpoint we defined in Flask */
-                
-                method: 'POST',
-                /* Use POST method (sending data, not just getting) */
-                
-                headers: {
-                    /* Headers provide extra information about our request */
-                    'Content-Type': 'application/json',
-                    /* Tells server we're sending JSON data */
-                }
-            })
-            .then(response => {
-                console.log("Server responded:", response.status);  // Debug
-                return response.json();
-            })
-            /* .then() handles what happens when server responds */
-            /* response.json() converts the response to JavaScript object */
-            
-            .then(data => {
-                /* This runs when we successfully get data back */
-                /* 'data' contains the JSON from our Flask server */
-                
-                console.log("Data received:", data);  // Debug message
-                cookies = data.cookies;
-                /* Update our cookie variable with the new count from server */
-                
-                updateDisplay();
-                /* Update what the user sees on screen */
-            })
-            .catch(error => {
-                /* .catch() handles any errors that occur */
-                console.error('Error:', error);
-                /* Log the error to browser's developer console */
-            });
+        // Increase cost
+        upgrade.cost = Math.floor(upgrade.cost * 1.5);
+        
+        updateDisplay();
+        saveGame();
+        
+        // Show achievement
+        showAchievement(`${type.charAt(0).toUpperCase() + type.slice(1)} purchased!`);
+    }
+}
+
+// Auto generate stars
+function autoGenerateStars() {
+    if (gameState.starsPerSecond > 0) {
+        gameState.stars += gameState.starsPerSecond / 10; // Divided by 10 for 100ms interval
+        updateDisplay();
+    }
+}
+
+// Check achievements
+function checkAchievements() {
+    const achievements = [
+        { stars: 100, message: "🌟 Reached 100 stars!" },
+        { stars: 1000, message: "✨ Stellar collector - 1000 stars!" },
+        { stars: 10000, message: "🌌 Cosmic harvester - 10000 stars!" },
+        { clicks: 100, message: "👆 100 clicks milestone!" },
+        { clicks: 1000, message: "🖱️ Click master - 1000 clicks!" }
+    ];
+    
+    achievements.forEach(achievement => {
+        if (achievement.stars && gameState.stars >= achievement.stars) {
+            const key = `achievement_stars_${achievement.stars}`;
+            if (!localStorage.getItem(key)) {
+                localStorage.setItem(key, 'true');
+                showAchievement(achievement.message);
+            }
         }
-    </script>
+        
+        if (achievement.clicks && gameState.totalClicks >= achievement.clicks) {
+            const key = `achievement_clicks_${achievement.clicks}`;
+            if (!localStorage.getItem(key)) {
+                localStorage.setItem(key, 'true');
+                showAchievement(achievement.message);
+            }
+        }
+    });
+}
+
+// Show achievement popup
+function showAchievement(message) {
+    const popup = document.createElement('div');
+    popup.className = 'achievement-popup';
+    popup.innerHTML = `<strong>Achievement Unlocked!</strong><br>${message}`;
+    document.body.appendChild(popup);
+    
+    setTimeout(() => {
+        popup.style.animation = 'achievementSlide 0.5s ease-in reverse';
+        setTimeout(() => popup.remove(), 500);
+    }, 3000);
+}
+
+// Initialize game
+loadGame();
+setInterval(autoGenerateStars, 100);
+setInterval(saveGame, 5000); // Auto-save every 5 seconds
+
+// Add background stars
+function addBackgroundStars() {
+    const container = document.querySelector('.clicker-container');
+    
+    for (let i = 0; i < 50; i++) {
+        const star = document.createElement('div');
+        star.className = 'star star-twinkle';
+        star.style.width = Math.random() * 3 + 'px';
+        star.style.height = star.style.width;
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.position = 'absolute';
+        star.style.zIndex = '1';
+        container.appendChild(star);
+    }
+}
+
+addBackgroundStars();
+</script>
 {% endblock %}
