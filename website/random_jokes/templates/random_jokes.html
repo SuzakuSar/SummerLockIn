@@ -1,44 +1,92 @@
 {% extends 'base.html' %}
 
-{% block header %}{% endblock %}
+{% block title %}Joke of the Day{% endblock %}
+
+{% block header %}Joke of the Day{% endblock %}
 
 {% block head %}
-    <title>Joke of the Day</title>
-    <style>
-        /* Basic styling for the page */
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
-        }
-        h1 {
-            color: #333;
-        }
-        .joke-container {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            min-height: 100px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
+<style>
+    /* Override the dark space theme for this page */
+    body {
+        background: white !important;
+        color: #333 !important;
+        font-family: Arial, sans-serif !important;
+    }
+    
+    /* Hide the base template's glowing h1 and use our own */
+    body > h1 {
+        display: none;
+    }
+    
+    /* Main container */
+    .joke-page {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        text-align: center;
+        background: white;
+        min-height: calc(100vh - 60px);
+    }
+    
+    .joke-page h1 {
+        color: #333;
+        font-size: 2rem;
+        margin: 20px 0;
+        text-shadow: none;
+        font-weight: normal;
+        animation: none;
+    }
+    
+    .joke-container {
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        min-height: 100px;
+        border: 1px solid #e0e0e0;
+    }
+    
+    #joke-text {
+        color: #333;
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    #new-joke-btn {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        text-transform: none;
+        letter-spacing: normal;
+        transition: background-color 0.3s ease;
+    }
+    
+    #new-joke-btn:hover {
+        background-color: #45a049;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Override any space theme styles that might leak through */
+    * {
+        text-shadow: none !important;
+    }
+    
+    /* Hide background stars if any */
+    .star, .star-twinkle {
+        display: none !important;
+    }
+</style>
 {% endblock %}
 
 {% block body %}
+<div class="joke-page">
     <h1>Joke of the Day</h1>
     
     <!-- Container to display the joke -->
@@ -72,4 +120,5 @@
             });
         });
     </script>
+</div>
 {% endblock %}

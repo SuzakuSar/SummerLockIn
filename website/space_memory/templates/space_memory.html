@@ -22,11 +22,23 @@
         gap: 2rem;
     }
     
-    /* Stats Panel */
+    /* Stats Panel with softer edges and more padding */
     .stats-panel {
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        background: linear-gradient(145deg, 
+            rgba(20, 0, 40, 0.6) 0%, 
+            rgba(40, 20, 60, 0.4) 50%, 
+            rgba(60, 40, 80, 0.2) 100%);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 35px;
+        padding: 3rem 2.5rem;
+        box-shadow: 
+            0 25px 70px rgba(0, 0, 0, 0.3),
+            inset 0 2px 1px rgba(255, 255, 255, 0.1),
+            inset 0 -1px 1px rgba(0, 0, 0, 0.2);
     }
     
     .stat-card {
@@ -57,9 +69,21 @@
         margin-top: 0.5rem;
     }
     
-    /* Game Board */
+    /* Game Board with softer edges */
     .game-area {
         text-align: center;
+        background: linear-gradient(145deg, 
+            rgba(20, 0, 40, 0.6) 0%, 
+            rgba(40, 20, 60, 0.4) 50%, 
+            rgba(60, 40, 80, 0.2) 100%);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 35px;
+        padding: 3rem 2.5rem;
+        box-shadow: 
+            0 25px 70px rgba(0, 0, 0, 0.3),
+            inset 0 2px 1px rgba(255, 255, 255, 0.1),
+            inset 0 -1px 1px rgba(0, 0, 0, 0.2);
     }
     
     .difficulty-selector {
@@ -97,11 +121,37 @@
         box-shadow: 
             inset 0 0 50px rgba(0, 0, 0, 0.5),
             0 0 30px rgba(138, 43, 226, 0.3);
+        max-width: 90vw;
+        max-height: 70vh;
+    }
+    
+    /* Dynamic card sizing based on grid size */
+    .memory-grid[data-grid-size="4"] { gap: 10px; }
+    .memory-grid[data-grid-size="6"] { gap: 8px; }
+    .memory-grid[data-grid-size="8"] { gap: 6px; }
+    
+    /* 4x4 grid (16 cards) */
+    .memory-grid[data-grid-size="4"] .memory-card {
+        width: clamp(60px, calc((min(600px, 80vw) - 80px) / 4), 100px);
+        height: clamp(60px, calc((min(600px, 80vw) - 80px) / 4), 100px);
+        font-size: 2rem;
+    }
+    
+    /* 6x6 grid (36 cards) */
+    .memory-grid[data-grid-size="6"] .memory-card {
+        width: clamp(45px, calc((min(600px, 80vw) - 100px) / 6), 70px);
+        height: clamp(45px, calc((min(600px, 80vw) - 100px) / 6), 70px);
+        font-size: 1.5rem;
+    }
+    
+    /* 8x8 grid (64 cards) */
+    .memory-grid[data-grid-size="8"] .memory-card {
+        width: clamp(35px, calc((min(600px, 80vw) - 120px) / 8), 55px);
+        height: clamp(35px, calc((min(600px, 80vw) - 120px) / 8), 55px);
+        font-size: 1.2rem;
     }
     
     .memory-card {
-        width: 80px;
-        height: 80px;
         background: linear-gradient(135deg, 
             rgba(138, 43, 226, 0.8), 
             rgba(75, 0, 130, 0.8));
@@ -111,16 +161,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
         transition: all 0.3s ease;
         transform-style: preserve-3d;
         position: relative;
+        aspect-ratio: 1;
     }
     
     .memory-card::before {
         content: '✨';
         position: absolute;
-        font-size: 1.5rem;
+        font-size: 1em; /* Relative to card size */
         opacity: 0.5;
         animation: cardSparkle 3s ease-in-out infinite;
     }
@@ -231,15 +281,33 @@
             overflow-x: auto;
         }
         
-        .memory-card {
-            width: 60px;
-            height: 60px;
-            font-size: 1.5rem;
-        }
-        
         .memory-grid {
             gap: 5px;
             padding: 1rem;
+            max-width: 95vw;
+        }
+        
+        /* Adjust card sizes for mobile */
+        .memory-grid[data-grid-size="4"] .memory-card {
+            width: calc((90vw - 60px) / 4);
+            height: calc((90vw - 60px) / 4);
+            font-size: 1.5rem;
+        }
+        
+        .memory-grid[data-grid-size="6"] .memory-card {
+            width: calc((90vw - 80px) / 6);
+            height: calc((90vw - 80px) / 6);
+            font-size: 1.2rem;
+        }
+        
+        .memory-grid[data-grid-size="8"] .memory-card {
+            width: calc((90vw - 100px) / 8);
+            height: calc((90vw - 100px) / 8);
+            font-size: 1rem;
+        }
+        
+        .memory-card::before {
+            font-size: 0.8em;
         }
     }
 </style>
@@ -284,13 +352,13 @@
             <!-- Difficulty Selector -->
             <div class="difficulty-selector">
                 <button class="difficulty-btn active" data-difficulty="easy" onclick="selectDifficulty('easy')">
-                    Easy (4x4)
+                    Easy (4×4)
                 </button>
                 <button class="difficulty-btn" data-difficulty="medium" onclick="selectDifficulty('medium')">
-                    Medium (6x6)
+                    Medium (6×6)
                 </button>
                 <button class="difficulty-btn" data-difficulty="hard" onclick="selectDifficulty('hard')">
-                    Hard (8x8)
+                    Hard (8×8)
                 </button>
             </div>
             
@@ -299,9 +367,11 @@
                 🚀 Start New Game
             </button>
             
-            <!-- Game Grid -->
-            <div id="gameGrid" class="memory-grid" style="display: none;">
-                <!-- Cards will be generated here -->
+            <!-- Game Grid Container -->
+            <div style="margin-top: 2rem; overflow: auto; max-height: 70vh;">
+                <div id="gameGrid" class="memory-grid" style="display: none;">
+                    <!-- Cards will be generated here -->
+                </div>
             </div>
         </div>
     </div>
@@ -386,6 +456,7 @@ function renderGameBoard() {
     const grid = document.getElementById('gameGrid');
     grid.style.display = 'inline-grid';
     grid.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`;
+    grid.setAttribute('data-grid-size', gameState.gridSize); // Add this for CSS sizing
     grid.innerHTML = '';
     
     gameState.board.forEach(card => {

@@ -42,6 +42,69 @@
         to { text-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88, 0 0 40px #00ff88; }
     }
 
+    .mode-selection {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        border: 2px solid #00ff88;
+    }
+
+    .mode-selection h3 {
+        color: #ffffff;
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+
+    .mode-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    .mode-button {
+        background: linear-gradient(45deg, #333, #666);
+        color: #ffffff;
+        border: 2px solid #666;
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        font-weight: bold;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        min-width: 150px;
+    }
+
+    .mode-button:hover {
+        border-color: #00ff88;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+    }
+
+    .mode-button.active {
+        background: linear-gradient(45deg, #00ff88, #00cc66);
+        color: #000;
+        border-color: #00ff88;
+        box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+    }
+
+    .mode-description {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        color: #cccccc;
+        font-size: 0.9rem;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .instructions {
         background: rgba(0, 0, 0, 0.3);
         padding: 1.5rem;
@@ -168,6 +231,7 @@
         border-radius: 8px;
         margin: 0.5rem;
         border: 1px solid #00ff88;
+        min-width: 120px;
     }
 
     .stat-value {
@@ -211,6 +275,15 @@
         background: #ff5252;
     }
 
+    .current-mode {
+        color: #00ff88;
+        font-weight: bold;
+        margin-top: 1rem;
+        padding: 0.5rem;
+        background: rgba(0, 255, 136, 0.1);
+        border-radius: 5px;
+    }
+
     @media (max-width: 600px) {
         .game-container {
             margin: 1rem;
@@ -224,6 +297,15 @@
         .stats {
             flex-direction: column;
         }
+        
+        .mode-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .mode-button {
+            min-width: 200px;
+        }
     }
 </style>
 {% endblock %}
@@ -232,32 +314,50 @@
 <div class="game-container">
     <div class="challenge-title">TIME PREDICT CHALLENGE</div>
     
+    <!-- Mode Selection -->
+    <div class="mode-selection">
+        <h3>🎮 CHOOSE YOUR MODE</h3>
+        <div class="mode-buttons">
+            <button class="mode-button active" id="predict-mode-btn" onclick="selectMode('predict')">
+                🧠 PREDICT MODE
+            </button>
+            <button class="mode-button" id="react-mode-btn" onclick="selectMode('react')">
+                ⚡ REACT MODE
+            </button>
+        </div>
+        <div class="mode-description" id="mode-description">
+            Pure timing intuition! No visible timer. Hit 10.000s within 0.1s tolerance.
+        </div>
+        <div class="current-mode" id="current-mode">
+            Current Mode: PREDICT
+        </div>
+    </div>
+    
     <div class="instructions">
         <h3>🎯 MISSION OBJECTIVE</h3>
         <ul>
+            <li>Choose your mode: <strong>PREDICT</strong> (intuition) or <strong>REACT</strong> (precision)</li>
             <li>Click "START GAME" to begin the challenge</li>
             <li>Wait for the countdown, then the timer starts</li>
             <li>Press the <strong>SPACEBAR</strong> when you think exactly <strong>10.000 seconds</strong> have passed</li>
-            <li>Win by being within <strong>0.05 seconds</strong> of the target time</li>
-            <li>Challenge yourself to get the perfect timing!</li>
+            <li><strong>PREDICT Mode:</strong> No visible timer, 0.1s win tolerance</li>
+            <li><strong>REACT Mode:</strong> Visible timer, 0.05s win tolerance</li>
         </ul>
     </div>
 
     <!-- Statistics Display -->
-    <div class="stats">
+    <div class="stats" id="stats-container">
         <div class="stat-item">
-            <div class="stat-value" id="games-played">{{ session.get('time_predict_games_played', 0) }}</div>
+            <div class="stat-value" id="games-played">0</div>
             <div class="stat-label">Games Played</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value" id="best-score">
-                {% if session.get('time_predict_best_score') is not none %}
-                    {{ "%.3f"|format(session.get('time_predict_best_score')) }}s
-                {% else %}
-                    --
-                {% endif %}
-            </div>
+            <div class="stat-value" id="best-score">--</div>
             <div class="stat-label">Best Score</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="win-rate">0%</div>
+            <div class="stat-label">Win Rate</div>
         </div>
     </div>
 
@@ -281,7 +381,7 @@
         </div>
     </div>
 
-    <button class="reset-button" onclick="resetStats()">Reset Statistics</button>
+    <button class="reset-button" onclick="resetStats()">Reset Current Mode Statistics</button>
 </div>
 
 <script>
@@ -289,6 +389,7 @@
     let startTime = null;
     let timerInterval = null;
     let countdownTimeout = null;
+    let currentMode = 'predict'; // Default to predict mode
 
     // Add spacebar event listener
     document.addEventListener('keydown', function(event) {
@@ -299,6 +400,56 @@
             }
         }
     });
+
+    function selectMode(mode) {
+        currentMode = mode;
+        
+        // Update button states
+        document.getElementById('predict-mode-btn').classList.remove('active');
+        document.getElementById('react-mode-btn').classList.remove('active');
+        document.getElementById(mode + '-mode-btn').classList.add('active');
+        
+        // Update description
+        const description = document.getElementById('mode-description');
+        const currentModeDisplay = document.getElementById('current-mode');
+        
+        if (mode === 'predict') {
+            description.textContent = 'Pure timing intuition! No visible timer. Hit 10.000s within 0.1s tolerance.';
+            currentModeDisplay.textContent = 'Current Mode: PREDICT';
+        } else {
+            description.textContent = 'Precision timing with visual feedback! Visible timer. Hit 10.000s within 0.05s tolerance.';
+            currentModeDisplay.textContent = 'Current Mode: REACT';
+        }
+        
+        // Load and display stats for this mode
+        loadStatsForMode(mode);
+    }
+
+    function loadStatsForMode(mode) {
+        fetch('/timepredict/get_stats?mode=' + mode)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStatsDisplay(data.stats);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+        });
+    }
+
+    function updateStatsDisplay(stats) {
+        document.getElementById('games-played').textContent = stats.games_played;
+        
+        if (stats.best_score !== null) {
+            document.getElementById('best-score').textContent = Math.abs(stats.best_score).toFixed(3) + 's';
+        } else {
+            document.getElementById('best-score').textContent = '--';
+        }
+        
+        const winRate = stats.games_played > 0 ? ((stats.wins / stats.games_played) * 100).toFixed(1) : 0;
+        document.getElementById('win-rate').textContent = winRate + '%';
+    }
 
     function startGame() {
         const startButton = document.getElementById('start-button');
@@ -343,6 +494,9 @@
             headers: {
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                mode: currentMode
+            })
         })
         .then(response => response.json())
         .then(data => {
@@ -352,11 +506,15 @@
                 
                 // Update UI
                 document.getElementById('game-status').textContent = 'Timer Running...';
-                document.getElementById('timer-display').style.display = 'block';
                 document.getElementById('spacebar-hint').style.display = 'block';
                 
-                // Start visual timer
-                startTimer();
+                // Only show timer in react mode
+                if (currentMode === 'react') {
+                    document.getElementById('timer-display').style.display = 'block';
+                    startTimer();
+                } else {
+                    document.getElementById('timer-display').style.display = 'none';
+                }
             } else {
                 alert('Error starting game: ' + data.error);
                 resetUI();
@@ -370,12 +528,15 @@
     }
 
     function startTimer() {
-        timerInterval = setInterval(() => {
-            if (gameActive) {
-                const elapsed = (performance.now() - startTime) / 1000;
-                document.getElementById('timer-display').textContent = elapsed.toFixed(3) + 's';
-            }
-        }, 10); // Update every 10ms for smooth display
+        // Only start visual timer for react mode
+        if (currentMode === 'react') {
+            timerInterval = setInterval(() => {
+                if (gameActive) {
+                    const elapsed = (performance.now() - startTime) / 1000;
+                    document.getElementById('timer-display').textContent = elapsed.toFixed(3) + 's';
+                }
+            }, 10); // Update every 10ms for smooth display
+        }
     }
 
     function stopGame() {
@@ -392,12 +553,15 @@
             headers: {
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                mode: currentMode
+            })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 displayResults(data);
-                updateStats(data);
+                updateStatsDisplay(data.stats);
             } else {
                 alert('Error stopping game: ' + data.error);
             }
@@ -427,6 +591,7 @@
         
         // Create detailed results
         const details = `
+            <p><strong>Mode:</strong> ${data.mode.toUpperCase()}</p>
             <p><strong>Your Time:</strong> ${data.elapsed_time}s</p>
             <p><strong>Target Time:</strong> ${data.target_time}s</p>
             <p><strong>Difference:</strong> ${data.timing_message}</p>
@@ -435,15 +600,6 @@
         
         resultDetails.innerHTML = details;
         results.style.display = 'block';
-    }
-
-    function updateStats(data) {
-        document.getElementById('games-played').textContent = data.games_played;
-        
-        const bestScore = data.best_score;
-        if (bestScore !== null) {
-            document.getElementById('best-score').textContent = bestScore.toFixed(3) + 's';
-        }
     }
 
     function resetUI() {
@@ -455,21 +611,27 @@
     }
 
     function resetStats() {
-        if (confirm('Are you sure you want to reset all statistics?')) {
+        if (confirm(`Are you sure you want to reset all statistics for ${currentMode.toUpperCase()} mode?`)) {
             fetch('/timepredict/reset_stats', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    mode: currentMode
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     // Update display
-                    document.getElementById('games-played').textContent = '0';
-                    document.getElementById('best-score').textContent = '--';
+                    updateStatsDisplay({
+                        games_played: 0,
+                        best_score: null,
+                        wins: 0
+                    });
                     document.getElementById('results').style.display = 'none';
-                    alert('Statistics reset successfully!');
+                    alert(`${currentMode.toUpperCase()} mode statistics reset successfully!`);
                 } else {
                     alert('Error resetting stats: ' + data.error);
                 }
@@ -480,5 +642,10 @@
             });
         }
     }
+
+    // Initialize stats display on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStatsForMode('predict');
+    });
 </script>
 {% endblock %}

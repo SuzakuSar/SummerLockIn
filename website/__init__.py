@@ -56,15 +56,15 @@ def create_app():
         from flask import render_template
         return render_template('404.html'), 404
     
-    # Optional: Add custom template filters
-    @app.template_filter('star_emoji')
-    def star_emoji_filter(number):
-        """Convert number to star emojis"""
-        return '⭐' * min(int(number), 5)
+    # # Optional: Add custom template filters
+    # @app.template_filter('star_emoji')
+    # def star_emoji_filter(number):
+    #     """Convert number to star emojis"""
+    #     return '⭐' * min(int(number), 5)
     
     return app
 
 # For development server
-if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     app = create_app()
+#     app.run(debug=True)

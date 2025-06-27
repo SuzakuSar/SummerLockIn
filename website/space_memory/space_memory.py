@@ -12,7 +12,12 @@ import json
 space_memory = Blueprint('space_memory', __name__, template_folder='templates')
 
 # Space-themed symbols for the memory game
-SPACE_SYMBOLS = ['🌟', '🌙', '🪐', '🛸', '🚀', '☄️', '🌌', '👽', '🛰️', '🔭']
+SPACE_SYMBOLS = [
+    '🌟', '🌙', '🪐', '🛸', '🚀', '☄️', '🌌', '👽', '🛰️', '🔭',
+    '⭐', '🌠', '💫', '✨', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖',
+    '🌗', '🌘', '🌚', '🌛', '🌜', '🌝', '🌞', '💥', '🔥', '🌎',
+    '🌍', '🌏'
+]
 
 def generate_game_board(difficulty='easy'):
     """
