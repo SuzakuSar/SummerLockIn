@@ -1,0 +1,931 @@
+{% extends 'base.html' %}
+
+{% block title %}Progress Tracker - Mountain Academy{% endblock %}
+
+{% block header %}📈 Your Climbing Progress{% endblock %}
+
+{% block head %}
+<style>
+    /* Leaderboard/Progress Tracker Styling */
+    .progress-container {
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(180deg, 
+            rgba(135, 206, 250, 0.2) 0%,
+            rgba(34, 139, 34, 0.15) 60%,
+            rgba(139, 69, 19, 0.15) 100%);
+        padding: 2rem;
+        position: relative;
+    }
+    
+    .progress-content {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Header section */
+    .progress-header {
+        text-align: center;
+        background: linear-gradient(135deg, 
+            rgba(255, 248, 220, 0.95) 0%,
+            rgba(250, 240, 210, 0.9) 100%);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(34, 139, 34, 0.1) 0%, transparent 50%);
+        animation: headerGlow 12s ease-in-out infinite;
+        z-index: -1;
+        pointer-events: none;
+    }
+    
+    @keyframes headerGlow {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        50% { transform: translate(-20px, -20px) rotate(3deg); }
+    }
+    
+    .progress-title {
+        font-size: 2.5rem;
+        color: rgba(101, 67, 33, 0.9);
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress-subtitle {
+        font-size: 1.2rem;
+        color: rgba(101, 67, 33, 0.7);
+        margin-bottom: 2rem;
+    }
+    
+    /* Main stats dashboard */
+    .stats-dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, 
+            rgba(255, 248, 220, 0.95) 0%,
+            rgba(250, 240, 210, 0.9) 100%);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            rgba(34, 139, 34, 0.3),
+            rgba(255, 215, 0, 0.3),
+            rgba(139, 69, 19, 0.3));
+        border-radius: 15px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+    
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+    
+    .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+        animation: iconFloat 4s ease-in-out infinite;
+    }
+    
+    @keyframes iconFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    .stat-value {
+        font-size: 3rem;
+        font-weight: 700;
+        color: rgba(34, 139, 34, 0.9);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: rgba(101, 67, 33, 0.8);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-sublabel {
+        font-size: 0.8rem;
+        color: rgba(101, 67, 33, 0.6);
+        margin-top: 0.3rem;
+        font-style: italic;
+    }
+    
+    /* Detailed sections */
+    .detail-section {
+        background: linear-gradient(135deg, 
+            rgba(255, 248, 220, 0.95) 0%,
+            rgba(250, 240, 210, 0.9) 100%);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .detail-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 25% 25%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 75% 75%, rgba(34, 139, 34, 0.05) 0%, transparent 50%);
+        animation: sectionGlow 15s ease-in-out infinite;
+        z-index: -1;
+        pointer-events: none;
+    }
+    
+    @keyframes sectionGlow {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        50% { transform: translate(-30px, -30px) rotate(5deg); }
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(139, 69, 19, 0.3);
+    }
+    
+    .section-icon {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: rgba(101, 67, 33, 0.9);
+    }
+    
+    /* Table mastery grid */
+    .mastery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .mastery-item {
+        background: rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .mastery-item.mastered {
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.8),
+            rgba(50, 205, 50, 0.8));
+        color: white;
+        border-color: rgba(34, 139, 34, 0.8);
+        transform: scale(1.05);
+    }
+    
+    .mastery-item.mastered::before {
+        content: '✓';
+        position: absolute;
+        top: 5px;
+        right: 8px;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+    
+    .mastery-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+    }
+    
+    .mastery-table {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mastery-status {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Achievement showcase */
+    .achievement-showcase {
+        margin-bottom: 2rem;
+    }
+    
+    .achievement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .achievement-card {
+        background: rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .achievement-card.earned {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.3),
+            rgba(255, 140, 0, 0.3));
+        border-color: rgba(255, 140, 0, 0.6);
+        box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
+    }
+    
+    .achievement-card.earned::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            rgba(255, 215, 0, 0.6),
+            rgba(255, 140, 0, 0.6));
+        border-radius: 15px;
+        z-index: -1;
+        animation: achievementGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes achievementGlow {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.7; }
+    }
+    
+    .achievement-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(139, 69, 19, 0.3);
+    }
+    
+    .achievement-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .achievement-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+    }
+    
+    .achievement-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: rgba(101, 67, 33, 0.9);
+    }
+    
+    .achievement-description {
+        color: rgba(101, 67, 33, 0.7);
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    .achievement-status {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .achievement-status.earned {
+        background: rgba(34, 139, 34, 0.2);
+        color: rgba(34, 139, 34, 0.9);
+        border: 1px solid rgba(34, 139, 34, 0.4);
+    }
+    
+    .achievement-status.locked {
+        background: rgba(128, 128, 128, 0.2);
+        color: rgba(128, 128, 128, 0.9);
+        border: 1px solid rgba(128, 128, 128, 0.4);
+    }
+    
+    /* Recent activity timeline */
+    .activity-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, 
+            rgba(34, 139, 34, 0.8),
+            rgba(139, 69, 19, 0.8));
+    }
+    
+    .activity-item {
+        position: relative;
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(139, 69, 19, 0.2);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        margin-left: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: -1.75rem;
+        top: 1.5rem;
+        width: 12px;
+        height: 12px;
+        background: rgba(34, 139, 34, 0.8);
+        border: 2px solid rgba(255, 248, 220, 1);
+        border-radius: 50%;
+    }
+    
+    .activity-item:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: translateX(5px);
+    }
+    
+    .activity-icon {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+        vertical-align: middle;
+    }
+    
+    .activity-text {
+        color: rgba(101, 67, 33, 0.8);
+        font-size: 0.9rem;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    
+    .activity-time {
+        color: rgba(101, 67, 33, 0.6);
+        font-size: 0.8rem;
+        float: right;
+        font-style: italic;
+    }
+    
+    /* Action buttons */
+    .action-section {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(139, 69, 19, 0.2);
+        border-radius: 15px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+    }
+    
+    .progress-btn {
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.9),
+            rgba(50, 205, 50, 0.9));
+        color: white;
+        border: 2px solid rgba(34, 139, 34, 1);
+        padding: 1rem 2.5rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(34, 139, 34, 0.3);
+    }
+    
+    .progress-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .progress-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(34, 139, 34, 0.4);
+    }
+    
+    .progress-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .progress-btn.secondary {
+        background: linear-gradient(135deg, 
+            rgba(139, 69, 19, 0.9),
+            rgba(160, 82, 45, 0.9));
+        border-color: rgba(139, 69, 19, 1);
+        box-shadow: 0 5px 20px rgba(139, 69, 19, 0.3);
+    }
+    
+    .progress-btn.secondary:hover {
+        box-shadow: 0 10px 30px rgba(139, 69, 19, 0.4);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .progress-container {
+            padding: 1rem;
+        }
+        
+        .progress-header {
+            padding: 1.5rem;
+        }
+        
+        .progress-title {
+            font-size: 2rem;
+        }
+        
+        .stats-dashboard {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .detail-section {
+            padding: 1.5rem;
+        }
+        
+        .mastery-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .achievement-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .progress-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .activity-timeline {
+            padding-left: 1rem;
+        }
+        
+        .activity-item {
+            margin-left: 0.5rem;
+        }
+    }
+    
+    /* Loading states */
+    .loading-shimmer {
+        background: linear-gradient(90deg, 
+            rgba(255, 255, 255, 0.1) 25%, 
+            rgba(255, 255, 255, 0.3) 50%, 
+            rgba(255, 255, 255, 0.1) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="progress-container">
+    <div class="progress-content">
+        <!-- Header Section -->
+        <div class="progress-header">
+            <h1 class="progress-title">🏔️ Your Mountain Journey</h1>
+            <p class="progress-subtitle">
+                Track your multiplication mastery and climbing achievements
+            </p>
+            
+            <!-- Overview stats in header -->
+            <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 1rem;">
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: rgba(34, 139, 34, 0.9);">
+                        {{ stats.total_elevation }}m
+                    </div>
+                    <div style="font-size: 0.9rem; color: rgba(101, 67, 33, 0.7);">Total Elevation</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: rgba(255, 140, 0, 0.9);">
+                        {{ stats.badges_earned }}
+                    </div>
+                    <div style="font-size: 0.9rem; color: rgba(101, 67, 33, 0.7);">Badges Earned</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: rgba(138, 43, 226, 0.9);">
+                        {{ stats.practice_streak }}
+                    </div>
+                    <div style="font-size: 0.9rem; color: rgba(101, 67, 33, 0.7);">Day Streak</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Statistics Dashboard -->
+        <div class="stats-dashboard">
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-value">{{ stats.total_questions }}</div>
+                <div class="stat-label">Questions Answered</div>
+                <div class="stat-sublabel">Total practice problems completed</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value">{{ "%.1f"|format(stats.accuracy) }}%</div>
+                <div class="stat-label">Overall Accuracy</div>
+                <div class="stat-sublabel">{{ stats.total_correct }} correct answers</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value">{{ (stats.total_questions / 20)|round|int }}</div>
+                <div class="stat-label">Expeditions</div>
+                <div class="stat-sublabel">Practice sessions completed</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-value">{{ ((stats.total_questions / 20)|round|int * 100)|int }}%</div>
+                <div class="stat-label">Skill Growth</div>
+                <div class="stat-sublabel">Estimated improvement level</div>
+            </div>
+        </div>
+        
+        <!-- Table Mastery Section -->
+        <div class="detail-section">
+            <div class="section-header">
+                <span class="section-icon">🗂️</span>
+                <h2 class="section-title">Multiplication Table Mastery</h2>
+            </div>
+            
+            <p style="color: rgba(101, 67, 33, 0.7); margin-bottom: 2rem; text-align: center;">
+                Master each table by consistently answering questions correctly during expeditions
+            </p>
+            
+            <div class="mastery-grid">
+                {% for i in range(1, 13) %}
+                {% set table_key = i|string %}
+                <div class="mastery-item {% if session.get('mult_trainer_table_mastery', {}).get(table_key, False) %}mastered{% endif %}">
+                    <div class="mastery-table">{{ i }} Times</div>
+                    <div class="mastery-status">
+                        {% if session.get('mult_trainer_table_mastery', {}).get(table_key, False) %}
+                        Mastered
+                        {% else %}
+                        Learning
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: rgba(255, 215, 0, 0.1); border-radius: 10px;">
+                <strong style="color: rgba(101, 67, 33, 0.9);">
+                    Progress: {{ session.get('mult_trainer_table_mastery', {})|selectattr('1')|list|length }}/12 Tables Mastered
+                </strong>
+                <div style="margin-top: 0.5rem; color: rgba(101, 67, 33, 0.7); font-size: 0.9rem;">
+                    Practice specific tables to achieve mastery status
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievement Showcase -->
+        <div class="detail-section">
+            <div class="section-header">
+                <span class="section-icon">🏅</span>
+                <h2 class="section-title">Trail Badges & Achievements</h2>
+            </div>
+            
+            <div class="achievement-showcase">
+                <div class="achievement-grid">
+                    {% set earned_badges = session.get('mult_trainer_earned_badges', []) %}
+                    
+                    <div class="achievement-card {% if 'first_steps' in earned_badges %}earned{% endif %}">
+                        <div class="achievement-header">
+                            <span class="achievement-icon">👣</span>
+                            <div class="achievement-name">First Steps</div>
+                        </div>
+                        <div class="achievement-description">
+                            Complete your first climbing expedition
+                        </div>
+                        <div class="achievement-status {% if 'first_steps' in earned_badges %}earned{% else %}locked{% endif %}">
+                            {% if 'first_steps' in earned_badges %}Earned{% else %}Not Yet Earned{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-card {% if 'swift_climber' in earned_badges %}earned{% endif %}">
+                        <div class="achievement-header">
+                            <span class="achievement-icon">💨</span>
+                            <div class="achievement-name">Swift Climber</div>
+                        </div>
+                        <div class="achievement-description">
+                            Answer 10 questions in under 30 seconds
+                        </div>
+                        <div class="achievement-status {% if 'swift_climber' in earned_badges %}earned{% else %}locked{% endif %}">
+                            {% if 'swift_climber' in earned_badges %}Earned{% else %}Practice Speed{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-card {% if 'perfect_path' in earned_badges %}earned{% endif %}">
+                        <div class="achievement-header">
+                            <span class="achievement-icon">✨</span>
+                            <div class="achievement-name">Perfect Path</div>
+                        </div>
+                        <div class="achievement-description">
+                            Get 20 questions correct in a row
+                        </div>
+                        <div class="achievement-status {% if 'perfect_path' in earned_badges %}earned{% else %}locked{% endif %}">
+                            {% if 'perfect_path' in earned_badges %}Earned{% else %}Build Streak{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-card {% if 'trail_master' in earned_badges %}earned{% endif %}">
+                        <div class="achievement-header">
+                            <span class="achievement-icon">🎒</span>
+                            <div class="achievement-name">Trail Master</div>
+                        </div>
+                        <div class="achievement-description">
+                            Master all multiplication tables 1-12
+                        </div>
+                        <div class="achievement-status {% if 'trail_master' in earned_badges %}earned{% else %}locked{% endif %}">
+                            {% if 'trail_master' in earned_badges %}Earned{% else %}Keep Learning{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-card {% if 'endurance_hiker' in earned_badges %}earned{% endif %}">
+                        <div class="achievement-header">
+                            <span class="achievement-icon">💪</span>
+                            <div class="achievement-name">Endurance Hiker</div>
+                        </div>
+                        <div class="achievement-description">
+                            Complete a 100-question expedition
+                        </div>
+                        <div class="achievement-status {% if 'endurance_hiker' in earned_badges %}earned{% else %}locked{% endif %}">
+                            {% if 'endurance_hiker' in earned_badges %}Earned{% else %}Long Trek Needed{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-card {% if 'daily_climber' in earned_badges %}earned{% endif %}">
+                        <div class="achievement-header">
+                            <span class="achievement-icon">📅</span>
+                            <div class="achievement-name">Daily Climber</div>
+                        </div>
+                        <div class="achievement-description">
+                            Practice 5 days in a row
+                        </div>
+                        <div class="achievement-status {% if 'daily_climber' in earned_badges %}earned{% else %}locked{% endif %}">
+                            {% if 'daily_climber' in earned_badges %}Earned{% else %}Stay Consistent{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity Timeline -->
+        {% if stats.total_questions > 0 %}
+        <div class="detail-section">
+            <div class="section-header">
+                <span class="section-icon">📊</span>
+                <h2 class="section-title">Training Summary</h2>
+            </div>
+            
+            <div class="activity-timeline">
+                <div class="activity-item">
+                    <span class="activity-icon">🎯</span>
+                    <span class="activity-text">
+                        Achieved {{ "%.1f"|format(stats.accuracy) }}% accuracy across all expeditions
+                    </span>
+                    <span class="activity-time">Overall Performance</span>
+                </div>
+                
+                <div class="activity-item">
+                    <span class="activity-icon">📚</span>
+                    <span class="activity-text">
+                        Completed {{ (stats.total_questions / 20)|round|int }} practice expeditions
+                    </span>
+                    <span class="activity-time">Total Sessions</span>
+                </div>
+                
+                <div class="activity-item">
+                    <span class="activity-icon">🏔️</span>
+                    <span class="activity-text">
+                        Climbed to {{ stats.total_elevation }} meters elevation
+                    </span>
+                    <span class="activity-time">Total Progress</span>
+                </div>
+                
+                {% if stats.practice_streak > 0 %}
+                <div class="activity-item">
+                    <span class="activity-icon">🔥</span>
+                    <span class="activity-text">
+                        Maintained {{ stats.practice_streak }} day practice streak
+                    </span>
+                    <span class="activity-time">Consistency</span>
+                </div>
+                {% endif %}
+                
+                <div class="activity-item">
+                    <span class="activity-icon">🏅</span>
+                    <span class="activity-text">
+                        Earned {{ stats.badges_earned }}/6 trail badges
+                    </span>
+                    <span class="activity-time">Achievements</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Section -->
+        <div class="action-section">
+            <h3 style="color: rgba(101, 67, 33, 0.9); margin-bottom: 1rem;">
+                🚀 Ready for Your Next Adventure?
+            </h3>
+            <p style="color: rgba(101, 67, 33, 0.7); margin-bottom: 1.5rem;">
+                Continue your mathematical mountain climbing journey
+            </p>
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('multiplication_trainer.expedition_setup') }}" class="progress-btn">
+                    🎒 Plan New Expedition
+                </a>
+                <a href="{{ url_for('multiplication_trainer.index') }}" class="progress-btn secondary">
+                    🏠 Back to Academy
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stat values counting up
+    const statValues = document.querySelectorAll('.stat-value');
+    statValues.forEach(stat => {
+        const finalText = stat.textContent;
+        const numericMatch = finalText.match(/[\d.]+/);
+        
+        if (numericMatch) {
+            const finalValue = parseFloat(numericMatch[0]);
+            const isPercentage = finalText.includes('%');
+            const isDecimal = finalText.includes('.');
+            
+            if (finalValue > 0) {
+                let current = 0;
+                const increment = finalValue / 50;
+                stat.textContent = isPercentage ? '0%' : '0';
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= finalValue) {
+                        stat.textContent = finalText;
+                        clearInterval(timer);
+                    } else {
+                        let displayValue = isDecimal ? current.toFixed(1) : Math.floor(current);
+                        stat.textContent = isPercentage ? displayValue + '%' : displayValue;
+                    }
+                }, 30);
+            }
+        }
+    });
+    
+    // Add hover effects to mastery items
+    const masteryItems = document.querySelectorAll('.mastery-item');
+    masteryItems.forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            if (!item.classList.contains('mastered')) {
+                item.style.background = 'rgba(34, 139, 34, 0.1)';
+                item.style.borderColor = 'rgba(34, 139, 34, 0.4)';
+            }
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            if (!item.classList.contains('mastered')) {
+                item.style.background = 'rgba(255, 255, 255, 0.3)';
+                item.style.borderColor = 'rgba(139, 69, 19, 0.3)';
+            }
+        });
+    });
+    
+    // Add achievement card interactions
+    const achievementCards = document.querySelectorAll('.achievement-card');
+    achievementCards.forEach(card => {
+        card.addEventListener('click', () => {
+            if (card.classList.contains('earned')) {
+                // Could show achievement details modal
+                card.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    card.style.transform = 'scale(1)';
+                }, 200);
+            }
+        });
+    });
+    
+    // Intersection Observer for animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all major sections for scroll animations
+    document.querySelectorAll('.detail-section, .stat-card').forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(section);
+    });
+    
+    console.log('📈 Progress tracker initialized!');
+});
+</script>
+{% endblock %}

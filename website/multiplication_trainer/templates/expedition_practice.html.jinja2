@@ -1,0 +1,473 @@
+{% extends 'base.html' %}
+
+{% block title %}Mountain Expedition - Practice{% endblock %}
+
+{% block header %}🏔️ Climbing in Progress{% endblock %}
+
+{% block head %}
+<style>
+    .practice-container {
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(180deg, 
+            rgba(135, 206, 250, 0.3) 0%,
+            rgba(34, 139, 34, 0.2) 60%,
+            rgba(139, 69, 19, 0.2) 100%);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .question-card {
+        background: white;
+        border: 3px solid #8B4513;
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        margin-bottom: 2rem;
+    }
+    
+    .progress-info {
+        background: rgba(255, 248, 220, 0.9);
+        border: 2px solid #8B4513;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .progress-item {
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .progress-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #228B22;
+    }
+    
+    .progress-label {
+        font-size: 0.9rem;
+        color: #654321;
+    }
+    
+    .question-number {
+        background: #228B22;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        display: inline-block;
+    }
+    
+    .question-display {
+        font-size: 4rem;
+        font-weight: bold;
+        color: #654321;
+        margin: 2rem 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .answer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 2rem;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .answer-choice {
+        background: linear-gradient(135deg, #f0f8ff, #e0e0e0);
+        border: 3px solid #8B4513;
+        border-radius: 15px;
+        padding: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #654321;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .answer-choice:hover {
+        background: linear-gradient(135deg, #228B22, #32CD32);
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(34, 139, 34, 0.4);
+    }
+    
+    .feedback-section {
+        margin-top: 2rem;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #feedbackMessage {
+        display: none;
+        font-size: 1.5rem;
+        font-weight: bold;
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        margin: 1rem 0;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    #feedbackMessage.correct {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        border: 3px solid #28a745;
+        color: #155724;
+        animation: correctPulse 0.6s ease-out;
+    }
+    
+    #feedbackMessage.incorrect {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        border: 3px solid #dc3545;
+        color: #721c24;
+        animation: incorrectShake 0.6s ease-out;
+    }
+    
+    @keyframes correctPulse {
+        0% { transform: scale(0.8); opacity: 0; }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes incorrectShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+    
+    #nextButton {
+        transition: all 0.3s ease;
+    }
+    
+    #nextButton:hover {
+        background: #1e7e34 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(34, 139, 34, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="practice-container">
+    <!-- Progress Information -->
+    <div class="progress-info">
+        <div class="progress-item">
+            <div class="progress-value" id="questionProgress">1/{{ expedition.questions|length }}</div>
+            <div class="progress-label">Question</div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-value" id="correctCount">0</div>
+            <div class="progress-label">Correct</div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-value" id="accuracyPercent">100%</div>
+            <div class="progress-label">Accuracy</div>
+        </div>
+    </div>
+    
+    <!-- Question Card -->
+    <div class="question-card">
+        <div class="question-number" id="questionNumber">
+            Question 1 of {{ expedition.questions|length }}
+        </div>
+        
+        <div class="question-display" id="questionDisplay">
+            {% set first_question = expedition.questions[0] %}
+            <span>{{ first_question.num1 }}</span>
+            <span style="margin: 0 1rem; color: #8B4513;">×</span>
+            <span>{{ first_question.num2 }}</span>
+            <span style="margin: 0 1rem; color: #228B22;">=</span>
+            <span style="color: #228B22;">?</span>
+        </div>
+        
+        <div class="answer-grid" id="answerChoices">
+            {% for choice in first_question.choices %}
+            <button class="answer-choice" onclick="alert('You clicked: {{ choice }}'); handleSimpleAnswer({{ choice }}, {{ first_question.answer }});">
+                {{ choice }}
+            </button>
+            {% endfor %}
+        </div>
+        
+        <div class="feedback-section">
+            <div id="feedbackMessage"></div>
+            <button id="nextButton" style="display: none; background: #228B22; color: white; border: none; padding: 1rem 2rem; border-radius: 10px; font-size: 1.1rem; font-weight: bold; margin-top: 1rem; cursor: pointer;">
+                Next Question →
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Pass expedition data to JavaScript -->
+<script type="application/json" id="expeditionData">
+{{ expedition|tojson }}
+</script>
+
+<script>
+// WORKING JAVASCRIPT - Building up from the simple version that works
+console.log('🏔️ Practice page loading...');
+
+// Get expedition data
+let expeditionData;
+let currentQuestionIndex = 0;
+let correctAnswers = 0;
+let isProcessing = false;
+
+try {
+    const dataElement = document.getElementById('expeditionData');
+    if (dataElement) {
+        expeditionData = JSON.parse(dataElement.textContent);
+        console.log('✅ Expedition data loaded:', expeditionData);
+    } else {
+        console.log('❌ No expedition data element found');
+    }
+} catch (error) {
+    console.error('❌ Error loading expedition data:', error);
+}
+
+function handleSimpleAnswer(selected, correct) {
+    console.log('🎯 Answer clicked:', selected, 'Correct answer:', correct);
+    
+    if (isProcessing) {
+        console.log('⚠️ Already processing, ignoring click');
+        return;
+    }
+    isProcessing = true;
+    
+    const isCorrect = (selected === correct);
+    const feedbackDiv = document.getElementById('feedbackMessage');
+    const nextButton = document.getElementById('nextButton');
+    
+    if (isCorrect) {
+        correctAnswers++;
+        
+        // Make the selected button very obviously correct
+        event.target.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+        event.target.style.color = 'white';
+        event.target.style.border = '4px solid #155724';
+        event.target.style.transform = 'scale(1.1)';
+        event.target.style.boxShadow = '0 8px 25px rgba(40, 167, 69, 0.5)';
+        
+        // Show prominent success feedback
+        feedbackDiv.innerHTML = `
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎉</div>
+            <div>CORRECT!</div>
+            <div style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">${selected} is right!</div>
+        `;
+        feedbackDiv.className = 'correct';
+        feedbackDiv.style.display = 'flex';
+        feedbackDiv.style.flexDirection = 'column';
+        
+    } else {
+        // Make the selected button obviously wrong
+        event.target.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+        event.target.style.color = 'white';
+        event.target.style.border = '4px solid #721c24';
+        event.target.style.transform = 'scale(0.95)';
+        
+        // Highlight the correct answer
+        document.querySelectorAll('.answer-choice').forEach(btn => {
+            if (parseInt(btn.textContent) === correct) {
+                btn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+                btn.style.color = 'white';
+                btn.style.border = '4px solid #ffd700';
+                btn.style.transform = 'scale(1.1)';
+                btn.style.boxShadow = '0 8px 25px rgba(255, 215, 0, 0.6)';
+            }
+        });
+        
+        // Show prominent incorrect feedback
+        feedbackDiv.innerHTML = `
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">❌</div>
+            <div>Not quite...</div>
+            <div style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">The answer is ${correct}</div>
+        `;
+        feedbackDiv.className = 'incorrect';
+        feedbackDiv.style.display = 'flex';
+        feedbackDiv.style.flexDirection = 'column';
+    }
+    
+    // Disable all buttons
+    document.querySelectorAll('.answer-choice').forEach(btn => {
+        btn.disabled = true;
+        btn.style.cursor = 'not-allowed';
+        if (btn !== event.target && parseInt(btn.textContent) !== correct) {
+            btn.style.opacity = '0.5';
+        }
+    });
+    
+    // Update progress
+    updateProgress();
+    
+    // Show next button
+    nextButton.style.display = 'inline-block';
+    nextButton.onclick = nextQuestion;
+    
+    // Focus the next button for keyboard users
+    setTimeout(() => {
+        nextButton.focus();
+    }, 500);
+}
+
+function updateProgress() {
+    const totalQuestions = expeditionData.questions.length;
+    const currentProgress = currentQuestionIndex + 1;
+    const accuracy = currentProgress > 0 ? Math.round((correctAnswers / currentProgress) * 100) : 100;
+    
+    // Update progress displays
+    document.getElementById('questionProgress').textContent = `${currentProgress}/${totalQuestions}`;
+    document.getElementById('correctCount').textContent = correctAnswers;
+    document.getElementById('accuracyPercent').textContent = `${accuracy}%`;
+    
+    console.log(`📊 Progress: ${currentProgress}/${totalQuestions}, Correct: ${correctAnswers}, Accuracy: ${accuracy}%`);
+}
+
+function nextQuestion() {
+    currentQuestionIndex++;
+    
+    if (currentQuestionIndex >= expeditionData.questions.length) {
+        // Expedition complete!
+        showResults();
+        return;
+    }
+    
+    console.log(`➡️ Moving to question ${currentQuestionIndex + 1}`);
+    
+    const question = expeditionData.questions[currentQuestionIndex];
+    
+    // Update question display
+    document.getElementById('questionNumber').textContent = `Question ${currentQuestionIndex + 1} of ${expeditionData.questions.length}`;
+    
+    document.getElementById('questionDisplay').innerHTML = `
+        <span>${question.num1}</span>
+        <span style="margin: 0 1rem; color: #8B4513;">×</span>
+        <span>${question.num2}</span>
+        <span style="margin: 0 1rem; color: #228B22;">=</span>
+        <span style="color: #228B22;">?</span>
+    `;
+    
+    // Update answer choices
+    const choicesDiv = document.getElementById('answerChoices');
+    choicesDiv.innerHTML = '';
+    question.choices.forEach(choice => {
+        const button = document.createElement('button');
+        button.className = 'answer-choice';
+        button.textContent = choice;
+        button.onclick = () => handleSimpleAnswer(choice, question.answer);
+        
+        // Reset button styling
+        button.style.background = 'linear-gradient(135deg, #f0f8ff, #e0e0e0)';
+        button.style.border = '3px solid #8B4513';
+        button.style.color = '#654321';
+        button.style.transform = 'scale(1)';
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.boxShadow = 'none';
+        button.disabled = false;
+        
+        choicesDiv.appendChild(button);
+    });
+    
+    // Clear feedback and hide next button
+    const feedbackDiv = document.getElementById('feedbackMessage');
+    feedbackDiv.style.display = 'none';
+    feedbackDiv.className = '';
+    
+    const nextButton = document.getElementById('nextButton');
+    nextButton.style.display = 'none';
+    
+    // Reset processing flag
+    isProcessing = false;
+    
+    console.log(`✅ Question ${currentQuestionIndex + 1} loaded: ${question.num1} × ${question.num2} = ${question.answer}`);
+}
+
+function showResults() {
+    const totalQuestions = expeditionData.questions.length;
+    const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
+    
+    console.log('🏁 Expedition completed!');
+    
+    // Hide question content and show results
+    document.querySelector('.question-card').innerHTML = `
+        <div style="text-align: center; padding: 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
+            <h2 style="color: #228B22; margin-bottom: 2rem;">Expedition Complete!</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); padding: 1.5rem; border-radius: 15px; border: 2px solid #28a745;">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: #155724;">${correctAnswers}</div>
+                    <div style="color: #155724;">Correct</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #fff3cd, #ffeaa7); padding: 1.5rem; border-radius: 15px; border: 2px solid #ffc107;">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: #856404;">${accuracy}%</div>
+                    <div style="color: #856404;">Accuracy</div>
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #e2e3e5, #d6d8db); padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem;">
+                <div style="font-size: 1.2rem; color: #495057;">
+                    You answered ${correctAnswers} out of ${totalQuestions} questions correctly!
+                </div>
+            </div>
+            
+            <button onclick="window.location.href='{{ url_for("multiplication_trainer.index") }}'"
+                    style="background: linear-gradient(135deg, #228B22, #32CD32); color: white; border: none; 
+                           padding: 1rem 2rem; border-radius: 10px; font-size: 1.2rem; font-weight: bold; 
+                           cursor: pointer; transition: all 0.3s ease;"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 5px 15px rgba(34, 139, 34, 0.4)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                🏠 Back to Mountain Academy
+            </button>
+        </div>
+    `;
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🏔️ Practice page DOM loaded successfully!');
+    
+    // Test button detection
+    const buttons = document.querySelectorAll('.answer-choice');
+    console.log('📊 Found', buttons.length, 'answer buttons');
+    
+    // Add Enter key support for next button
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            const nextButton = document.getElementById('nextButton');
+            if (nextButton.style.display !== 'none' && !nextButton.disabled) {
+                nextButton.click();
+            }
+        }
+    });
+    
+    console.log('🚀 Ready to start expedition!');
+});
+
+console.log('🏔️ Practice page JavaScript loaded successfully!');
+</script>
+{% endblock %}

@@ -1,0 +1,812 @@
+{% extends 'base.html' %}
+
+{% block title %}Expedition Setup - Mountain Academy{% endblock %}
+
+{% block header %}🎒 Plan Your Expedition{% endblock %}
+
+{% block head %}
+<style>
+    /* Expedition Setup Styling */
+    .expedition-container {
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(180deg, 
+            rgba(135, 206, 250, 0.2) 0%,
+            rgba(34, 139, 34, 0.15) 60%,
+            rgba(139, 69, 19, 0.15) 100%);
+        padding: 2rem;
+        position: relative;
+    }
+    
+    .setup-content {
+        max-width: 800px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, 
+            rgba(255, 248, 220, 0.95) 0%,
+            rgba(250, 240, 210, 0.9) 100%);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .setup-content::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(34, 139, 34, 0.1) 0%, transparent 50%);
+        animation: backgroundShift 10s ease-in-out infinite;
+        z-index: -1;
+        pointer-events: none;
+    }
+    
+    @keyframes backgroundShift {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        50% { transform: translate(-10px, -10px) rotate(2deg); }
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(139, 69, 19, 0.3);
+    }
+    
+    .section-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: rgba(101, 67, 33, 0.9);
+    }
+    
+    /* Form sections */
+    .form-section {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(139, 69, 19, 0.2);
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-section h3 {
+        color: rgba(101, 67, 33, 0.9);
+        margin-bottom: 1.5rem;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Table selection grid */
+    .table-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .table-option {
+        position: relative;
+    }
+    
+    .table-checkbox {
+        display: none;
+    }
+    
+    .table-label {
+        display: block;
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.1),
+            rgba(50, 205, 50, 0.1));
+        border: 2px solid rgba(34, 139, 34, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        color: rgba(101, 67, 33, 0.9);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .table-label::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            rgba(255, 215, 0, 0.6),
+            rgba(34, 139, 34, 0.6));
+        border-radius: 12px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+    }
+    
+    .table-label:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(34, 139, 34, 0.3);
+    }
+    
+    .table-checkbox:checked + .table-label {
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.8),
+            rgba(50, 205, 50, 0.8));
+        color: white;
+        border-color: rgba(34, 139, 34, 0.8);
+        transform: translateY(-2px);
+    }
+    
+    .table-checkbox:checked + .table-label::before {
+        opacity: 1;
+    }
+    
+    .table-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .table-preview {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+    
+    /* Input styling */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: rgba(101, 67, 33, 0.9);
+        font-size: 1rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+        color: rgba(101, 67, 33, 0.9);
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: rgba(34, 139, 34, 0.6);
+        box-shadow: 0 0 10px rgba(34, 139, 34, 0.3);
+        background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .form-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23654321' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+        padding-right: 3rem;
+    }
+    
+    /* Range slider styling */
+    .range-container {
+        position: relative;
+        margin: 1rem 0;
+    }
+    
+    .range-input {
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: linear-gradient(to right, 
+            rgba(139, 69, 19, 0.3) 0%, 
+            rgba(34, 139, 34, 0.6) 100%);
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    
+    .range-input::-webkit-slider-thumb {
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.9),
+            rgba(50, 205, 50, 0.9));
+        cursor: pointer;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .range-input::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 10px rgba(34, 139, 34, 0.4);
+    }
+    
+    .range-value {
+        position: absolute;
+        top: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(101, 67, 33, 0.9);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    /* Checkbox and radio styling */
+    .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        padding: 0.8rem 1.2rem;
+        background: rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .checkbox-item:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+    }
+    
+    .checkbox-item input[type="checkbox"]:checked + span,
+    .checkbox-item input[type="radio"]:checked + span {
+        font-weight: 600;
+    }
+    
+    .checkbox-item input[type="checkbox"]:checked,
+    .checkbox-item input[type="radio"]:checked {
+        accent-color: rgba(34, 139, 34, 0.8);
+    }
+    
+    /* Action buttons */
+    .action-section {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(139, 69, 19, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+    }
+    
+    .expedition-btn {
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.9),
+            rgba(50, 205, 50, 0.9));
+        color: white;
+        border: 2px solid rgba(34, 139, 34, 1);
+        padding: 1.2rem 3rem;
+        border-radius: 30px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(34, 139, 34, 0.3);
+    }
+    
+    .expedition-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .expedition-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(34, 139, 34, 0.4);
+    }
+    
+    .expedition-btn:hover::before {
+        width: 400px;
+        height: 400px;
+    }
+    
+    .expedition-btn.secondary {
+        background: linear-gradient(135deg, 
+            rgba(139, 69, 19, 0.9),
+            rgba(160, 82, 45, 0.9));
+        border-color: rgba(139, 69, 19, 1);
+        box-shadow: 0 5px 20px rgba(139, 69, 19, 0.3);
+    }
+    
+    .expedition-btn.secondary:hover {
+        box-shadow: 0 10px 30px rgba(139, 69, 19, 0.4);
+    }
+    
+    /* Preset buttons */
+    .preset-section {
+        margin-bottom: 2rem;
+    }
+    
+    .preset-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+    
+    .preset-btn {
+        background: rgba(255, 215, 0, 0.2);
+        border: 2px solid rgba(255, 215, 0, 0.5);
+        color: rgba(101, 67, 33, 0.9);
+        padding: 0.8rem 1.5rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+    
+    .preset-btn:hover {
+        background: rgba(255, 215, 0, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
+    }
+    
+    /* Help text */
+    .help-text {
+        font-size: 0.9rem;
+        color: rgba(101, 67, 33, 0.6);
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .expedition-container {
+            padding: 1rem;
+        }
+        
+        .setup-content {
+            padding: 2rem;
+        }
+        
+        .table-grid {
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .expedition-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .preset-buttons {
+            flex-direction: column;
+        }
+        
+        .preset-btn {
+            width: 100%;
+        }
+    }
+    
+    /* Form validation styling */
+    .form-input:invalid {
+        border-color: rgba(220, 20, 60, 0.6);
+        box-shadow: 0 0 5px rgba(220, 20, 60, 0.3);
+    }
+    
+    .form-input:valid {
+        border-color: rgba(34, 139, 34, 0.6);
+    }
+    
+    .error-message {
+        color: rgba(220, 20, 60, 0.8);
+        font-size: 0.8rem;
+        margin-top: 0.3rem;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="expedition-container">
+    <div class="setup-content">
+        <div class="section-header">
+            <span class="section-icon">🗺️</span>
+            <h1 class="section-title">Customize Your Mountain Expedition</h1>
+        </div>
+        
+        <p style="text-align: center; color: rgba(101, 67, 33, 0.7); margin-bottom: 3rem; font-size: 1.1rem;">
+            Plan your mathematical journey through the peaks. Choose your difficulty, select your training focus, and prepare for the climb!
+        </p>
+        
+        <form action="{{ url_for('multiplication_trainer.start_expedition') }}" method="POST" id="expeditionForm">
+            
+            <!-- Quick Presets Section -->
+            <div class="form-section preset-section">
+                <h3>🎯 Quick Expedition Presets</h3>
+                <p class="help-text">Choose a ready-made expedition or customize your own below</p>
+                
+                <div class="preset-buttons">
+                    <button type="button" class="preset-btn" data-preset="beginner">
+                        🌱 Beginner Trail (×2, ×5, ×10)
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="intermediate">
+                        ⛰️ Mountain Path (×3, ×4, ×6, ×7, ×8)
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="advanced">
+                        🏔️ Summit Challenge (×6, ×7, ×8, ×9, ×11, ×12)
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="mixed">
+                        🎲 Mixed Adventure (All tables)
+                    </button>
+                    <button type="button" class="preset-btn" data-preset="speed">
+                        ⚡ Speed Climb (Quick & easy)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Table Selection -->
+            <div class="form-section">
+                <h3>📚 Choose Your Training Tables</h3>
+                <p class="help-text">Select which multiplication tables you want to practice</p>
+                
+                <div class="table-grid">
+                    {% for i in range(1, 13) %}
+                    <div class="table-option">
+                        <input type="checkbox" 
+                               name="tables" 
+                               value="{{ i }}" 
+                               id="table_{{ i }}" 
+                               class="table-checkbox"
+                               {% if i in [2, 3, 4, 5] %}checked{% endif %}>
+                        <label for="table_{{ i }}" class="table-label">
+                            <div class="table-title">{{ i }} Times</div>
+                            <div class="table-preview">{{ i }} × 1 = {{ i }}</div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div style="margin-top: 1rem; text-align: center;">
+                    <button type="button" id="selectAllTables" class="preset-btn">Select All</button>
+                    <button type="button" id="selectNoneTables" class="preset-btn">Clear All</button>
+                </div>
+            </div>
+            
+            <!-- Expedition Length -->
+            <div class="form-section">
+                <h3>📏 Expedition Length</h3>
+                
+                <div class="form-group">
+                    <label for="questionCount" class="form-label">Number of Questions</label>
+                    <div class="range-container">
+                        <input type="range" 
+                               id="questionCount" 
+                               name="question_count" 
+                               min="5" 
+                               max="100" 
+                               value="{{ settings.question_count or 20 }}" 
+                               class="range-input">
+                        <div class="range-value" id="questionCountValue">{{ settings.question_count or 20 }} questions</div>
+                    </div>
+                    <p class="help-text">More questions = higher potential elevation gain, but longer expedition time</p>
+                </div>
+            </div>
+            
+            <!-- Difficulty Settings -->
+            <div class="form-section">
+                <h3>⛰️ Trail Difficulty</h3>
+                
+                <div class="form-group">
+                    <label for="difficulty" class="form-label">Difficulty Level</label>
+                    <select id="difficulty" name="difficulty" class="form-input form-select">
+                        <option value="easy" {% if settings.difficulty == 'easy' %}selected{% endif %}>
+                            🌱 Easy Trail (×1 to ×5)
+                        </option>
+                        <option value="medium" {% if settings.difficulty == 'medium' %}selected{% endif %}>
+                            ⛰️ Medium Path (×6 to ×10)
+                        </option>
+                        <option value="hard" {% if settings.difficulty == 'hard' %}selected{% endif %}>
+                            🏔️ Hard Climb (×11 to ×15)
+                        </option>
+                        <option value="mixed" {% if settings.difficulty == 'mixed' or not settings.difficulty %}selected{% endif %}>
+                            🎲 Mixed Adventure (×1 to ×12)
+                        </option>
+                    </select>
+                    <p class="help-text">Controls the range of numbers used as multipliers</p>
+                </div>
+            </div>
+            
+            <!-- Time Settings -->
+            <div class="form-section">
+                <h3>⏱️ Time Challenge</h3>
+                
+                <div class="form-group">
+                    <label for="timeLimit" class="form-label">Time Limit (seconds)</label>
+                    <select id="timeLimit" name="time_limit" class="form-input form-select">
+                        <option value="">🏃‍♂️ No Time Limit (Relaxed pace)</option>
+                        <option value="300">⏰ 5 Minutes (Leisurely)</option>
+                        <option value="180">⚡ 3 Minutes (Brisk pace)</option>
+                        <option value="120">🔥 2 Minutes (Sprint mode)</option>
+                        <option value="60">💨 1 Minute (Lightning round)</option>
+                    </select>
+                    <p class="help-text">Time pressure can increase focus but may cause stress</p>
+                </div>
+            </div>
+            
+            <!-- Quality of Life Features -->
+            <div class="form-section">
+                <h3>🎒 Expedition Gear</h3>
+                <p class="help-text">Choose your helpful tools for the journey</p>
+                
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" 
+                               name="show_hints" 
+                               {% if settings.show_hints %}checked{% endif %}>
+                        <span>💡 Show Hints (Visual aids for tricky problems)</span>
+                    </label>
+                    
+                    <label class="checkbox-item">
+                        <input type="checkbox" 
+                               name="play_sounds" 
+                               {% if settings.play_sounds %}checked{% endif %}>
+                        <span>🔊 Sound Effects (Audio feedback for answers)</span>
+                    </label>
+                    
+                    <label class="checkbox-item">
+                        <input type="checkbox" 
+                               name="show_progress" 
+                               checked>
+                        <span>📊 Progress Tracker (Real-time expedition stats)</span>
+                    </label>
+                    
+                    <label class="checkbox-item">
+                        <input type="checkbox" 
+                               name="auto_advance" 
+                               checked>
+                        <span>⏭️ Auto-Advance (Move to next question automatically)</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Start Expedition -->
+            <div class="action-section">
+                <h3 style="color: rgba(101, 67, 33, 0.9); margin-bottom: 1rem;">
+                    🚀 Ready to Begin Your Expedition?
+                </h3>
+                <p style="color: rgba(101, 67, 33, 0.7); margin-bottom: 1.5rem;">
+                    Double-check your settings above, then start your mathematical mountain climb!
+                </p>
+                
+                <div class="btn-group">
+                    <button type="submit" class="expedition-btn" id="startExpedition">
+                        🏔️ Start Expedition
+                    </button>
+                    <a href="{{ url_for('multiplication_trainer.index') }}" class="expedition-btn secondary">
+                        🏠 Back to Academy
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Preset configurations
+    const presets = {
+        beginner: {
+            tables: [2, 5, 10],
+            question_count: 15,
+            difficulty: 'easy',
+            time_limit: '',
+            show_hints: true,
+            play_sounds: true
+        },
+        intermediate: {
+            tables: [3, 4, 6, 7, 8],
+            question_count: 25,
+            difficulty: 'medium',
+            time_limit: '',
+            show_hints: true,
+            play_sounds: true
+        },
+        advanced: {
+            tables: [6, 7, 8, 9, 11, 12],
+            question_count: 30,
+            difficulty: 'hard',
+            time_limit: '',
+            show_hints: false,
+            play_sounds: true
+        },
+        mixed: {
+            tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            question_count: 40,
+            difficulty: 'mixed',
+            time_limit: '',
+            show_hints: true,
+            play_sounds: true
+        },
+        speed: {
+            tables: [2, 3, 4, 5],
+            question_count: 20,
+            difficulty: 'easy',
+            time_limit: '120',
+            show_hints: false,
+            play_sounds: true
+        }
+    };
+    
+    // Apply preset configuration
+    function applyPreset(presetName) {
+        const preset = presets[presetName];
+        if (!preset) return;
+        
+        // Clear all table selections first
+        document.querySelectorAll('.table-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Select preset tables
+        preset.tables.forEach(table => {
+            const checkbox = document.getElementById(`table_${table}`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Set other options
+        document.getElementById('questionCount').value = preset.question_count;
+        updateRangeValue('questionCount', preset.question_count);
+        
+        document.getElementById('difficulty').value = preset.difficulty;
+        document.getElementById('timeLimit').value = preset.time_limit;
+        
+        // Set checkboxes
+        const hintsCheckbox = document.querySelector('input[name="show_hints"]');
+        const soundsCheckbox = document.querySelector('input[name="play_sounds"]');
+        
+        if (hintsCheckbox) hintsCheckbox.checked = preset.show_hints;
+        if (soundsCheckbox) soundsCheckbox.checked = preset.play_sounds;
+        
+        // Visual feedback
+        highlightPresetButton(presetName);
+    }
+    
+    function highlightPresetButton(activePreset) {
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.style.background = 'rgba(255, 215, 0, 0.2)';
+        });
+        
+        const activeBtn = document.querySelector(`[data-preset="${activePreset}"]`);
+        if (activeBtn) {
+            activeBtn.style.background = 'rgba(255, 215, 0, 0.6)';
+            setTimeout(() => {
+                activeBtn.style.background = 'rgba(255, 215, 0, 0.2)';
+            }, 1000);
+        }
+    }
+    
+    // Preset button event listeners
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const preset = this.getAttribute('data-preset');
+            applyPreset(preset);
+        });
+    });
+    
+    // Range input updates
+    function updateRangeValue(rangeId, value) {
+        const valueDisplay = document.getElementById(rangeId + 'Value');
+        if (valueDisplay) {
+            valueDisplay.textContent = value + ' questions';
+        }
+    }
+    
+    document.getElementById('questionCount').addEventListener('input', function() {
+        updateRangeValue('questionCount', this.value);
+    });
+    
+    // Table selection helpers
+    document.getElementById('selectAllTables').addEventListener('click', function() {
+        document.querySelectorAll('.table-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    });
+    
+    document.getElementById('selectNoneTables').addEventListener('click', function() {
+        document.querySelectorAll('.table-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    });
+    
+    // Form validation
+    document.getElementById('expeditionForm').addEventListener('submit', function(e) {
+        const selectedTables = document.querySelectorAll('.table-checkbox:checked');
+        
+        if (selectedTables.length === 0) {
+            e.preventDefault();
+            alert('🏔️ Please select at least one multiplication table for your expedition!');
+            return false;
+        }
+        
+        // Add loading state to button
+        const submitBtn = document.getElementById('startExpedition');
+        submitBtn.innerHTML = '🏔️ Starting Expedition...';
+        submitBtn.disabled = true;
+        
+        // Allow form to submit
+        return true;
+    });
+    
+    // Add visual feedback to form interactions
+    document.querySelectorAll('.form-input, .table-checkbox').forEach(input => {
+        input.addEventListener('change', function() {
+            // Add a subtle animation to show the change was registered
+            this.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+    
+    // Initialize range value display
+    updateRangeValue('questionCount', document.getElementById('questionCount').value);
+    
+    console.log('🎒 Expedition setup initialized!');
+});
+</script>
+{% endblock %}

@@ -27,6 +27,7 @@ def create_app():
     from .hangman import hangman
     from .time_predict import time_predict
     from .space_memory import space_memory
+    from .multiplication_trainer.multiplication_trainer import multiplication_trainer
     
     # Register blueprints with URL prefixes
     app.register_blueprint(home, url_prefix='/')
@@ -37,6 +38,7 @@ def create_app():
     app.register_blueprint(hangman, url_prefix='/hangman')
     app.register_blueprint(time_predict, url_prefix='/timepredict')
     app.register_blueprint(space_memory, url_prefix='/spacememory')
+    app.register_blueprint(multiplication_trainer, url_prefix='/mountainacademy')
     
     # Add any new blueprints here following the same pattern:
     # from .new_feature import new_feature

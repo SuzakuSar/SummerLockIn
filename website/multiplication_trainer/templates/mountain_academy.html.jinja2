@@ -1,0 +1,726 @@
+{% extends 'base.html' %}
+
+{% block title %}Mountain Academy - Multiplication Trainer{% endblock %}
+
+{% block header %}🏔️ Mountain Academy{% endblock %}
+
+{% block head %}
+<style>
+    /* Mountain Academy Theme Styling */
+    .mountain-container {
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(180deg, 
+            rgba(135, 206, 250, 0.3) 0%,     /* Sky blue at top */
+            rgba(34, 139, 34, 0.2) 60%,      /* Forest green middle */
+            rgba(139, 69, 19, 0.2) 100%);    /* Earth brown at bottom */
+        position: relative;
+        overflow: hidden;
+        padding: 2rem;
+    }
+    
+    /* Mountain background silhouettes */
+    .mountain-bg {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 60%;
+        background: 
+            radial-gradient(ellipse at 20% 100%, rgba(105, 105, 105, 0.4) 0%, transparent 50%),
+            radial-gradient(ellipse at 60% 100%, rgba(128, 128, 128, 0.3) 0%, transparent 60%),
+            radial-gradient(ellipse at 90% 100%, rgba(105, 105, 105, 0.4) 0%, transparent 45%);
+        z-index: 1;
+        pointer-events: none;
+    }
+    
+    /* Floating clouds */
+    .cloud {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 50px;
+        opacity: 0.7;
+        animation: cloudFloat 20s ease-in-out infinite;
+        pointer-events: none;
+    }
+    
+    .cloud::before,
+    .cloud::after {
+        content: '';
+        position: absolute;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 50px;
+    }
+    
+    .cloud-1 {
+        width: 80px;
+        height: 30px;
+        top: 15%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+    
+    .cloud-1::before {
+        width: 50px;
+        height: 40px;
+        top: -20px;
+        left: 10px;
+    }
+    
+    .cloud-1::after {
+        width: 60px;
+        height: 35px;
+        top: -15px;
+        right: 10px;
+    }
+    
+    .cloud-2 {
+        width: 60px;
+        height: 25px;
+        top: 25%;
+        right: 20%;
+        animation-delay: -8s;
+    }
+    
+    .cloud-2::before {
+        width: 40px;
+        height: 30px;
+        top: -15px;
+        left: 8px;
+    }
+    
+    .cloud-2::after {
+        width: 45px;
+        height: 28px;
+        top: -12px;
+        right: 8px;
+    }
+    
+    @keyframes cloudFloat {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        25% { transform: translateX(20px) translateY(-10px); }
+        50% { transform: translateX(-10px) translateY(-5px); }
+        75% { transform: translateX(15px) translateY(-8px); }
+    }
+    
+    /* Main content area */
+    .academy-content {
+        position: relative;
+        z-index: 10;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Academy dashboard cards */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .academy-card {
+        background: linear-gradient(135deg, 
+            rgba(255, 248, 220, 0.95) 0%,
+            rgba(250, 240, 210, 0.9) 100%);
+        border: 2px solid rgba(139, 69, 19, 0.3);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .academy-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            rgba(34, 139, 34, 0.3),
+            rgba(255, 215, 0, 0.3),
+            rgba(139, 69, 19, 0.3));
+        border-radius: 15px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .academy-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 
+            0 15px 35px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+    
+    .academy-card:hover::before {
+        opacity: 1;
+    }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: rgba(101, 67, 33, 0.9);
+    }
+    
+    .card-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+    }
+    
+    /* Rank progress section */
+    .rank-section {
+        text-align: center;
+    }
+    
+    .current-rank {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        color: rgba(101, 67, 33, 0.9);
+    }
+    
+    .rank-icon {
+        font-size: 2.5rem;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 25px;
+        background: linear-gradient(135deg, 
+            rgba(139, 69, 19, 0.2),
+            rgba(160, 82, 45, 0.2));
+        border: 2px solid rgba(139, 69, 19, 0.4);
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+        margin: 1rem 0;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.8),
+            rgba(50, 205, 50, 0.8));
+        border-radius: 13px;
+        transition: width 1s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba(255, 255, 255, 0.4), 
+            transparent);
+        animation: progressShine 2s ease-in-out infinite;
+    }
+    
+    @keyframes progressShine {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+    
+    .next-rank-info {
+        font-size: 0.9rem;
+        color: rgba(101, 67, 33, 0.7);
+        margin-top: 0.5rem;
+    }
+    
+    /* Stats grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(139, 69, 19, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: scale(1.05);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: rgba(34, 139, 34, 0.9);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: rgba(101, 67, 33, 0.8);
+        margin-top: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Badge showcase */
+    .badge-showcase {
+        margin-top: 1rem;
+    }
+    
+    .badge-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+    
+    .badge-item {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.8),
+            rgba(255, 140, 0, 0.8));
+        border: 2px solid rgba(184, 134, 11, 0.8);
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .badge-item:hover {
+        transform: scale(1.1) rotate(10deg);
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.5);
+    }
+    
+    .badge-item.locked {
+        background: rgba(128, 128, 128, 0.3);
+        border-color: rgba(128, 128, 128, 0.5);
+        color: rgba(128, 128, 128, 0.7);
+    }
+    
+    .badge-tooltip {
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 100;
+    }
+    
+    .badge-item:hover .badge-tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .mountain-btn {
+        background: linear-gradient(135deg, 
+            rgba(34, 139, 34, 0.9),
+            rgba(50, 205, 50, 0.9));
+        color: white;
+        border: 2px solid rgba(34, 139, 34, 1);
+        padding: 1rem 2.5rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);
+    }
+    
+    .mountain-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .mountain-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(34, 139, 34, 0.4);
+        border-color: rgba(50, 205, 50, 1);
+    }
+    
+    .mountain-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .mountain-btn.secondary {
+        background: linear-gradient(135deg, 
+            rgba(139, 69, 19, 0.9),
+            rgba(160, 82, 45, 0.9));
+        border-color: rgba(139, 69, 19, 1);
+        box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+    }
+    
+    .mountain-btn.secondary:hover {
+        box-shadow: 0 8px 25px rgba(139, 69, 19, 0.4);
+        border-color: rgba(160, 82, 45, 1);
+    }
+    
+    /* Recent activity section */
+    .recent-activity {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(139, 69, 19, 0.2);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .activity-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-description {
+        color: rgba(101, 67, 33, 0.8);
+        font-size: 0.9rem;
+    }
+    
+    .activity-time {
+        color: rgba(101, 67, 33, 0.6);
+        font-size: 0.8rem;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .mountain-container {
+            padding: 1rem;
+        }
+        
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .mountain-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .cloud {
+            display: none;
+        }
+    }
+    
+    /* Loading animation for interactive elements */
+    .loading {
+        position: relative;
+        pointer-events: none;
+    }
+    
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="mountain-container">
+    <!-- Mountain background -->
+    <div class="mountain-bg"></div>
+    
+    <!-- Floating clouds -->
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    
+    <div class="academy-content">
+        <!-- Welcome message -->
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="color: rgba(101, 67, 33, 0.9); font-size: 2rem; margin-bottom: 1rem;">
+                🎒 Welcome to Mountain Academy! 🏔️
+            </h2>
+            <p style="color: rgba(101, 67, 33, 0.7); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                Master multiplication facts by climbing mathematical peaks. Each correct answer brings you higher up the mountain!
+            </p>
+        </div>
+        
+        <!-- Dashboard grid -->
+        <div class="dashboard-grid">
+            <!-- Rank Progress Card -->
+            <div class="academy-card">
+                <div class="card-header">
+                    <span class="card-icon">🏆</span>
+                    Climbing Progress
+                </div>
+                
+                <div class="rank-section">
+                    <div class="current-rank">
+                        <span class="rank-icon">{{ current_rank.icon }}</span>
+                        <div>
+                            <div style="font-weight: 600;">{{ current_rank.name }}</div>
+                            <div style="font-size: 0.9rem; opacity: 0.7;">{{ stats.total_elevation }} meters climbed</div>
+                        </div>
+                    </div>
+                    
+                    {% if next_rank %}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ progress_to_next }}%;"></div>
+                    </div>
+                    <div class="next-rank-info">
+                        {{ next_rank.min_elevation - stats.total_elevation }} meters to {{ next_rank.name }} {{ next_rank.icon }}
+                    </div>
+                    {% else %}
+                    <div style="color: rgba(255, 215, 0, 0.9); font-weight: 600; margin-top: 1rem;">
+                        🎉 You've reached the summit! 🎉
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Statistics Card -->
+            <div class="academy-card">
+                <div class="card-header">
+                    <span class="card-icon">📊</span>
+                    Training Stats
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ stats.total_questions }}</span>
+                        <span class="stat-label">Questions Answered</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ "%.1f"|format(stats.accuracy) }}%</span>
+                        <span class="stat-label">Accuracy</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ stats.practice_streak }}</span>
+                        <span class="stat-label">Day Streak</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ stats.tables_mastered }}/12</span>
+                        <span class="stat-label">Tables Mastered</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Trail Badges Card -->
+            <div class="academy-card">
+                <div class="card-header">
+                    <span class="card-icon">🏅</span>
+                    Trail Badges
+                </div>
+                
+                <div class="badge-showcase">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <span style="font-size: 1.2rem; font-weight: 600; color: rgba(101, 67, 33, 0.9);">
+                            {{ stats.badges_earned }}/{{ all_badges|length }} Earned
+                        </span>
+                    </div>
+                    
+                    <div class="badge-grid">
+                        {% for badge in all_badges %}
+                        <div class="badge-item {% if badge.id not in user_badges|map(attribute='id')|list %}locked{% endif %}">
+                            {{ badge.icon }}
+                            <div class="badge-tooltip">
+                                <strong>{{ badge.name }}</strong><br>
+                                {{ badge.desc }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Start Card -->
+            <div class="academy-card">
+                <div class="card-header">
+                    <span class="card-icon">⚡</span>
+                    Quick Expedition
+                </div>
+                
+                <div style="text-align: center;">
+                    <p style="color: rgba(101, 67, 33, 0.7); margin-bottom: 1.5rem;">
+                        Start practicing immediately with default settings
+                    </p>
+                    
+                    <form action="{{ url_for('multiplication_trainer.start_expedition') }}" method="POST" style="display: inline-block;">
+                        <!-- Default settings for quick start -->
+                        <input type="hidden" name="tables" value="2">
+                        <input type="hidden" name="tables" value="3">
+                        <input type="hidden" name="tables" value="4">
+                        <input type="hidden" name="tables" value="5">
+                        <input type="hidden" name="question_count" value="20">
+                        <input type="hidden" name="difficulty" value="mixed">
+                        <input type="hidden" name="show_hints" value="on">
+                        <input type="hidden" name="play_sounds" value="on">
+                        
+                        <button type="submit" class="mountain-btn">
+                            🚀 Start Climbing!
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('multiplication_trainer.expedition_setup') }}" class="mountain-btn">
+                ⚙️ Custom Expedition
+            </a>
+            <a href="{{ url_for('multiplication_trainer.leaderboard') }}" class="mountain-btn secondary">
+                🎯 View Progress
+            </a>
+        </div>
+        
+        <!-- Recent activity (if we had it) -->
+        {% if stats.total_questions > 0 %}
+        <div class="recent-activity">
+            <h3 style="color: rgba(101, 67, 33, 0.9); margin-bottom: 1rem; text-align: center;">
+                🗂️ Training Summary
+            </h3>
+            <div class="activity-item">
+                <span class="activity-description">Total practice sessions completed</span>
+                <span class="activity-time">{{ (stats.total_questions / 20)|round|int }} sessions</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-description">Highest accuracy achieved</span>
+                <span class="activity-time">{{ "%.1f"|format(stats.accuracy) }}%</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-description">Current climbing streak</span>
+                <span class="activity-time">{{ stats.practice_streak }} days</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Add some interactivity to make the mountain feel alive
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bars
+    const progressBars = document.querySelectorAll('.progress-fill');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+    
+    // Animate stat values counting up
+    const statValues = document.querySelectorAll('.stat-value');
+    statValues.forEach(stat => {
+        const finalValue = stat.textContent;
+        const numericValue = parseFloat(finalValue);
+        
+        if (!isNaN(numericValue) && numericValue > 0) {
+            let current = 0;
+            const increment = numericValue / 50;
+            stat.textContent = '0';
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= numericValue) {
+                    stat.textContent = finalValue;
+                    clearInterval(timer);
+                } else {
+                    stat.textContent = Math.floor(current).toString();
+                }
+            }, 30);
+        }
+    });
+    
+    // Add mountain climbing sound effect on button hover (optional)
+    const buttons = document.querySelectorAll('.mountain-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            // Could add sound effects here if desired
+            btn.style.transform = 'translateY(-3px) scale(1.02)';
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    console.log('🏔️ Mountain Academy initialized successfully!');
+});
+</script>
+{% endblock %}

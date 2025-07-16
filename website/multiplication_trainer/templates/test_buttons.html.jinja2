@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}TEST - Button Debug{% endblock %}
+
+{% block header %}🧪 BUTTON TEST PAGE{% endblock %}
+
+{% block head %}
+<style>
+    .test-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border: 2px solid #333;
+        border-radius: 10px;
+    }
+    
+    .test-button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        margin: 0.5rem;
+        border-radius: 5px;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+    
+    .test-button:hover {
+        background: #0056b3;
+    }
+    
+    #debug-info {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 5px;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="test-container">
+    <h2>🧪 JavaScript & Button Test</h2>
+    
+    <div id="debug-info">Loading...</div>
+    
+    <h3>Test Buttons (Should show alerts when clicked):</h3>
+    
+    <!-- Super simple test buttons -->
+    <button class="test-button" onclick="alert('Button 1 works!')">Test Button 1</button>
+    <button class="test-button" onclick="alert('Button 2 works!')">Test Button 2</button>
+    <button class="test-button" onclick="testFunction()">Test Function Button</button>
+    <button class="test-button" onclick="showExpeditionData()">Show Expedition Data</button>
+    
+    <h3>Practice-Style Buttons:</h3>
+    <div id="practice-buttons">
+        <button class="test-button" onclick="handleTestAnswer(10)">10</button>
+        <button class="test-button" onclick="handleTestAnswer(15)">15</button>
+        <button class="test-button" onclick="handleTestAnswer(20)">20</button>
+        <button class="test-button" onclick="handleTestAnswer(25)">25</button>
+    </div>
+    
+    <div id="result-area" style="margin-top: 2rem; padding: 1rem; background: #e9ecef; border-radius: 5px;">
+        <strong>Results will appear here...</strong>
+    </div>
+</div>
+
+<!-- Expedition data (if available) -->
+<script type="application/json" id="expeditionData">
+{{ expedition|tojson if expedition else '{"test": "no expedition data"}' }}
+</script>
+
+<script>
+// Debug logging
+console.log('🧪 TEST PAGE: Script is loading...');
+
+// Test if basic JavaScript works
+function testFunction() {
+    console.log('🧪 TEST: testFunction() called');
+    alert('JavaScript function works!');
+    
+    document.getElementById('debug-info').textContent += '\n✅ JavaScript function executed successfully';
+}
+
+// Test answer handling
+function handleTestAnswer(answer) {
+    console.log('🧪 TEST: handleTestAnswer called with:', answer);
+    
+    const resultArea = document.getElementById('result-area');
+    resultArea.innerHTML = `
+        <strong>✅ Button clicked!</strong><br>
+        Answer selected: ${answer}<br>
+        Time: ${new Date().toLocaleTimeString()}
+    `;
+    
+    alert(`You clicked: ${answer}`);
+}
+
+// Check expedition data
+function showExpeditionData() {
+    console.log('🧪 TEST: Checking expedition data...');
+    
+    try {
+        const dataElement = document.getElementById('expeditionData');
+        if (!dataElement) {
+            alert('❌ No expedition data element found');
+            return;
+        }
+        
+        const data = JSON.parse(dataElement.textContent);
+        console.log('🧪 TEST: Expedition data:', data);
+        
+        alert(`Expedition data found!\nKeys: ${Object.keys(data).join(', ')}`);
+        
+    } catch (error) {
+        console.error('🧪 TEST: Error with expedition data:', error);
+        alert(`❌ Error: ${error.message}`);
+    }
+}
+
+// Run tests when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🧪 TEST: DOM loaded');
+    
+    const debugInfo = document.getElementById('debug-info');
+    
+    let info = 'DEBUG INFORMATION:\n';
+    info += '✅ JavaScript is working\n';
+    info += '✅ DOM loaded successfully\n';
+    info += `✅ Current time: ${new Date()}\n`;
+    
+    // Check for expedition data
+    const expeditionElement = document.getElementById('expeditionData');
+    if (expeditionElement) {
+        info += '✅ Expedition data element found\n';
+        try {
+            const data = JSON.parse(expeditionElement.textContent);
+            info += `✅ Expedition data parsed: ${Object.keys(data).length} keys\n`;
+        } catch (e) {
+            info += `❌ Expedition data parse error: ${e.message}\n`;
+        }
+    } else {
+        info += '❌ No expedition data element\n';
+    }
+    
+    // Check if we're in the practice route
+    info += `✅ Current URL: ${window.location.pathname}\n`;
+    
+    debugInfo.textContent = info;
+    
+    console.log('🧪 TEST: Initialization complete');
+});
+
+// Test console output
+console.log('🧪 TEST: Script loaded successfully');
+</script>
+{% endblock %}
