@@ -1,0 +1,575 @@
+<!-- File: website/click_speed/templates/click_speed.html -->
+{% extends 'base.html' %}
+
+{% block title %}Click Speed Calculator{% endblock %}
+
+{% block header %}⚡ Click Speed Calculator ⚡{% endblock %}
+
+{% block head %}
+<style>
+    /* Speed-focused theme with electric blue accents */
+    .speed-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .speed-card {
+        background: linear-gradient(135deg, 
+            rgba(0, 50, 100, 0.9) 0%, 
+            rgba(0, 30, 60, 0.8) 50%, 
+            rgba(0, 20, 40, 0.9) 100%);
+        border: 2px solid rgba(0, 150, 255, 0.5);
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 
+            0 0 20px rgba(0, 150, 255, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .timer-display {
+        font-size: 4rem;
+        font-weight: 300;
+        color: #00aaff;
+        text-shadow: 
+            0 0 10px rgba(0, 170, 255, 0.8),
+            0 0 20px rgba(0, 170, 255, 0.5);
+        margin: 1rem 0;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .click-area {
+        width: 300px;
+        height: 300px;
+        margin: 2rem auto;
+        border-radius: 50%;
+        background: linear-gradient(45deg, 
+            rgba(0, 170, 255, 0.8), 
+            rgba(0, 255, 170, 0.6));
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .click-area:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(0, 170, 255, 0.6);
+    }
+    
+    .click-area:active {
+        transform: scale(0.95);
+    }
+    
+    .click-area.disabled {
+        background: linear-gradient(45deg, 
+            rgba(100, 100, 100, 0.5), 
+            rgba(80, 80, 80, 0.5));
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .click-area.disabled:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Click ripple effect */
+    .click-ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.6);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+    
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .stat-item {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 150, 255, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        border-color: rgba(0, 150, 255, 0.6);
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #00aaff;
+        text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    .control-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 2rem 0;
+    }
+    
+    .speed-btn {
+        background: linear-gradient(135deg, 
+            rgba(0, 150, 255, 0.8), 
+            rgba(0, 100, 200, 0.8));
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .speed-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 150, 255, 0.4);
+        background: linear-gradient(135deg, 
+            rgba(0, 170, 255, 0.9), 
+            rgba(0, 120, 220, 0.9));
+    }
+    
+    .speed-btn:active {
+        transform: translateY(0);
+    }
+    
+    .speed-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .speed-btn:disabled:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .results-panel {
+        background: rgba(0, 255, 150, 0.1);
+        border: 2px solid rgba(0, 255, 150, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        display: none;
+    }
+    
+    .results-panel.show {
+        display: block;
+        animation: slideUp 0.5s ease;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .final-score {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #00ff96;
+        text-shadow: 0 0 15px rgba(0, 255, 150, 0.6);
+        margin: 1rem 0;
+    }
+    
+    .new-record {
+        background: linear-gradient(45deg, #ff6b35, #f7931e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 1.2rem;
+        font-weight: bold;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+        from { filter: brightness(1); }
+        to { filter: brightness(1.3); }
+    }
+    
+    .instructions {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+        opacity: 0.9;
+    }
+    
+    /* Game state indicators */
+    .game-ready .click-area {
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .game-active .timer-display {
+        animation: timerPulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    @keyframes timerPulse {
+        0%, 100% { color: #00aaff; }
+        50% { color: #ff4444; }
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .click-area {
+            width: 250px;
+            height: 250px;
+        }
+        
+        .timer-display {
+            font-size: 3rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .control-buttons {
+            flex-direction: column;
+        }
+        
+        .speed-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="speed-container">
+    <!-- Instructions -->
+    <div class="speed-card instructions">
+        <h3>🎯 How to Play</h3>
+        <p>Click the START button, then click the blue circle as fast as you can for 10 seconds!</p>
+        <p>Your clicking speed will be calculated in clicks per second.</p>
+    </div>
+    
+    <!-- Timer and Click Area -->
+    <div class="speed-card game-ready" id="gameCard">
+        <div class="timer-display" id="timerDisplay">10.00</div>
+        
+        <div class="click-area" id="clickArea">
+            <span id="clickText">Click START to begin!</span>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="clickCount">0</div>
+                <div class="stat-label">Total Clicks</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="currentSpeed">0.00</div>
+                <div class="stat-label">Current CPS</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="personalBest">{{ "%.2f"|format(personal_best) }}</div>
+                <div class="stat-label">Personal Best</div>
+            </div>
+        </div>
+        
+        <!-- Control Buttons -->
+        <div class="control-buttons">
+            <button class="speed-btn" id="startBtn" onclick="startGame()">
+                🚀 START GAME
+            </button>
+            <button class="speed-btn" id="resetBtn" onclick="resetStats()" disabled>
+                🔄 RESET BEST
+            </button>
+        </div>
+    </div>
+    
+    <!-- Results Panel -->
+    <div class="speed-card results-panel" id="resultsPanel">
+        <h3>🏁 Game Complete!</h3>
+        <div class="final-score" id="finalScore">0.00 CPS</div>
+        <div id="recordMessage"></div>
+        <button class="speed-btn" onclick="playAgain()">
+            ⚡ PLAY AGAIN
+        </button>
+    </div>
+</div>
+
+<script>
+// Game state variables
+let gameState = 'ready'; // 'ready', 'active', 'finished'
+let startTime = null;
+let endTime = null;
+let clickCount = 0;
+let gameTimer = null;
+let updateTimer = null;
+
+// DOM elements
+const timerDisplay = document.getElementById('timerDisplay');
+const clickArea = document.getElementById('clickArea');
+const clickText = document.getElementById('clickText');
+const clickCountEl = document.getElementById('clickCount');
+const currentSpeedEl = document.getElementById('currentSpeed');
+const personalBestEl = document.getElementById('personalBest');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const gameCard = document.getElementById('gameCard');
+const resultsPanel = document.getElementById('resultsPanel');
+const finalScore = document.getElementById('finalScore');
+const recordMessage = document.getElementById('recordMessage');
+
+// Initialize game
+function initGame() {
+    gameState = 'ready';
+    clickCount = 0;
+    startTime = null;
+    endTime = null;
+    
+    timerDisplay.textContent = '10.00';
+    clickText.textContent = 'Click START to begin!';
+    clickCountEl.textContent = '0';
+    currentSpeedEl.textContent = '0.00';
+    
+    clickArea.classList.remove('disabled');
+    gameCard.className = 'speed-card game-ready';
+    startBtn.disabled = false;
+    startBtn.textContent = '🚀 START GAME';
+    
+    resultsPanel.classList.remove('show');
+    
+    // Clear any existing timers
+    if (gameTimer) clearTimeout(gameTimer);
+    if (updateTimer) clearInterval(updateTimer);
+}
+
+// Start the game
+function startGame() {
+    if (gameState !== 'ready') return;
+    
+    gameState = 'active';
+    startTime = Date.now();
+    endTime = startTime + 10000; // 10 seconds
+    clickCount = 0;
+    
+    clickText.textContent = 'CLICK NOW!';
+    startBtn.disabled = true;
+    startBtn.textContent = '⏳ GAME ACTIVE';
+    gameCard.className = 'speed-card game-active';
+    
+    // Start the countdown timer
+    updateTimer = setInterval(updateDisplay, 10); // Update every 10ms
+    
+    // End game after 10 seconds
+    gameTimer = setTimeout(endGame, 10000);
+}
+
+// Handle click area clicks
+function handleClick(event) {
+    if (gameState !== 'active') return;
+    
+    clickCount++;
+    clickCountEl.textContent = clickCount;
+    
+    // Create ripple effect
+    createRipple(event);
+    
+    // Update current speed
+    const elapsed = (Date.now() - startTime) / 1000;
+    const currentCPS = clickCount / elapsed;
+    currentSpeedEl.textContent = currentCPS.toFixed(2);
+}
+
+// Create click ripple effect
+function createRipple(event) {
+    const ripple = document.createElement('span');
+    ripple.classList.add('click-ripple');
+    
+    const rect = clickArea.getBoundingClientRect();
+    const size = 50;
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+    
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    
+    clickArea.appendChild(ripple);
+    
+    // Remove ripple after animation
+    setTimeout(() => {
+        ripple.remove();
+    }, 600);
+}
+
+// Update timer display
+function updateDisplay() {
+    const now = Date.now();
+    const remaining = Math.max(0, (endTime - now) / 1000);
+    timerDisplay.textContent = remaining.toFixed(2);
+    
+    if (remaining <= 0) {
+        endGame();
+    }
+}
+
+// End the game
+function endGame() {
+    gameState = 'finished';
+    
+    // Clear timers
+    if (gameTimer) clearTimeout(gameTimer);
+    if (updateTimer) clearInterval(updateTimer);
+    
+    // Calculate final score
+    const finalCPS = clickCount / 10; // 10 seconds total
+    finalScore.textContent = finalCPS.toFixed(2) + ' CPS';
+    
+    // Update UI
+    timerDisplay.textContent = '0.00';
+    clickText.textContent = 'Game Over!';
+    clickArea.classList.add('disabled');
+    gameCard.className = 'speed-card';
+    startBtn.textContent = '🚀 START GAME';
+    
+    // Save score to server
+    saveScore(finalCPS);
+    
+    // Show results
+    setTimeout(() => {
+        resultsPanel.classList.add('show');
+    }, 500);
+}
+
+// Save score to server
+async function saveScore(cps) {
+    try {
+        const response = await fetch('/clickspeed/api/save_score', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                clicks_per_second: cps
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            personalBestEl.textContent = data.personal_best.toFixed(2);
+            resetBtn.disabled = false;
+            
+            if (data.new_record) {
+                recordMessage.innerHTML = '<div class="new-record">🎉 NEW PERSONAL RECORD! 🎉</div>';
+            } else {
+                recordMessage.innerHTML = '<div>Keep practicing to beat your best!</div>';
+            }
+        }
+    } catch (error) {
+        console.error('Error saving score:', error);
+        recordMessage.innerHTML = '<div>Score saved locally</div>';
+    }
+}
+
+// Reset personal best
+async function resetStats() {
+    if (!confirm('Are you sure you want to reset your personal best?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/clickspeed/api/reset_best', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            personalBestEl.textContent = '0.00';
+            resetBtn.disabled = true;
+            alert('Personal best reset successfully!');
+        }
+    } catch (error) {
+        console.error('Error resetting stats:', error);
+        alert('Error resetting stats');
+    }
+}
+
+// Play again
+function playAgain() {
+    initGame();
+}
+
+// Event listeners
+clickArea.addEventListener('click', handleClick);
+
+// Prevent right-click context menu on click area
+clickArea.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initGame();
+    console.log('⚡ Click Speed Calculator initialized');
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && gameState === 'ready') {
+        e.preventDefault();
+        startGame();
+    } else if (e.code === 'Space' && gameState === 'active') {
+        e.preventDefault();
+        handleClick({ clientX: clickArea.offsetLeft + clickArea.offsetWidth/2, 
+                     clientY: clickArea.offsetTop + clickArea.offsetHeight/2 });
+    }
+});
+</script>
+{% endblock %}

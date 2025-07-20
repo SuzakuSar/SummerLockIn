@@ -34,6 +34,9 @@ def create_app():
     from .rock_paper_scissors.rock_paper_scissors import rock_paper_scissors
     from .block_blast.block_blast import block_blast
     from .wordle import wordle
+    from .typing_test.typing_test import typing_test
+    from .click_speed.click_speed import click_speed
+
     
     # Register blueprints with URL prefixes
     app.register_blueprint(home, url_prefix='/')
@@ -51,6 +54,9 @@ def create_app():
     app.register_blueprint(rock_paper_scissors, url_prefix='/rockpaperscissors')
     app.register_blueprint(block_blast, url_prefix='/blockblast') # clean up
     app.register_blueprint(wordle, url_prefix='/wordle') # fix; submitted words labeled as "not a valid word"
+    app.register_blueprint(typing_test, url_prefix='/typingtest') #doesn't work at all
+    app.register_blueprint(click_speed, url_prefix='/clickspeed')
+
     
     
 

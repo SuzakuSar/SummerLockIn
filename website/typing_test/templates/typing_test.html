@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+
+{% block title %}Typing Test - SUMMERLOCKIN{% endblock %}
+
+{% block header %}⌨️ Typing Speed Test ⌨️{% endblock %}
+
+{% block head %}
+<style>
+    /* Retro terminal theme */
+    :root {
+        --terminal-bg: #0a0a0a;
+        --terminal-text: #00ff00;
+        --terminal-cursor: #ffffff;
+        --terminal-error: #ff4444;
+        --terminal-correct: #44ff44;
+        --terminal-border: #333333;
+    }
+    
+    .typing-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(10, 10, 10, 0.95) 0%, 
+            rgba(20, 20, 20, 0.95) 100%);
+        border: 2px solid var(--terminal-border);
+        border-radius: 10px;
+        font-family: 'Courier New', monospace;
+        box-shadow: 
+            0 0 20px rgba(0, 255, 0, 0.1),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 5px;
+        border: 1px solid var(--terminal-border);
+    }
+    
+    .stat-item {
+        text-align: center;
+        color: var(--terminal-text);
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-shadow: 0 0 5px currentColor;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    
+    .text-display {
+        background: var(--terminal-bg);
+        border: 2px solid var(--terminal-border);
+        border-radius: 5px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.7);
+        min-height: 150px;
+        position: relative;
+        overflow-wrap: break-word;
+    }
+    
+    .text-char {
+        position: relative;
+    }
+    
+    .text-char.correct {
+        background: rgba(68, 255, 68, 0.2);
+        color: var(--terminal-correct);
+    }
+    
+    .text-char.incorrect {
+        background: rgba(255, 68, 68, 0.2);
+        color: var(--terminal-error);
+    }
+    
+    .text-char.current {
+        background: var(--terminal-cursor);
+        color: black;
+        animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+        50% { opacity: 0.5; }
+    }
+    
+    .typing-input {
+        width: 100%;
+        background: var(--terminal-bg);
+        border: 2px solid var(--terminal-border);
+        border-radius: 5px;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        color: var(--terminal-text);
+        resize: none;
+        outline: none;
+        min-height: 100px;
+    }
+    
+    .typing-input:focus {
+        border-color: var(--terminal-text);
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+    
+    .typing-input:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .control-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 1.5rem 0;
+        flex-wrap: wrap;
+    }
+    
+    .terminal-btn {
+        background: linear-gradient(135deg, 
+            rgba(0, 255, 0, 0.2), 
+            rgba(0, 200, 0, 0.2));
+        color: var(--terminal-text);
+        border: 1px solid var(--terminal-text);
+        padding: 0.8rem 1.5rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .terminal-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, 
+            rgba(0, 255, 0, 0.3), 
+            rgba(0, 200, 0, 0.3));
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+        text-shadow: 0 0 5px currentColor;
+    }
+    
+    .terminal-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .terminal-btn.primary {
+        background: linear-gradient(135deg, 
+            rgba(0, 255, 0, 0.4), 
+            rgba(0, 200, 0, 0.4));
+        font-weight: bold;
+    }
+    
+    .timer-display {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 1rem 0;
+        color: var(--terminal-text);
+        text-shadow: 0 0 10px currentColor;
+    }
+    
+    .timer-display.warning {
+        color: #ffaa00;
+        animation: pulse 0.5s infinite alternate;
+    }
+    
+    .timer-display.danger {
+        color: var(--terminal-error);
+        animation: pulse 0.3s infinite alternate;
+    }
+    
+    @keyframes pulse {
+        from { opacity: 1; }
+        to { opacity: 0.7; }
+    }
+    
+    .results-panel {
+        background: rgba(0, 255, 0, 0.1);
+        border: 2px solid var(--terminal-text);
+        border-radius: 5px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        text-align: center;
+        display: none;
+    }
+    
+    .results-panel.show {
+        display: block;
+        animation: slideIn 0.5s ease;
+    }
+    
+    @keyframes slideIn {
+        from { 
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to { 
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .result-score {
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--terminal-text);
+        text-shadow: 0 0 15px currentColor;
+        margin-bottom: 0.5rem;
+    }
+    
+    .result-label {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 1rem;
+    }
+    
+    .test-status {
+        text-align: center;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 5px;
+        font-weight: bold;
+        display: none;
+    }
+    
+    .test-status.ready {
+        background: rgba(0, 255, 0, 0.2);
+        border: 1px solid var(--terminal-text);
+        color: var(--terminal-text);
+        display: block;
+    }
+    
+    .test-status.active {
+        background: rgba(255, 255, 0, 0.2);
+        border: 1px solid #ffff00;
+        color: #ffff00;
+        display: block;
+    }
+    
+    .test-status.finished {
+        background: rgba(0, 255, 0, 0.3);
+        border: 1px solid var(--terminal-text);
+        color: var(--terminal-text);
+        display: block;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .typing-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .stats-bar {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .text-display {
+            font-size: 1rem;
+            padding: 1rem;
+        }
+        
+        .typing-input {
+            font-size: 1rem;
+        }
+        
+        .control-buttons {
+            flex-direction: column;
+        }
+        
+        .terminal-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="typing-container">
+    <!-- Test Status -->
+    <div class="test-status ready" id="testStatus">
+        Ready to start typing test. Click "Start Test" when ready!
+    </div>
+    
+    <!-- Statistics Bar -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value" id="wpmDisplay">0</div>
+            <div class="stat-label">WPM</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="accuracyDisplay">100</div>
+            <div class="stat-label">Accuracy %</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="timeDisplay">60</div>
+            <div class="stat-label">Time Left</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="progressDisplay">0</div>
+            <div class="stat-label">Progress %</div>
+        </div>
+    </div>
+    
+    <!-- Timer Display -->
+    <div class="timer-display" id="timerDisplay">01:00</div>
+    
+    <!-- Text to Type -->
+    <div class="text-display" id="textDisplay">{{ text_to_type }}</div>
+    
+    <!-- Typing Input -->
+    <textarea 
+        class="typing-input" 
+        id="typingInput" 
+        placeholder="Click 'Start Test' then begin typing here..."
+        disabled
+    ></textarea>
+    
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+        <button class="terminal-btn primary" id="startBtn" onclick="startTest()">
+            Start Test
+        </button>
+        <button class="terminal-btn" id="resetBtn" onclick="resetTest()">
+            Reset
+        </button>
+        <button class="terminal-btn" id="newTextBtn" onclick="getNewText()">
+            New Text
+        </button>
+    </div>
+    
+    <!-- Results Panel -->
+    <div class="results-panel" id="resultsPanel">
+        <div class="result-score" id="finalWPM">0</div>
+        <div class="result-label">Words Per Minute</div>
+        
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="finalAccuracy">0</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalTime">0</div>
+                <div class="stat-label">Time Taken</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalChars">0</div>
+                <div class="stat-label">Characters</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="correctChars">0</div>
+                <div class="stat-label">Correct</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+let testActive = false;
+let testTimer = null;
+let timeLeft = 60;
+let startTime = null;
+let originalText = "{{ text_to_type|tojson }}";
+
+const elements = {
+    typingInput: document.getElementById('typingInput'),
+    textDisplay: document.getElementById('textDisplay'),
+    startBtn: document.getElementById('startBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    newTextBtn: document.getElementById('newTextBtn'),
+    testStatus: document.getElementById('testStatus'),
+    resultsPanel: document.getElementById('resultsPanel'),
+    timerDisplay: document.getElementById('timerDisplay'),
+    wpmDisplay: document.getElementById('wpmDisplay'),
+    accuracyDisplay: document.getElementById('accuracyDisplay'),
+    timeDisplay: document.getElementById('timeDisplay'),
+    progressDisplay: document.getElementById('progressDisplay')
+};
+
+// Start the typing test
+async function startTest() {
+    try {
+        const response = await fetch('{{ url_for("typing_test.start_test") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            testActive = true;
+            startTime = Date.now();
+            timeLeft = 60;
+            
+            elements.typingInput.disabled = false;
+            elements.typingInput.placeholder = "Start typing the text above...";
+            elements.typingInput.focus();
+            elements.startBtn.disabled = true;
+            
+            updateTestStatus('active', 'Test in progress - Type as fast and accurately as you can!');
+            
+            startTimer();
+        }
+    } catch (error) {
+        console.error('Error starting test:', error);
+    }
+}
+
+// Start the countdown timer
+function startTimer() {
+    testTimer = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft <= 0) {
+            finishTest();
+        }
+    }, 1000);
+}
+
+// Update timer display
+function updateTimerDisplay() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    elements.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    elements.timeDisplay.textContent = timeLeft;
+    
+    // Change color based on time remaining
+    elements.timerDisplay.className = '';
+    if (timeLeft <= 10) {
+        elements.timerDisplay.classList.add('danger');
+    } else if (timeLeft <= 20) {
+        elements.timerDisplay.classList.add('warning');
+    }
+}
+
+// Finish the test
+async function finishTest() {
+    if (!testActive) return;
+    
+    testActive = false;
+    clearInterval(testTimer);
+    
+    elements.typingInput.disabled = true;
+    elements.startBtn.disabled = false;
+    
+    updateTestStatus('finished', 'Test completed! Check your results below.');
+    
+    // Submit results
+    try {
+        const response = await fetch('{{ url_for("typing_test.submit_test") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                typed_text: elements.typingInput.value
+            })
+        });
+        
+        if (response.ok) {
+            const results = await response.json();
+            displayResults(results);
+        }
+    } catch (error) {
+        console.error('Error submitting test:', error);
+    }
+}
+
+// Display test results
+function displayResults(results) {
+    document.getElementById('finalWPM').textContent = results.wpm;
+    document.getElementById('finalAccuracy').textContent = results.accuracy + '%';
+    document.getElementById('finalTime').textContent = results.time_taken + 's';
+    document.getElementById('totalChars').textContent = results.total_chars;
+    document.getElementById('correctChars').textContent = results.correct_chars;
+    
+    elements.resultsPanel.classList.add('show');
+}
+
+// Reset the test
+function resetTest() {
+    testActive = false;
+    clearInterval(testTimer);
+    timeLeft = 60;
+    
+    elements.typingInput.value = '';
+    elements.typingInput.disabled = true;
+    elements.typingInput.placeholder = "Click 'Start Test' then begin typing here...";
+    elements.startBtn.disabled = false;
+    
+    updateTestStatus('ready', 'Ready to start typing test. Click "Start Test" when ready!');
+    
+    elements.resultsPanel.classList.remove('show');
+    elements.timerDisplay.textContent = '01:00';
+    elements.timerDisplay.className = '';
+    
+    // Reset stats
+    elements.wpmDisplay.textContent = '0';
+    elements.accuracyDisplay.textContent = '100';
+    elements.timeDisplay.textContent = '60';
+    elements.progressDisplay.textContent = '0';
+    
+    // Reset text display
+    updateTextHighlighting();
+}
+
+// Get new text
+async function getNewText() {
+    try {
+        const response = await fetch('{{ url_for("typing_test.new_text") }}');
+        if (response.ok) {
+            const data = await response.json();
+            originalText = data.text;
+            elements.textDisplay.textContent = originalText;
+            resetTest();
+        }
+    } catch (error) {
+        console.error('Error getting new text:', error);
+    }
+}
+
+// Update test status
+function updateTestStatus(status, message) {
+    elements.testStatus.className = `test-status ${status}`;
+    elements.testStatus.textContent = message;
+}
+
+// Update text highlighting and stats
+function updateTextHighlighting() {
+    const typedText = elements.typingInput.value;
+    const textChars = originalText.split('');
+    
+    let html = '';
+    let correctChars = 0;
+    
+    for (let i = 0; i < textChars.length; i++) {
+        let className = '';
+        
+        if (i < typedText.length) {
+            if (typedText[i] === textChars[i]) {
+                className = 'correct';
+                correctChars++;
+            } else {
+                className = 'incorrect';
+            }
+        } else if (i === typedText.length && testActive) {
+            className = 'current';
+        }
+        
+        html += `<span class="text-char ${className}">${textChars[i]}</span>`;
+    }
+    
+    elements.textDisplay.innerHTML = html;
+    
+    // Update real-time stats
+    if (testActive && startTime) {
+        const currentTime = (Date.now() - startTime) / 1000;
+        const wordsTyped = typedText.length / 5;
+        const currentWPM = Math.round((wordsTyped / currentTime) * 60);
+        const accuracy = typedText.length > 0 ? Math.round((correctChars / typedText.length) * 100) : 100;
+        const progress = Math.round((typedText.length / originalText.length) * 100);
+        
+        elements.wpmDisplay.textContent = currentWPM;
+        elements.accuracyDisplay.textContent = accuracy;
+        elements.progressDisplay.textContent = Math.min(progress, 100);
+    }
+}
+
+// Event listeners
+elements.typingInput.addEventListener('input', updateTextHighlighting);
+
+// Prevent copy/paste
+elements.typingInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+});
+
+// Handle Enter key to start test
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !testActive && !elements.startBtn.disabled) {
+        startTest();
+    }
+    
+    // Prevent tab from leaving input during test
+    if (e.key === 'Tab' && testActive) {
+        e.preventDefault();
+        elements.typingInput.focus();
+    }
+});
+
+// Initialize
+updateTextHighlighting();
+
+console.log('⌨️ Typing Test initialized');
+</script>
+{% endblock %}

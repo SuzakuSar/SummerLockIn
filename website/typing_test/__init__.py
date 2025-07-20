@@ -1,0 +1,1 @@
+from .typing_test import typing_test
