@@ -573,6 +573,12 @@
                         <a href="{{ url_for('dino_runner.index') }}" class="nav-dropdown-link {{ 'active' if request.endpoint == 'dino_runner.index' else '' }}" data-search="dinosaur runner game jump">
                             <span>🦕</span>Cosmic Dino Runner
                         </a>
+                        <a href="{{ url_for('snake_game.index') }}" class="nav-dropdown-link {{ 'active' if request.endpoint == 'snake_game.index' else '' }}" data-search="snake game">
+                            <span>🐍</span>Snake Game
+                        </a>
+                        <a href="{{ url_for('tic_tac_toe.index') }}" class="nav-link {{ 'active' if request.endpoint == 'tic_tac_toe.index' else '' }}">
+                            <span>⚡</span>Tic Tac Toe
+                        </a>
                     </div>
                 </div>
             </div>

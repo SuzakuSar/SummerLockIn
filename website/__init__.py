@@ -29,6 +29,8 @@ def create_app():
     from .space_memory import space_memory
     from .multiplication_trainer.multiplication_trainer import multiplication_trainer
     from .dino_runner.dino_runner import dino_runner
+    from .snake_game.snake_game import snake_game
+    from .tic_tac_toe.tic_tac_toe import tic_tac_toe
     
     # Register blueprints with URL prefixes
     app.register_blueprint(home, url_prefix='/')
@@ -41,6 +43,9 @@ def create_app():
     app.register_blueprint(space_memory, url_prefix='/spacememory')
     app.register_blueprint(multiplication_trainer, url_prefix='/mountainacademy')
     app.register_blueprint(dino_runner, url_prefix='/dino-runner')
+    app.register_blueprint(snake_game, url_prefix='/snakegame') #fix
+    app.register_blueprint(tic_tac_toe, url_prefix='/tictactoe')
+    
     
     # Add any new blueprints here following the same pattern:
     # from .new_feature import new_feature

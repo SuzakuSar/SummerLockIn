@@ -1,0 +1,572 @@
+<!-- File: website/tic_tac_toe/templates/tic_tac_toe.html -->
+{% extends 'base.html' %}
+
+{% block title %}Cosmic Tic Tac Toe{% endblock %}
+
+{% block header %}🌌 Cosmic Tic Tac Toe 🌌{% endblock %}
+
+{% block head %}
+<style>
+    .tic-tac-toe-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 200px);
+        padding: 2rem;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .game-panel {
+        background: linear-gradient(135deg, 
+            rgba(15, 15, 35, 0.9) 0%, 
+            rgba(25, 25, 55, 0.8) 50%, 
+            rgba(35, 25, 65, 0.7) 100%);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(138, 43, 226, 0.4);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        max-width: 500px;
+        width: 100%;
+    }
+    
+    .game-status {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .current-player {
+        font-size: 1.5rem;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+        margin-bottom: 1rem;
+    }
+    
+    .game-message {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        min-height: 1.5rem;
+    }
+    
+    .game-board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 8px;
+        width: 300px;
+        height: 300px;
+        margin: 0 auto 2rem auto;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .game-cell {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 100%);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-cell:hover:not(.occupied) {
+        background: rgba(138, 43, 226, 0.2);
+        border-color: rgba(138, 43, 226, 0.5);
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+    }
+    
+    .game-cell.occupied {
+        cursor: not-allowed;
+    }
+    
+    .game-cell.x {
+        color: #ff6b6b;
+        text-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+    }
+    
+    .game-cell.o {
+        color: #4ecdc4;
+        text-shadow: 0 0 15px rgba(78, 205, 196, 0.8);
+    }
+    
+    .game-cell.winner {
+        background: rgba(255, 215, 0, 0.3) !important;
+        border-color: rgba(255, 215, 0, 0.8) !important;
+        animation: winnerPulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes winnerPulse {
+        0%, 100% { 
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        50% { 
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+    }
+    
+    .game-cell::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.4s, height 0.4s;
+        z-index: -1;
+    }
+    
+    .game-cell:hover::before {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .cosmic-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: 'Times New Roman', Times, serif;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cosmic-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 8px 25px rgba(138, 43, 226, 0.4),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+    
+    .cosmic-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    
+    .winner-announcement {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 20, 0.95) 0%, 
+            rgba(20, 20, 40, 0.95) 100%);
+        border: 3px solid rgba(255, 215, 0, 0.8);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        z-index: 1000;
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.8),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: transform 0.5s ease;
+    }
+    
+    .winner-announcement.show {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .winner-text {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+    
+    .winner-subtext {
+        font-size: 1.1rem;
+        opacity: 0.8;
+        margin-bottom: 2rem;
+    }
+    
+    .game-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.8rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-top: 0.3rem;
+    }
+    
+    @media (max-width: 768px) {
+        .tic-tac-toe-container {
+            padding: 1rem;
+        }
+        
+        .game-panel {
+            padding: 1.5rem;
+        }
+        
+        .game-board {
+            width: 280px;
+            height: 280px;
+        }
+        
+        .game-cell {
+            font-size: 2.5rem;
+        }
+        
+        .winner-announcement {
+            padding: 2rem;
+            margin: 1rem;
+            max-width: calc(100vw - 2rem);
+        }
+        
+        .winner-text {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="tic-tac-toe-container">
+    <div class="game-panel">
+        <!-- Game Status -->
+        <div class="game-status">
+            <div class="current-player" id="currentPlayer">
+                Player <span id="playerSymbol">{{ game_state.current_player }}</span>'s Turn
+            </div>
+            <div class="game-message" id="gameMessage">
+                Click any empty cell to make your move
+            </div>
+        </div>
+        
+        <!-- Game Stats -->
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="movesCount">{{ game_state.moves_count }}</div>
+                <div class="stat-label">Moves</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="currentRound">1</div>
+                <div class="stat-label">Round</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="gameStatus">Active</div>
+                <div class="stat-label">Status</div>
+            </div>
+        </div>
+        
+        <!-- Game Board -->
+        <div class="game-board" id="gameBoard">
+            {% for row_idx in range(3) %}
+                {% for col_idx in range(3) %}
+                    <div class="game-cell" 
+                         data-row="{{ row_idx }}" 
+                         data-col="{{ col_idx }}"
+                         id="cell-{{ row_idx }}-{{ col_idx }}">
+                        {% if game_state.board[row_idx][col_idx] %}
+                            {{ game_state.board[row_idx][col_idx] }}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        
+        <!-- Game Controls -->
+        <div class="game-controls">
+            <button class="cosmic-btn" onclick="resetGame()" id="resetBtn">
+                🌟 New Game
+            </button>
+            <button class="cosmic-btn" onclick="getGameState()" id="refreshBtn">
+                🔄 Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Winner Announcement Modal -->
+<div class="winner-announcement" id="winnerModal">
+    <div class="winner-text" id="winnerText"></div>
+    <div class="winner-subtext" id="winnerSubtext"></div>
+    <button class="cosmic-btn" onclick="closeWinnerModal()">
+        ✨ Continue Playing
+    </button>
+</div>
+
+<script>
+let gameState = {{ game_state|tojson }};
+let isProcessingMove = false;
+
+// Initialize the game board display
+function initializeBoard() {
+    const cells = document.querySelectorAll('.game-cell');
+    cells.forEach(cell => {
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+        const value = gameState.board[row][col];
+        
+        cell.textContent = value;
+        cell.className = 'game-cell';
+        
+        if (value) {
+            cell.classList.add('occupied', value.toLowerCase());
+        }
+        
+        // Add click event listener
+        cell.addEventListener('click', () => makeMove(row, col));
+    });
+    
+    updateGameStatus();
+}
+
+// Update game status display
+function updateGameStatus() {
+    const playerSymbol = document.getElementById('playerSymbol');
+    const gameMessage = document.getElementById('gameMessage');
+    const movesCount = document.getElementById('movesCount');
+    const gameStatus = document.getElementById('gameStatus');
+    const currentPlayer = document.getElementById('currentPlayer');
+    
+    movesCount.textContent = gameState.moves_count;
+    
+    if (gameState.game_over) {
+        currentPlayer.style.display = 'none';
+        gameStatus.textContent = 'Finished';
+        
+        if (gameState.winner === 'Draw') {
+            gameMessage.textContent = "🌌 It's a cosmic draw! 🌌";
+            gameMessage.style.color = 'rgba(255, 255, 255, 0.8)';
+        } else {
+            gameMessage.innerHTML = `🎉 Player <span style="color: ${gameState.winner === 'X' ? '#ff6b6b' : '#4ecdc4'}">${gameState.winner}</span> wins! 🎉`;
+            
+            // Show winner modal
+            showWinnerModal(gameState.winner);
+        }
+    } else {
+        currentPlayer.style.display = 'block';
+        gameStatus.textContent = 'Active';
+        playerSymbol.textContent = gameState.current_player;
+        playerSymbol.style.color = gameState.current_player === 'X' ? '#ff6b6b' : '#4ecdc4';
+        gameMessage.textContent = 'Click any empty cell to make your move';
+        gameMessage.style.color = 'rgba(255, 255, 255, 0.9)';
+    }
+}
+
+// Make a move
+async function makeMove(row, col) {
+    if (isProcessingMove || gameState.game_over) return;
+    
+    const cell = document.getElementById(`cell-${row}-${col}`);
+    if (cell.classList.contains('occupied')) return;
+    
+    isProcessingMove = true;
+    document.body.classList.add('loading');
+    
+    try {
+        const response = await fetch('{{ url_for("tic_tac_toe.make_move") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ row: row, col: col })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            gameState = data.game_state;
+            initializeBoard();
+            
+            // Add winning cell animation if game is over
+            if (gameState.game_over && gameState.winner !== 'Draw') {
+                highlightWinningCells();
+            }
+        } else {
+            alert(data.message || 'Invalid move!');
+        }
+    } catch (error) {
+        console.error('Error making move:', error);
+        alert('Error making move. Please try again.');
+    }
+    
+    isProcessingMove = false;
+    document.body.classList.remove('loading');
+}
+
+// Reset the game
+async function resetGame() {
+    const resetBtn = document.getElementById('resetBtn');
+    resetBtn.disabled = true;
+    resetBtn.textContent = '🌟 Resetting...';
+    
+    try {
+        const response = await fetch('{{ url_for("tic_tac_toe.reset_game") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            gameState = data.game_state;
+            initializeBoard();
+            closeWinnerModal();
+        }
+    } catch (error) {
+        console.error('Error resetting game:', error);
+        alert('Error resetting game. Please try again.');
+    }
+    
+    resetBtn.disabled = false;
+    resetBtn.textContent = '🌟 New Game';
+}
+
+// Get current game state
+async function getGameState() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = '🔄 Refreshing...';
+    
+    try {
+        const response = await fetch('{{ url_for("tic_tac_toe.get_game_state") }}');
+        const data = await response.json();
+        
+        gameState = data;
+        initializeBoard();
+    } catch (error) {
+        console.error('Error refreshing game state:', error);
+    }
+    
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = '🔄 Refresh';
+}
+
+// Show winner modal
+function showWinnerModal(winner) {
+    const modal = document.getElementById('winnerModal');
+    const winnerText = document.getElementById('winnerText');
+    const winnerSubtext = document.getElementById('winnerSubtext');
+    
+    if (winner === 'Draw') {
+        winnerText.textContent = '🌌 Cosmic Draw! 🌌';
+        winnerSubtext.textContent = 'The universe remains in perfect balance';
+        winnerText.style.color = 'rgba(255, 255, 255, 0.9)';
+    } else {
+        winnerText.textContent = `🎉 Player ${winner} Wins! 🎉`;
+        winnerSubtext.textContent = 'Congratulations on your cosmic victory!';
+        winnerText.style.color = winner === 'X' ? '#ff6b6b' : '#4ecdc4';
+    }
+    
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 1000);
+}
+
+// Close winner modal
+function closeWinnerModal() {
+    const modal = document.getElementById('winnerModal');
+    modal.classList.remove('show');
+}
+
+// Highlight winning cells
+function highlightWinningCells() {
+    const board = gameState.board;
+    const winner = gameState.winner;
+    
+    // Check rows
+    for (let row = 0; row < 3; row++) {
+        if (board[row][0] === board[row][1] && board[row][1] === board[row][2] && board[row][0] === winner) {
+            for (let col = 0; col < 3; col++) {
+                document.getElementById(`cell-${row}-${col}`).classList.add('winner');
+            }
+            return;
+        }
+    }
+    
+    // Check columns
+    for (let col = 0; col < 3; col++) {
+        if (board[0][col] === board[1][col] && board[1][col] === board[2][col] && board[0][col] === winner) {
+            for (let row = 0; row < 3; row++) {
+                document.getElementById(`cell-${row}-${col}`).classList.add('winner');
+            }
+            return;
+        }
+    }
+    
+    // Check diagonals
+    if (board[0][0] === board[1][1] && board[1][1] === board[2][2] && board[0][0] === winner) {
+        for (let i = 0; i < 3; i++) {
+            document.getElementById(`cell-${i}-${i}`).classList.add('winner');
+        }
+        return;
+    }
+    
+    if (board[0][2] === board[1][1] && board[1][1] === board[2][0] && board[0][2] === winner) {
+        document.getElementById('cell-0-2').classList.add('winner');
+        document.getElementById('cell-1-1').classList.add('winner');
+        document.getElementById('cell-2-0').classList.add('winner');
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeBoard();
+    console.log('🎯 Cosmic Tic Tac Toe initialized!');
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('winnerModal');
+    if (event.target === modal) {
+        closeWinnerModal();
+    }
+});
+</script>
+{% endblock %}
