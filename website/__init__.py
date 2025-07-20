@@ -32,6 +32,7 @@ def create_app():
     from .snake_game.snake_game import snake_game
     from .tic_tac_toe.tic_tac_toe import tic_tac_toe
     from .rock_paper_scissors.rock_paper_scissors import rock_paper_scissors
+    from .block_blast.block_blast import block_blast
     
     # Register blueprints with URL prefixes
     app.register_blueprint(home, url_prefix='/')
@@ -44,11 +45,13 @@ def create_app():
     app.register_blueprint(space_memory, url_prefix='/spacememory')
     app.register_blueprint(multiplication_trainer, url_prefix='/mountainacademy')
     app.register_blueprint(dino_runner, url_prefix='/dino-runner')
-    app.register_blueprint(snake_game, url_prefix='/snakegame') #fix
+    app.register_blueprint(snake_game, url_prefix='/snakegame') # fix
     app.register_blueprint(tic_tac_toe, url_prefix='/tictactoe')
     app.register_blueprint(rock_paper_scissors, url_prefix='/rockpaperscissors')
+    app.register_blueprint(block_blast, url_prefix='/blockblast') # clean up
     
     
+
     # Add any new blueprints here following the same pattern:
     # from .new_feature import new_feature
     # app.register_blueprint(new_feature, url_prefix='/newfeature')

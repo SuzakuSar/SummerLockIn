@@ -1,0 +1,639 @@
+<!-- File: website/block_blast/templates/block_blast.html -->
+{% extends 'base.html' %}
+
+{% block title %}Block Blast - SUMMERLOCKIN{% endblock %}
+
+{% block header %}🔳 Cosmic Block Blast 🔳{% endblock %}
+
+{% block head %}
+<style>
+    .block-blast-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 20, 0.9) 0%, 
+            rgba(20, 0, 40, 0.8) 50%, 
+            rgba(40, 0, 60, 0.7) 100%);
+    }
+
+    .game-ui {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .score-panel {
+        background: rgba(138, 43, 226, 0.2);
+        border: 2px solid rgba(138, 43, 226, 0.5);
+        border-radius: 15px;
+        padding: 1rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+
+    .score-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.8);
+        margin: 0;
+    }
+
+    .score-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .game-area {
+        display: flex;
+        gap: 2rem;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .grid-container {
+        background: rgba(0, 0, 0, 0.6);
+        border: 3px solid rgba(138, 43, 226, 0.6);
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 
+            0 0 20px rgba(138, 43, 226, 0.4),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .game-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 30px);
+        grid-template-rows: repeat(10, 30px);
+        gap: 2px;
+        background: rgba(20, 20, 40, 0.8);
+        padding: 5px;
+        border-radius: 5px;
+    }
+
+    .grid-cell {
+        width: 30px;
+        height: 30px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .grid-cell.filled {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.9));
+        border-color: rgba(138, 43, 226, 1);
+        box-shadow: 
+            0 0 5px rgba(138, 43, 226, 0.6),
+            inset 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .grid-cell.valid-drop {
+        background: rgba(0, 255, 0, 0.3);
+        border-color: rgba(0, 255, 0, 0.8);
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+
+    .grid-cell.preview {
+        background: rgba(255, 255, 0, 0.4);
+        border-color: rgba(255, 255, 0, 0.8);
+        box-shadow: 0 0 8px rgba(255, 255, 0, 0.5);
+    }
+
+    .pieces-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 150px;
+    }
+
+    .pieces-title {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 5px rgba(138, 43, 226, 0.5);
+    }
+
+    .piece-container {
+        background: rgba(138, 43, 226, 0.15);
+        border: 2px solid rgba(138, 43, 226, 0.4);
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .piece-container:hover {
+        background: rgba(138, 43, 226, 0.25);
+        border-color: rgba(138, 43, 226, 0.7);
+        transform: scale(1.05);
+    }
+
+    .piece-container.selected {
+        background: rgba(255, 215, 0, 0.2);
+        border-color: rgba(255, 215, 0, 0.8);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+
+    .piece-container.used {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: rgba(100, 100, 100, 0.1);
+        border-color: rgba(100, 100, 100, 0.3);
+    }
+
+    .piece-grid {
+        display: grid;
+        gap: 2px;
+    }
+
+    .piece-cell {
+        width: 15px;
+        height: 15px;
+        border-radius: 2px;
+        transition: all 0.2s ease;
+    }
+
+    .piece-cell.filled {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 1), 
+            rgba(75, 0, 130, 1));
+        box-shadow: 0 0 3px rgba(138, 43, 226, 0.8);
+    }
+
+    .piece-cell.empty {
+        background: transparent;
+    }
+
+    .controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .cosmic-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: inherit;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cosmic-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 8px 25px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    .cosmic-btn:active {
+        transform: translateY(0);
+    }
+
+    .game-over-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, 
+            rgba(20, 20, 40, 0.95), 
+            rgba(40, 20, 60, 0.95));
+        border: 2px solid rgba(138, 43, 226, 0.8);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-title {
+        font-size: 2rem;
+        color: #fff;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.8);
+    }
+
+    .modal-score {
+        font-size: 1.5rem;
+        color: rgba(255, 215, 0, 1);
+        margin-bottom: 2rem;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    }
+
+    .instructions {
+        background: rgba(138, 43, 226, 0.1);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+        .game-area {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .pieces-panel {
+            flex-direction: row;
+            min-width: auto;
+            justify-content: center;
+        }
+        
+        .grid-container {
+            margin-bottom: 1rem;
+        }
+        
+        .game-grid {
+            grid-template-columns: repeat(10, 25px);
+            grid-template-rows: repeat(10, 25px);
+        }
+        
+        .grid-cell {
+            width: 25px;
+            height: 25px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="block-blast-container">
+    <!-- Instructions -->
+    <div class="instructions">
+        <strong>🌟 How to Play:</strong> Select a piece and click on the grid to place it. 
+        Clear complete rows or columns to score points. Game ends when no pieces can be placed!
+    </div>
+
+    <div class="game-ui">
+        <!-- Score Panel -->
+        <div class="score-panel">
+            <div class="score-display" id="scoreDisplay">{{ score }}</div>
+            <div class="score-label">Cosmic Points</div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="game-area">
+            <!-- Game Grid -->
+            <div class="grid-container">
+                <div class="game-grid" id="gameGrid">
+                    {% for row in range(10) %}
+                        {% for col in range(10) %}
+                            <div class="grid-cell {{ 'filled' if grid[row][col] else '' }}" 
+                                 data-row="{{ row }}" 
+                                 data-col="{{ col }}"
+                                 onclick="attemptPlacePiece({{ row }}, {{ col }})">
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pieces Panel -->
+            <div class="pieces-panel">
+                <div class="pieces-title">Next Pieces</div>
+                {% for i in range(3) %}
+                    <div class="piece-container {{ 'used' if not pieces[i] else '' }}" 
+                         data-piece-index="{{ i }}"
+                         onclick="selectPiece({{ i }})">
+                        {% if pieces[i] %}
+                            <div class="piece-grid" 
+                                 style="grid-template-columns: repeat({{ pieces[i][0]|length }}, 15px); 
+                                        grid-template-rows: repeat({{ pieces[i]|length }}, 15px);">
+                                {% for row in pieces[i] %}
+                                    {% for cell in row %}
+                                        <div class="piece-cell {{ 'filled' if cell else 'empty' }}"></div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="cosmic-btn" onclick="newGame()">🌌 New Universe</button>
+            <button class="cosmic-btn" onclick="showValidPositions()">✨ Show Hints</button>
+        </div>
+    </div>
+</div>
+
+<!-- Game Over Modal -->
+<div class="game-over-modal" id="gameOverModal">
+    <div class="modal-content">
+        <div class="modal-title">🌌 Universe Collapsed! 🌌</div>
+        <div class="modal-score">Final Score: <span id="finalScore">0</span></div>
+        <button class="cosmic-btn" onclick="newGame()">Create New Universe</button>
+    </div>
+</div>
+
+<script>
+let selectedPieceIndex = -1;
+let currentPieces = {{ pieces|tojson }};
+let gameGrid = {{ grid|tojson }};
+let currentScore = {{ score }};
+
+function selectPiece(pieceIndex) {
+    // Clear previous selection
+    document.querySelectorAll('.piece-container').forEach(container => {
+        container.classList.remove('selected');
+    });
+    
+    // Don't select used pieces
+    if (!currentPieces[pieceIndex]) {
+        return;
+    }
+    
+    selectedPieceIndex = pieceIndex;
+    document.querySelector(`[data-piece-index="${pieceIndex}"]`).classList.add('selected');
+    
+    // Clear any existing highlights
+    clearGridHighlights();
+    
+    // Show valid positions for this piece
+    getValidPositions(pieceIndex);
+}
+
+function clearGridHighlights() {
+    document.querySelectorAll('.grid-cell').forEach(cell => {
+        cell.classList.remove('valid-drop', 'preview');
+    });
+}
+
+function getValidPositions(pieceIndex) {
+    fetch('/blockblast/get_valid_positions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            piece_index: pieceIndex
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Highlight valid positions
+        data.positions.forEach(pos => {
+            const cell = document.querySelector(`[data-row="${pos.row}"][data-col="${pos.col}"]`);
+            if (cell) {
+                cell.classList.add('valid-drop');
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error getting valid positions:', error);
+    });
+}
+
+function attemptPlacePiece(row, col) {
+    if (selectedPieceIndex === -1) {
+        alert('🌟 Please select a piece first!');
+        return;
+    }
+    
+    if (!currentPieces[selectedPieceIndex]) {
+        alert('⚠️ That piece has already been used!');
+        return;
+    }
+    
+    fetch('/blockblast/place_piece', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            piece_index: selectedPieceIndex,
+            row: row,
+            col: col
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update game state
+            gameGrid = data.grid;
+            currentPieces = data.pieces;
+            currentScore = data.score;
+            
+            // Update UI
+            updateGrid(data.grid);
+            updateScore(data.score);
+            updatePieces(data.pieces);
+            
+            // Clear selection
+            selectedPieceIndex = -1;
+            document.querySelectorAll('.piece-container').forEach(container => {
+                container.classList.remove('selected');
+            });
+            clearGridHighlights();
+            
+            // Show effects for line clearing
+            if (data.lines_cleared) {
+                showLinesClearedEffect();
+            }
+            
+            // Check for game over
+            if (data.game_over) {
+                setTimeout(() => {
+                    showGameOver(data.score);
+                }, 500);
+            }
+        } else {
+            alert('❌ ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error placing piece:', error);
+        alert('⚠️ Error placing piece. Please try again.');
+    });
+}
+
+function updateGrid(grid) {
+    const cells = document.querySelectorAll('.grid-cell');
+    
+    grid.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+            const cellElement = document.querySelector(`[data-row="${rowIndex}"][data-col="${colIndex}"]`);
+            if (cell === 1) {
+                cellElement.classList.add('filled');
+            } else {
+                cellElement.classList.remove('filled');
+            }
+        });
+    });
+}
+
+function updateScore(score) {
+    document.getElementById('scoreDisplay').textContent = score;
+    
+    // Add score animation
+    const scoreElement = document.getElementById('scoreDisplay');
+    scoreElement.style.transform = 'scale(1.2)';
+    scoreElement.style.textShadow = '0 0 20px rgba(255, 215, 0, 1)';
+    
+    setTimeout(() => {
+        scoreElement.style.transform = 'scale(1)';
+        scoreElement.style.textShadow = '0 0 10px rgba(138, 43, 226, 0.8)';
+    }, 300);
+}
+
+function updatePieces(pieces) {
+    pieces.forEach((piece, index) => {
+        const container = document.querySelector(`[data-piece-index="${index}"]`);
+        if (!piece) {
+            container.classList.add('used');
+            container.innerHTML = '<div style="color: rgba(255,255,255,0.5);">USED</div>';
+        } else {
+            container.classList.remove('used');
+            // Rebuild piece display
+            const pieceGrid = document.createElement('div');
+            pieceGrid.className = 'piece-grid';
+            pieceGrid.style.gridTemplateColumns = `repeat(${piece[0].length}, 15px)`;
+            pieceGrid.style.gridTemplateRows = `repeat(${piece.length}, 15px)`;
+            
+            piece.forEach(row => {
+                row.forEach(cell => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = `piece-cell ${cell ? 'filled' : 'empty'}`;
+                    pieceGrid.appendChild(cellDiv);
+                });
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(pieceGrid);
+        }
+    });
+}
+
+function showLinesClearedEffect() {
+    // Create sparkle effect
+    for (let i = 0; i < 10; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.innerHTML = '✨';
+        sparkle.style.position = 'fixed';
+        sparkle.style.left = Math.random() * window.innerWidth + 'px';
+        sparkle.style.top = Math.random() * window.innerHeight + 'px';
+        sparkle.style.fontSize = '2rem';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.zIndex = '1001';
+        sparkle.style.animation = 'sparkleFloat 2s ease-out forwards';
+        
+        document.body.appendChild(sparkle);
+        
+        setTimeout(() => sparkle.remove(), 2000);
+    }
+}
+
+function showGameOver(finalScore) {
+    document.getElementById('finalScore').textContent = finalScore;
+    document.getElementById('gameOverModal').style.display = 'flex';
+}
+
+function newGame() {
+    fetch('/blockblast/new_game', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            gameGrid = data.grid;
+            currentPieces = data.pieces;
+            currentScore = data.score;
+            
+            updateGrid(data.grid);
+            updateScore(data.score);
+            updatePieces(data.pieces);
+            
+            // Hide game over modal
+            document.getElementById('gameOverModal').style.display = 'none';
+            
+            // Clear selection
+            selectedPieceIndex = -1;
+            document.querySelectorAll('.piece-container').forEach(container => {
+                container.classList.remove('selected');
+            });
+            clearGridHighlights();
+        }
+    })
+    .catch(error => {
+        console.error('Error starting new game:', error);
+    });
+}
+
+function showValidPositions() {
+    if (selectedPieceIndex !== -1) {
+        getValidPositions(selectedPieceIndex);
+    } else {
+        alert('🌟 Select a piece first to see valid positions!');
+    }
+}
+
+// Add sparkle animation CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes sparkleFloat {
+        0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-100px) scale(0.5);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔳 Block Blast initialized');
+    console.log('Grid size: 10x10');
+    console.log('Current score:', currentScore);
+});
+</script>
+{% endblock %}
