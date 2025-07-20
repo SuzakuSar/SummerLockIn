@@ -1,0 +1,548 @@
+{% extends 'base.html' %}
+
+{% block header %}Rock Paper Scissors Dojo{% endblock %}
+
+{% block head %}
+<style>
+    /* Dojo theme with dark colors and gold accents */
+    body {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        color: #f4f4f4;
+    }
+    
+    .dojo-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(145deg, rgba(20, 20, 20, 0.9), rgba(40, 40, 40, 0.7));
+        border-radius: 15px;
+        border: 2px solid #d4a574;
+        box-shadow: 
+            0 0 30px rgba(212, 165, 116, 0.3),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+    }
+    
+    .dojo-title {
+        text-align: center;
+        font-size: 2.5rem;
+        color: #d4a574;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        margin-bottom: 1rem;
+        font-weight: 300;
+    }
+    
+    .dojo-subtitle {
+        text-align: center;
+        color: #cccccc;
+        margin-bottom: 2rem;
+        font-style: italic;
+        opacity: 0.8;
+    }
+    
+    /* Stats Section */
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        border: 1px solid #d4a574;
+    }
+    
+    .stat-card {
+        text-align: center;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(212, 165, 116, 0.1), rgba(212, 165, 116, 0.05));
+        border-radius: 8px;
+        border: 1px solid rgba(212, 165, 116, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(212, 165, 116, 0.2);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #d4a574;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #cccccc;
+        margin-top: 0.5rem;
+    }
+    
+    /* Game Arena */
+    .game-arena {
+        background: linear-gradient(145deg, rgba(10, 10, 10, 0.8), rgba(30, 30, 30, 0.6));
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 2px solid rgba(212, 165, 116, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-arena::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, 
+            transparent 48%, 
+            rgba(212, 165, 116, 0.1) 50%, 
+            transparent 52%);
+        animation: shimmer 8s linear infinite;
+        pointer-events: none;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    /* Choice Buttons */
+    .choices-container {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .choice-btn {
+        background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+        border: 3px solid #d4a574;
+        border-radius: 15px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: white;
+        font-size: 1.1rem;
+        min-width: 140px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .choice-btn:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 
+            0 10px 25px rgba(212, 165, 116, 0.4),
+            inset 0 0 20px rgba(212, 165, 116, 0.1);
+        border-color: #f4d03f;
+    }
+    
+    .choice-btn:active {
+        transform: translateY(-2px) scale(1.02);
+    }
+    
+    .choice-emoji {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .choice-name {
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Battle Results */
+    .battle-results {
+        text-align: center;
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border: 1px solid rgba(212, 165, 116, 0.3);
+    }
+    
+    .battle-choices {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .battle-choice {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(212, 165, 116, 0.1);
+        border-radius: 10px;
+        min-width: 120px;
+        border: 1px solid rgba(212, 165, 116, 0.3);
+    }
+    
+    .battle-choice.winner {
+        background: rgba(46, 204, 113, 0.2);
+        border-color: #2ecc71;
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+    }
+    
+    .battle-choice.loser {
+        background: rgba(231, 76, 60, 0.2);
+        border-color: #e74c3c;
+        opacity: 0.7;
+    }
+    
+    .battle-emoji {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .battle-label {
+        font-size: 0.9rem;
+        color: #cccccc;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .vs-text {
+        font-size: 2rem;
+        color: #d4a574;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    }
+    
+    .result-message {
+        font-size: 1.3rem;
+        color: #f4f4f4;
+        font-weight: bold;
+        text-align: center;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    .result-message.win {
+        background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(39, 174, 96, 0.1));
+        border: 1px solid #2ecc71;
+        color: #2ecc71;
+    }
+    
+    .result-message.lose {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.1));
+        border: 1px solid #e74c3c;
+        color: #e74c3c;
+    }
+    
+    .result-message.tie {
+        background: linear-gradient(135deg, rgba(241, 196, 15, 0.2), rgba(243, 156, 18, 0.1));
+        border: 1px solid #f1c40f;
+        color: #f1c40f;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        background: linear-gradient(135deg, #d4a574, #b8956a);
+        border: none;
+        color: #1a1a1a;
+        padding: 0.8rem 2rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .action-btn:hover {
+        background: linear-gradient(135deg, #f4d03f, #d4a574);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(212, 165, 116, 0.4);
+    }
+    
+    .action-btn:active {
+        transform: translateY(0);
+    }
+    
+    .action-btn.danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+    }
+    
+    .action-btn.danger:hover {
+        background: linear-gradient(135deg, #ff6b6b, #e74c3c);
+    }
+    
+    /* Loading and disabled states */
+    .choice-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+    
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+    
+    /* Welcome message */
+    .welcome-message {
+        text-align: center;
+        color: #cccccc;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        opacity: 0.8;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .dojo-container {
+            padding: 1rem;
+            margin: 1rem;
+        }
+        
+        .choices-container {
+            gap: 1rem;
+        }
+        
+        .choice-btn {
+            min-width: 100px;
+            padding: 1rem;
+        }
+        
+        .choice-emoji {
+            font-size: 2.5rem;
+        }
+        
+        .battle-choices {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .vs-text {
+            order: 1;
+        }
+        
+        .stats-section {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="dojo-container">
+    <h2 class="dojo-title">⚔️ Battle Arena ⚔️</h2>
+    <p class="dojo-subtitle">Test your strategy against the computer sensei</p>
+    
+    <!-- Statistics Section -->
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-value" id="winsCount">{{ wins }}</div>
+            <div class="stat-label">Wins</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="lossesCount">{{ losses }}</div>
+            <div class="stat-label">Losses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="tiesCount">{{ ties }}</div>
+            <div class="stat-label">Ties</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalGames">{{ total_games }}</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="winPercentage">{{ win_percentage }}%</div>
+            <div class="stat-label">Win Rate</div>
+        </div>
+    </div>
+    
+    <!-- Game Arena -->
+    <div class="game-arena">
+        <!-- Choice Buttons -->
+        <div class="choices-container">
+            {% for choice in choices %}
+            <button class="choice-btn" onclick="playRound('{{ choice }}')">
+                <span class="choice-emoji">{{ choice_emojis[choice] }}</span>
+                <span class="choice-name">{{ choice.title() }}</span>
+            </button>
+            {% endfor %}
+        </div>
+        
+        <!-- Battle Results -->
+        <div class="battle-results" id="battleResults">
+            <div class="welcome-message">
+                <p>Choose your weapon wisely, warrior!</p>
+                <p>Click Rock, Paper, or Scissors to begin battle.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="action-btn danger" onclick="resetStats()">Reset Stats</button>
+        <button class="action-btn" onclick="location.reload()">New Session</button>
+    </div>
+</div>
+
+<script>
+// Disable buttons during game processing
+function setButtonsEnabled(enabled) {
+    const buttons = document.querySelectorAll('.choice-btn');
+    buttons.forEach(btn => {
+        btn.disabled = !enabled;
+    });
+    
+    if (!enabled) {
+        document.querySelector('.game-arena').classList.add('loading');
+    } else {
+        document.querySelector('.game-arena').classList.remove('loading');
+    }
+}
+
+// Play a round of rock paper scissors
+async function playRound(playerChoice) {
+    setButtonsEnabled(false);
+    
+    try {
+        const response = await fetch('{{ url_for("rock_paper_scissors.play_round") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ choice: playerChoice })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        const data = await response.json();
+        displayBattleResult(data);
+        updateStats(data.stats);
+        
+    } catch (error) {
+        console.error('Error playing round:', error);
+        alert('Error playing round. Please try again.');
+    } finally {
+        setButtonsEnabled(true);
+    }
+}
+
+// Display battle result
+function displayBattleResult(data) {
+    const resultsDiv = document.getElementById('battleResults');
+    
+    const winnerClass = data.result === 'win' ? 'winner' : 
+                       data.result === 'lose' ? 'loser' : '';
+    const loserClass = data.result === 'lose' ? 'winner' : 
+                      data.result === 'win' ? 'loser' : '';
+    
+    resultsDiv.innerHTML = `
+        <div class="battle-choices">
+            <div class="battle-choice ${winnerClass}">
+                <span class="battle-emoji">${data.player_emoji}</span>
+                <div class="battle-label">You</div>
+            </div>
+            <div class="vs-text">VS</div>
+            <div class="battle-choice ${loserClass}">
+                <span class="battle-emoji">${data.computer_emoji}</span>
+                <div class="battle-label">Computer</div>
+            </div>
+        </div>
+        <div class="result-message ${data.result}">
+            ${data.result_message}
+        </div>
+    `;
+}
+
+// Update statistics display
+function updateStats(stats) {
+    document.getElementById('winsCount').textContent = stats.wins;
+    document.getElementById('lossesCount').textContent = stats.losses;
+    document.getElementById('tiesCount').textContent = stats.ties;
+    document.getElementById('totalGames').textContent = stats.total_games;
+    document.getElementById('winPercentage').textContent = stats.win_percentage + '%';
+}
+
+// Reset game statistics
+async function resetStats() {
+    if (!confirm('Are you sure you want to reset all statistics?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('{{ url_for("rock_paper_scissors.reset_stats") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        // Reset display
+        updateStats({
+            wins: 0,
+            losses: 0,
+            ties: 0,
+            total_games: 0,
+            win_percentage: 0
+        });
+        
+        // Reset battle results
+        document.getElementById('battleResults').innerHTML = `
+            <div class="welcome-message">
+                <p>Statistics reset! Choose your weapon wisely, warrior!</p>
+                <p>Click Rock, Paper, or Scissors to begin battle.</p>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error resetting stats:', error);
+        alert('Error resetting statistics. Please try again.');
+    }
+}
+
+// Add keyboard support
+document.addEventListener('keydown', function(event) {
+    if (document.querySelector('.choice-btn:disabled')) return;
+    
+    switch(event.key.toLowerCase()) {
+        case 'r':
+            playRound('rock');
+            break;
+        case 'p':
+            playRound('paper');
+            break;
+        case 's':
+            playRound('scissors');
+            break;
+    }
+});
+
+console.log('🥋 Rock Paper Scissors Dojo initialized!');
+console.log('💡 Tip: Use keyboard shortcuts - R (Rock), P (Paper), S (Scissors)');
+</script>
+{% endblock %}
