@@ -1,0 +1,503 @@
+<!-- website/wordle/templates/wordle.html -->
+{% extends 'base.html' %}
+
+{% block header %}🔤 Space Wordle 🔤{% endblock %}
+
+{% block head %}
+<style>
+    .wordle-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .game-info {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .game-info h3 {
+        margin: 0 0 1rem 0;
+        color: rgba(138, 43, 226, 1);
+    }
+    
+    .game-board {
+        display: grid;
+        grid-template-rows: repeat(6, 1fr);
+        gap: 5px;
+        margin: 2rem 0;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .guess-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+    }
+    
+    .letter-tile {
+        width: 60px;
+        height: 60px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .letter-tile.correct {
+        background: linear-gradient(135deg, #4ade80, #22c55e);
+        border-color: #16a34a;
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+    }
+    
+    .letter-tile.present {
+        background: linear-gradient(135deg, #facc15, #eab308);
+        border-color: #ca8a04;
+        box-shadow: 0 0 15px rgba(234, 179, 8, 0.5);
+    }
+    
+    .letter-tile.absent {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        border-color: #374151;
+        box-shadow: 0 0 10px rgba(107, 114, 128, 0.3);
+    }
+    
+    .letter-tile.current {
+        border-color: rgba(138, 43, 226, 0.8);
+        background: rgba(138, 43, 226, 0.2);
+        box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);
+    }
+    
+    .input-section {
+        margin: 2rem 0;
+    }
+    
+    .guess-input {
+        width: 250px;
+        padding: 1rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 1rem;
+        letter-spacing: 0.2em;
+    }
+    
+    .guess-input:focus {
+        outline: none;
+        border-color: rgba(138, 43, 226, 0.8);
+        box-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
+    }
+    
+    .guess-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    
+    .game-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .game-btn {
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.8), rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .game-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(138, 43, 226, 0.4);
+    }
+    
+    .game-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .game-status {
+        margin: 1rem 0;
+        padding: 1rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    
+    .status-win {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.3));
+        border: 1px solid rgba(34, 197, 94, 0.5);
+        color: #4ade80;
+    }
+    
+    .status-lose {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+        border: 1px solid rgba(239, 68, 68, 0.5);
+        color: #f87171;
+    }
+    
+    .status-playing {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.3));
+        border: 1px solid rgba(59, 130, 246, 0.5);
+        color: #60a5fa;
+    }
+    
+    .error-message {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+        border: 1px solid rgba(239, 68, 68, 0.5);
+        color: #f87171;
+        padding: 0.8rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        font-weight: bold;
+    }
+    
+    .game-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.3rem;
+    }
+    
+    @media (max-width: 480px) {
+        .wordle-container {
+            padding: 1rem;
+        }
+        
+        .letter-tile {
+            width: 50px;
+            height: 50px;
+            font-size: 1.3rem;
+        }
+        
+        .guess-input {
+            width: 200px;
+            font-size: 1rem;
+        }
+        
+        .game-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="wordle-container">
+    <!-- Game Info -->
+    <div class="game-info">
+        <h3>🚀 Cosmic Word Challenge 🚀</h3>
+        <p>Guess the 5-letter word in 6 tries!</p>
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="guessesRemaining">6</div>
+                <div class="stat-label">Guesses Left</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="currentGuess">1</div>
+                <div class="stat-label">Current Guess</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalGuesses">0</div>
+                <div class="stat-label">Total Guesses</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Board -->
+    <div class="game-board" id="gameBoard">
+        <!-- 6 rows of 5 tiles each -->
+        {% for row in range(6) %}
+        <div class="guess-row" id="row{{ row }}">
+            {% for col in range(5) %}
+            <div class="letter-tile" id="tile-{{ row }}-{{ col }}"></div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Input Section -->
+    <div class="input-section">
+        <input 
+            type="text" 
+            id="guessInput" 
+            class="guess-input" 
+            placeholder="Enter 5-letter word"
+            maxlength="5"
+            autocomplete="off"
+        >
+        <div class="game-buttons">
+            <button class="game-btn" id="submitGuess">Submit Guess</button>
+            <button class="game-btn" id="newGameBtn">New Game</button>
+        </div>
+    </div>
+    
+    <!-- Game Status -->
+    <div id="gameStatus" class="game-status status-playing">
+        Make your first guess!
+    </div>
+    
+    <!-- Error Messages -->
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+</div>
+
+<script>
+let gameState = {
+    gameOver: false,
+    won: false,
+    currentRow: 0,
+    guesses: []
+};
+
+// DOM elements
+const guessInput = document.getElementById('guessInput');
+const submitBtn = document.getElementById('submitGuess');
+const newGameBtn = document.getElementById('newGameBtn');
+const gameStatus = document.getElementById('gameStatus');
+const errorMessage = document.getElementById('errorMessage');
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', function() {
+    loadGameState();
+    
+    // Event listeners
+    submitBtn.addEventListener('click', submitGuess);
+    newGameBtn.addEventListener('click', newGame);
+    guessInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            submitGuess();
+        }
+    });
+    
+    // Auto-uppercase input
+    guessInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.toLowerCase();
+    });
+});
+
+async function loadGameState() {
+    try {
+        const response = await fetch('/wordle/game-state');
+        const data = await response.json();
+        
+        gameState.gameOver = data.game_over;
+        gameState.won = data.won;
+        gameState.guesses = data.guesses;
+        gameState.currentRow = data.guesses.length;
+        
+        // Render existing guesses
+        renderGuesses();
+        updateStats();
+        updateGameStatus(data);
+        
+    } catch (error) {
+        console.error('Error loading game state:', error);
+        showError('Error loading game');
+    }
+}
+
+function renderGuesses() {
+    gameState.guesses.forEach((guess, rowIndex) => {
+        const row = document.getElementById(`row${rowIndex}`);
+        guess.result.forEach((letterResult, colIndex) => {
+            const tile = document.getElementById(`tile-${rowIndex}-${colIndex}`);
+            tile.textContent = letterResult[0];
+            tile.className = `letter-tile ${letterResult[1]}`;
+        });
+    });
+}
+
+async function submitGuess() {
+    const guess = guessInput.value.trim().toLowerCase();
+    
+    if (gameState.gameOver) {
+        showError('Game is over! Start a new game.');
+        return;
+    }
+    
+    if (guess.length !== 5) {
+        showError('Please enter exactly 5 letters');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/wordle/guess', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ guess: guess })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
+        
+        // Render the guess result
+        const row = document.getElementById(`row${gameState.currentRow}`);
+        data.result.forEach((letterResult, colIndex) => {
+            const tile = document.getElementById(`tile-${gameState.currentRow}-${colIndex}`);
+            tile.textContent = letterResult[0];
+            
+            // Add animation delay for each tile
+            setTimeout(() => {
+                tile.className = `letter-tile ${letterResult[1]}`;
+            }, colIndex * 100);
+        });
+        
+        // Update game state
+        gameState.currentRow++;
+        gameState.gameOver = data.game_over;
+        gameState.won = data.won;
+        gameState.guesses.push({
+            word: guess.toUpperCase(),
+            result: data.result
+        });
+        
+        // Clear input
+        guessInput.value = '';
+        
+        // Update UI
+        updateStats();
+        updateGameStatus(data);
+        
+        // Disable input if game over
+        if (data.game_over) {
+            guessInput.disabled = true;
+            submitBtn.disabled = true;
+        }
+        
+    } catch (error) {
+        console.error('Error submitting guess:', error);
+        showError('Error submitting guess');
+    }
+}
+
+async function newGame() {
+    try {
+        const response = await fetch('/wordle/new-game', {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            // Reset UI
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < 5; col++) {
+                    const tile = document.getElementById(`tile-${row}-${col}`);
+                    tile.textContent = '';
+                    tile.className = 'letter-tile';
+                }
+            }
+            
+            // Reset game state
+            gameState = {
+                gameOver: false,
+                won: false,
+                currentRow: 0,
+                guesses: []
+            };
+            
+            // Reset input
+            guessInput.disabled = false;
+            submitBtn.disabled = false;
+            guessInput.value = '';
+            guessInput.focus();
+            
+            // Update UI
+            updateStats();
+            gameStatus.textContent = 'Make your first guess!';
+            gameStatus.className = 'game-status status-playing';
+            hideError();
+        }
+    } catch (error) {
+        console.error('Error starting new game:', error);
+        showError('Error starting new game');
+    }
+}
+
+function updateStats() {
+    document.getElementById('guessesRemaining').textContent = 6 - gameState.currentRow;
+    document.getElementById('currentGuess').textContent = Math.min(gameState.currentRow + 1, 6);
+    document.getElementById('totalGuesses').textContent = gameState.guesses.length;
+}
+
+function updateGameStatus(data) {
+    if (data.game_over) {
+        if (data.won) {
+            gameStatus.textContent = `🎉 Congratulations! You won in ${gameState.guesses.length} guesses! 🎉`;
+            gameStatus.className = 'game-status status-win';
+        } else {
+            gameStatus.textContent = `😞 Game Over! The word was "${data.target_word}" 😞`;
+            gameStatus.className = 'game-status status-lose';
+        }
+    } else {
+        gameStatus.textContent = `Keep going! ${data.guesses_remaining} guesses remaining.`;
+        gameStatus.className = 'game-status status-playing';
+    }
+}
+
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+    setTimeout(hideError, 3000);
+}
+
+function hideError() {
+    errorMessage.style.display = 'none';
+}
+</script>
+{% endblock %}

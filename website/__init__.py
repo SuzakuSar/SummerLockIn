@@ -33,6 +33,7 @@ def create_app():
     from .tic_tac_toe.tic_tac_toe import tic_tac_toe
     from .rock_paper_scissors.rock_paper_scissors import rock_paper_scissors
     from .block_blast.block_blast import block_blast
+    from .wordle import wordle
     
     # Register blueprints with URL prefixes
     app.register_blueprint(home, url_prefix='/')
@@ -49,6 +50,7 @@ def create_app():
     app.register_blueprint(tic_tac_toe, url_prefix='/tictactoe')
     app.register_blueprint(rock_paper_scissors, url_prefix='/rockpaperscissors')
     app.register_blueprint(block_blast, url_prefix='/blockblast') # clean up
+    app.register_blueprint(wordle, url_prefix='/wordle') # fix; submitted words labeled as "not a valid word"
     
     
 
