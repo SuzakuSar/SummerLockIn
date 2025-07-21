@@ -1,0 +1,711 @@
+{% extends 'base.html' %}
+
+{% block header %}Number Sequence Challenge{% endblock %}
+
+{% block head %}
+<style>
+    /* Digital Matrix Theme */
+    :root {
+        --matrix-green: #00ff41;
+        --matrix-dark-green: #008f11;
+        --matrix-bg: #0d1117;
+        --matrix-border: #1c2128;
+        --neon-glow: rgba(0, 255, 65, 0.6);
+        --error-red: #ff073a;
+        --success-blue: #00d4ff;
+    }
+    
+    .matrix-container {
+        background: linear-gradient(135deg, var(--matrix-bg) 0%, #161b22 100%);
+        min-height: calc(100vh - 150px);
+        padding: 2rem;
+        font-family: 'Courier New', monospace;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Animated background grid */
+    .matrix-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 65, 0.1) 1px, transparent 1px);
+        background-size: 30px 30px;
+        animation: gridMove 20s linear infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    @keyframes gridMove {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(30px, 30px); }
+    }
+    
+    .game-panel {
+        background: rgba(13, 17, 23, 0.9);
+        border: 2px solid var(--matrix-border);
+        border-radius: 15px;
+        padding: 2rem;
+        max-width: 800px;
+        margin: 0 auto;
+        box-shadow: 
+            0 0 20px rgba(0, 255, 65, 0.3),
+            inset 0 0 20px rgba(0, 255, 65, 0.1);
+        position: relative;
+        z-index: 10;
+    }
+    
+    .game-panel::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, var(--matrix-green), var(--matrix-dark-green), var(--matrix-green));
+        border-radius: 15px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        animation: borderPulse 3s ease-in-out infinite;
+    }
+    
+    .game-panel:hover::before {
+        opacity: 0.5;
+    }
+    
+    @keyframes borderPulse {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.8; }
+    }
+    
+    .game-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .game-title {
+        color: var(--matrix-green);
+        font-size: 2.5rem;
+        font-weight: bold;
+        text-shadow: 0 0 10px var(--neon-glow);
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.1em;
+    }
+    
+    .game-subtitle {
+        color: rgba(0, 255, 65, 0.8);
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .game-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .stat-box {
+        background: rgba(0, 255, 65, 0.1);
+        border: 1px solid var(--matrix-green);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        min-width: 120px;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-box:hover {
+        background: rgba(0, 255, 65, 0.2);
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    .stat-label {
+        color: rgba(0, 255, 65, 0.7);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+    }
+    
+    .stat-value {
+        color: var(--matrix-green);
+        font-size: 1.8rem;
+        font-weight: bold;
+        text-shadow: 0 0 5px var(--neon-glow);
+    }
+    
+    .game-controls {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .matrix-btn {
+        background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 143, 17, 0.2));
+        color: var(--matrix-green);
+        border: 2px solid var(--matrix-green);
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin: 0 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .matrix-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.4), transparent);
+        transition: left 0.5s;
+    }
+    
+    .matrix-btn:hover {
+        background: rgba(0, 255, 65, 0.3);
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+        transform: translateY(-2px);
+    }
+    
+    .matrix-btn:hover::before {
+        left: 100%;
+    }
+    
+    .matrix-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .game-area {
+        position: relative;
+        height: 400px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--matrix-green);
+        border-radius: 10px;
+        margin: 2rem 0;
+        overflow: hidden;
+    }
+    
+    .number-button {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--matrix-green), var(--matrix-dark-green));
+        color: black;
+        border: none;
+        border-radius: 50%;
+        font-family: 'Courier New', monospace;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 
+            0 0 10px rgba(0, 255, 65, 0.6),
+            inset 0 0 5px rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        z-index: 20;
+    }
+    
+    .number-button:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 
+            0 0 20px rgba(0, 255, 65, 0.8),
+            inset 0 0 10px rgba(255, 255, 255, 0.5);
+        animation: numberPulse 0.5s ease-in-out;
+    }
+    
+    .number-button.clicked {
+        background: linear-gradient(135deg, var(--success-blue), #0088cc);
+        color: white;
+        animation: clickSuccess 0.6s ease-out;
+        pointer-events: none;
+    }
+    
+    .number-button.next-target {
+        animation: targetPulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes numberPulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1.1); }
+        50% { transform: translate(-50%, -50%) scale(1.2); }
+    }
+    
+    @keyframes clickSuccess {
+        0% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.5); }
+        100% { transform: translate(-50%, -50%) scale(1); }
+    }
+    
+    @keyframes targetPulse {
+        0%, 100% { 
+            box-shadow: 
+                0 0 10px rgba(0, 255, 65, 0.6),
+                inset 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+        50% { 
+            box-shadow: 
+                0 0 25px rgba(0, 255, 65, 1),
+                inset 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+    }
+    
+    .game-message {
+        text-align: center;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .message-success {
+        background: rgba(0, 212, 255, 0.2);
+        border: 1px solid var(--success-blue);
+        color: var(--success-blue);
+    }
+    
+    .message-error {
+        background: rgba(255, 7, 58, 0.2);
+        border: 1px solid var(--error-red);
+        color: var(--error-red);
+    }
+    
+    .message-info {
+        background: rgba(0, 255, 65, 0.2);
+        border: 1px solid var(--matrix-green);
+        color: var(--matrix-green);
+    }
+    
+    .instructions {
+        background: rgba(0, 255, 65, 0.1);
+        border: 1px solid var(--matrix-green);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        color: rgba(0, 255, 65, 0.9);
+    }
+    
+    .instructions h3 {
+        color: var(--matrix-green);
+        margin-bottom: 1rem;
+        text-shadow: 0 0 5px var(--neon-glow);
+    }
+    
+    .instructions ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    
+    .instructions li {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    
+    .instructions li::before {
+        content: '>';
+        color: var(--matrix-green);
+        font-weight: bold;
+        position: absolute;
+        left: 0;
+    }
+    
+    /* Loading animation */
+    .loading {
+        display: inline-block;
+        color: var(--matrix-green);
+    }
+    
+    .loading::after {
+        content: '';
+        animation: loadingDots 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes loadingDots {
+        0%, 20% { content: ''; }
+        40% { content: '.'; }
+        60% { content: '..'; }
+        80%, 100% { content: '...'; }
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .matrix-container {
+            padding: 1rem;
+        }
+        
+        .game-panel {
+            padding: 1.5rem;
+        }
+        
+        .game-title {
+            font-size: 2rem;
+        }
+        
+        .game-stats {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-area {
+            height: 300px;
+        }
+        
+        .number-button {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+        }
+        
+        .matrix-btn {
+            display: block;
+            margin: 0.5rem auto;
+            width: 200px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="matrix-container">
+    <div class="game-panel">
+        <div class="game-header">
+            <div class="game-title">SEQUENCE PROTOCOL</div>
+            <div class="game-subtitle">Click numbers in ascending order: 1 → 2 → 3 → ... → 10</div>
+        </div>
+        
+        <div class="instructions">
+            <h3>Mission Parameters:</h3>
+            <ul>
+                <li>Locate and click numbers in correct sequence (1, 2, 3, etc.)</li>
+                <li>Numbers are randomly positioned in the matrix</li>
+                <li>Speed and accuracy determine your score</li>
+                <li>One mistake terminates the sequence</li>
+            </ul>
+        </div>
+        
+        <div class="game-stats">
+            <div class="stat-box">
+                <div class="stat-label">Next Target</div>
+                <div class="stat-value" id="currentNumber">1</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="gameScore">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Time</div>
+                <div class="stat-value" id="gameTime">0.0s</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Status</div>
+                <div class="stat-value" id="gameStatus">Ready</div>
+            </div>
+        </div>
+        
+        <div class="game-controls">
+            <button class="matrix-btn" onclick="startGame()" id="startBtn">
+                Initialize Sequence
+            </button>
+            <button class="matrix-btn" onclick="resetGame()" id="resetBtn" style="display: none;">
+                Reset Matrix
+            </button>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="game-message message-info" id="gameMessage">
+                Click "Initialize Sequence" to begin the challenge
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let gameState = 'waiting';
+let startTime = null;
+let timerInterval = null;
+
+// Initialize game state from server
+async function loadGameState() {
+    try {
+        const response = await fetch('{{ url_for("number_sequence.get_game_state") }}');
+        const data = await response.json();
+        
+        updateUI(data);
+        
+        if (data.game_state === 'playing' && data.numbers) {
+            renderNumbers(data.numbers);
+            startTimer();
+        }
+    } catch (error) {
+        console.error('Error loading game state:', error);
+    }
+}
+
+// Start new game
+async function startGame() {
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const gameMessage = document.getElementById('gameMessage');
+    
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<span class="loading">Initializing</span>';
+    
+    try {
+        const response = await fetch('{{ url_for("number_sequence.start_game") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            gameState = 'playing';
+            startTime = Date.now();
+            
+            // Update UI
+            document.getElementById('currentNumber').textContent = data.current_number;
+            document.getElementById('gameStatus').textContent = 'Active';
+            gameMessage.className = 'game-message message-info';
+            gameMessage.textContent = 'Sequence initialized. Click number 1 to begin!';
+            
+            // Render numbers
+            renderNumbers(data.numbers);
+            
+            // Show reset button, hide start button
+            startBtn.style.display = 'none';
+            resetBtn.style.display = 'inline-block';
+            
+            // Start timer
+            startTimer();
+        }
+    } catch (error) {
+        console.error('Error starting game:', error);
+        gameMessage.className = 'game-message message-error';
+        gameMessage.textContent = 'Error initializing sequence. Please try again.';
+    }
+    
+    startBtn.disabled = false;
+    startBtn.innerHTML = 'Initialize Sequence';
+}
+
+// Render numbers on game area
+function renderNumbers(numbers) {
+    const gameArea = document.getElementById('gameArea');
+    const gameMessage = document.getElementById('gameMessage');
+    
+    // Clear existing numbers
+    const existingNumbers = gameArea.querySelectorAll('.number-button');
+    existingNumbers.forEach(btn => btn.remove());
+    
+    // Hide message during game
+    gameMessage.style.display = 'none';
+    
+    // Add new numbers
+    numbers.forEach(num => {
+        const button = document.createElement('button');
+        button.className = 'number-button';
+        button.textContent = num.number;
+        button.style.left = num.x + '%';
+        button.style.top = num.y + '%';
+        button.onclick = () => clickNumber(num.number);
+        
+        // Highlight next target
+        if (num.number === parseInt(document.getElementById('currentNumber').textContent)) {
+            button.classList.add('next-target');
+        }
+        
+        // Mark as clicked if already clicked
+        if (num.clicked) {
+            button.classList.add('clicked');
+            button.onclick = null;
+        }
+        
+        gameArea.appendChild(button);
+    });
+}
+
+// Handle number click
+async function clickNumber(number) {
+    if (gameState !== 'playing') return;
+    
+    try {
+        const response = await fetch('{{ url_for("number_sequence.click_number") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ number: number })
+        });
+        
+        const data = await response.json();
+        const gameMessage = document.getElementById('gameMessage');
+        
+        if (data.status === 'correct') {
+            // Update UI for correct click
+            document.getElementById('currentNumber').textContent = data.next_number;
+            document.getElementById('gameScore').textContent = data.score;
+            
+            // Mark button as clicked
+            const buttons = document.querySelectorAll('.number-button');
+            buttons.forEach(btn => {
+                if (parseInt(btn.textContent) === number) {
+                    btn.classList.remove('next-target');
+                    btn.classList.add('clicked');
+                    btn.onclick = null;
+                }
+                // Highlight next target
+                if (parseInt(btn.textContent) === data.next_number) {
+                    btn.classList.add('next-target');
+                }
+            });
+            
+        } else if (data.status === 'complete') {
+            // Game completed
+            gameState = 'completed';
+            stopTimer();
+            
+            document.getElementById('gameStatus').textContent = 'Complete';
+            gameMessage.style.display = 'block';
+            gameMessage.className = 'game-message message-success';
+            gameMessage.textContent = data.message;
+            
+            // Remove number highlighting
+            const buttons = document.querySelectorAll('.number-button');
+            buttons.forEach(btn => {
+                btn.classList.remove('next-target');
+                btn.onclick = null;
+            });
+            
+        } else if (data.status === 'wrong') {
+            // Wrong number clicked
+            gameState = 'failed';
+            stopTimer();
+            
+            document.getElementById('gameStatus').textContent = 'Failed';
+            gameMessage.style.display = 'block';
+            gameMessage.className = 'game-message message-error';
+            gameMessage.textContent = data.message;
+            
+            // Disable all number buttons
+            const buttons = document.querySelectorAll('.number-button');
+            buttons.forEach(btn => {
+                btn.classList.remove('next-target');
+                btn.onclick = null;
+                if (parseInt(btn.textContent) !== number) {
+                    btn.style.opacity = '0.5';
+                }
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error clicking number:', error);
+    }
+}
+
+// Reset game
+async function resetGame() {
+    try {
+        const response = await fetch('{{ url_for("number_sequence.reset_game") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'reset') {
+            // Reset UI
+            gameState = 'waiting';
+            stopTimer();
+            
+            document.getElementById('currentNumber').textContent = '1';
+            document.getElementById('gameScore').textContent = '0';
+            document.getElementById('gameTime').textContent = '0.0s';
+            document.getElementById('gameStatus').textContent = 'Ready';
+            
+            // Clear game area
+            const gameArea = document.getElementById('gameArea');
+            const existingNumbers = gameArea.querySelectorAll('.number-button');
+            existingNumbers.forEach(btn => btn.remove());
+            
+            // Show initial message
+            const gameMessage = document.getElementById('gameMessage');
+            gameMessage.style.display = 'block';
+            gameMessage.className = 'game-message message-info';
+            gameMessage.textContent = 'Click "Initialize Sequence" to begin the challenge';
+            
+            // Toggle buttons
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('resetBtn').style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error resetting game:', error);
+    }
+}
+
+// Timer functions
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+        if (gameState === 'playing' && startTime) {
+            const elapsed = (Date.now() - startTime) / 1000;
+            document.getElementById('gameTime').textContent = elapsed.toFixed(1) + 's';
+        }
+    }, 100);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+// Update UI from server data
+function updateUI(data) {
+    document.getElementById('currentNumber').textContent = data.current_number || '1';
+    document.getElementById('gameScore').textContent = data.score || '0';
+    
+    let statusText = 'Ready';
+    if (data.game_state === 'playing') statusText = 'Active';
+    else if (data.game_state === 'completed') statusText = 'Complete';
+    else if (data.game_state === 'failed') statusText = 'Failed';
+    
+    document.getElementById('gameStatus').textContent = statusText;
+    gameState = data.game_state || 'waiting';
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadGameState();
+    console.log('🔢 Number Sequence Protocol initialized');
+});
+
+// Cleanup timer when page unloads
+window.addEventListener('beforeunload', () => {
+    stopTimer();
+});
+</script>
+{% endblock %}

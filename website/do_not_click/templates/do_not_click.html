@@ -1,0 +1,150 @@
+<!-- File: website/do_not_click/templates/do_not_click.html -->
+{% extends 'base.html' %}
+
+{% block header %}⚠️ CRITICAL WARNING ⚠️{% endblock %}
+
+{% block head %}
+<style>
+    .warning-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 200px);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .warning-text {
+        font-size: 1.5rem;
+        color: #ff6b6b;
+        margin-bottom: 3rem;
+        text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        animation: warningPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes warningPulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; text-shadow: 0 0 20px rgba(255, 107, 107, 0.8); }
+    }
+    
+    .forbidden-button {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        border: 8px solid #cc0000;
+        background: linear-gradient(145deg, #ff0000, #cc0000);
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+        font-family: 'Arial Black', Arial, sans-serif;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 
+            0 10px 30px rgba(255, 0, 0, 0.4),
+            inset 0 -5px 10px rgba(0, 0, 0, 0.3),
+            inset 0 5px 10px rgba(255, 255, 255, 0.2);
+        position: relative;
+        outline: none;
+        animation: redButtonFloat 3s ease-in-out infinite;
+    }
+    
+    @keyframes redButtonFloat {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-10px) scale(1.02); }
+    }
+    
+    .forbidden-button:hover {
+        background: linear-gradient(145deg, #ff3333, #ff0000);
+        box-shadow: 
+            0 15px 40px rgba(255, 0, 0, 0.6),
+            inset 0 -5px 10px rgba(0, 0, 0, 0.4),
+            inset 0 5px 10px rgba(255, 255, 255, 0.3);
+        transform: translateY(-5px) scale(1.05);
+        animation: none;
+    }
+    
+    .forbidden-button:active {
+        transform: translateY(0) scale(0.98);
+        box-shadow: 
+            0 5px 15px rgba(255, 0, 0, 0.4),
+            inset 0 -2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .disclaimer {
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        opacity: 0.7;
+        color: rgba(255, 255, 255, 0.8);
+        max-width: 400px;
+        line-height: 1.4;
+    }
+    
+    .warning-signs {
+        display: flex;
+        justify-content: space-around;
+        margin: 2rem 0;
+        font-size: 3rem;
+        animation: flashWarning 1.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes flashWarning {
+        0% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .forbidden-button {
+            width: 250px;
+            height: 250px;
+            font-size: 1.5rem;
+        }
+        
+        .warning-text {
+            font-size: 1.2rem;
+        }
+        
+        .warning-signs {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="warning-container">
+    <div class="warning-text">
+        🚨 ABSOLUTELY DO NOT CLICK THE RED BUTTON 🚨
+    </div>
+    
+    <div class="warning-signs">
+        ⚠️ ☢️ ⚠️ ☢️ ⚠️
+    </div>
+    
+    <button class="forbidden-button" onclick="clickForbiddenButton()">
+        DO NOT<br>CLICK
+    </button>
+    
+    <div class="disclaimer">
+        Seriously, we mean it. This button should never, ever be clicked. 
+        We're not responsible for what happens if you ignore this warning.
+        Consider yourself warned. ⚠️
+    </div>
+</div>
+
+<script>
+function clickForbiddenButton() {
+    // Add some dramatic delay before redirecting
+    const button = document.querySelector('.forbidden-button');
+    button.style.background = 'linear-gradient(145deg, #ff6666, #ff3333)';
+    button.innerHTML = 'OH NO!<br>YOU DID IT!';
+    
+    setTimeout(() => {
+        window.location.href = "{{ url_for('do_not_click.clicked') }}";
+    }, 1000);
+}
+</script>
+{% endblock %}
+

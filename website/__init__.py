@@ -36,8 +36,14 @@ def create_app():
     from .wordle import wordle
     from .typing_test.typing_test import typing_test
     from .click_speed.click_speed import click_speed
+    from .drag_drop.drag_drop import drag_drop
+    from .shell_game.shell_game import shell_game
+    from .wire_matching.wire_matching import wire_matching
+    from .do_not_click.do_not_click import do_not_click
+    from .click_clear import click_clear
+    from .number_sequence.number_sequence import number_sequence
+    from .fake_download.fake_download import fake_download
 
-    
     # Register blueprints with URL prefixes
     app.register_blueprint(home, url_prefix='/')
     app.register_blueprint(helloWorld, url_prefix='/')
@@ -55,9 +61,14 @@ def create_app():
     app.register_blueprint(block_blast, url_prefix='/blockblast') # clean up
     app.register_blueprint(wordle, url_prefix='/wordle') # fix; submitted words labeled as "not a valid word"
     app.register_blueprint(typing_test, url_prefix='/typingtest') #doesn't work at all
-    app.register_blueprint(click_speed, url_prefix='/clickspeed')
-
-    
+    app.register_blueprint(click_speed, url_prefix='/clickspeed') # make start on click area
+    app.register_blueprint(drag_drop, url_prefix='/dragdrop') # doesn't work
+    app.register_blueprint(shell_game, url_prefix='/shellgame') #bro how tf can you track this sob
+    app.register_blueprint(wire_matching, url_prefix='/wirematching')
+    app.register_blueprint(do_not_click, url_prefix='/donotclick')
+    app.register_blueprint(click_clear, url_prefix='/clickclear')
+    app.register_blueprint(number_sequence, url_prefix='/numbersequence')
+    app.register_blueprint(fake_download, url_prefix='/fakedownload')
     
 
     # Add any new blueprints here following the same pattern:

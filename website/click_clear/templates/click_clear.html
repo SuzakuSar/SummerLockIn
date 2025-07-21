@@ -1,0 +1,625 @@
+<!-- FILE: website/click_clear/templates/click_clear.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Click Clear - Space Cleanup{% endblock %}
+
+{% block header %}🌌 Space Cleanup Mission 🌌{% endblock %}
+
+{% block head %}
+<style>
+    /* Game Container */
+    .game-container {
+        position: relative;
+        width: 100%;
+        min-height: calc(100vh - 200px);
+        background: radial-gradient(ellipse at center, 
+            rgba(25, 25, 60, 0.8) 0%, 
+            rgba(10, 10, 30, 0.9) 100%);
+        border: 2px solid rgba(138, 43, 226, 0.3);
+        border-radius: 20px;
+        margin: 1rem auto;
+        overflow: hidden;
+        cursor: crosshair;
+    }
+    
+    /* Game Stats Panel */
+    .stats-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 20, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        border-radius: 15px;
+        padding: 1rem;
+        color: white;
+        font-family: 'Courier New', monospace;
+        z-index: 100;
+        min-width: 200px;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+    }
+    
+    .stat-value {
+        color: rgba(138, 43, 226, 1);
+        font-weight: bold;
+        text-shadow: 0 0 5px rgba(138, 43, 226, 0.5);
+    }
+    
+    /* Game Controls */
+    .controls-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 20, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        border-radius: 15px;
+        padding: 1rem;
+        z-index: 100;
+    }
+    
+    .game-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-family: 'Times New Roman', Times, serif;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+        display: block;
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+    
+    .game-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 1), 
+            rgba(75, 0, 130, 1));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .game-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Clickable Objects */
+    .game-object {
+        position: absolute;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.3s ease;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        
+        /* Glowing effect */
+        box-shadow: 
+            0 0 10px rgba(255, 255, 255, 0.3),
+            0 0 20px rgba(138, 43, 226, 0.2),
+            inset 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    
+    .game-object::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.2) 50%, 
+            transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .game-object:hover {
+        transform: scale(1.1);
+        box-shadow: 
+            0 0 20px rgba(255, 255, 255, 0.5),
+            0 0 30px rgba(138, 43, 226, 0.4),
+            inset 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+    
+    .game-object:hover::before {
+        opacity: 1;
+    }
+    
+    .game-object.clicked {
+        animation: objectDisappear 0.5s ease forwards;
+    }
+    
+    @keyframes objectDisappear {
+        0% {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.3);
+            opacity: 0.7;
+        }
+        100% {
+            transform: scale(0);
+            opacity: 0;
+        }
+    }
+    
+    /* Floating animation for objects */
+    .game-object.floating {
+        animation: float linear infinite;
+    }
+    
+    @keyframes float {
+        from {
+            transform: rotate(0deg) translateY(0px);
+        }
+        to {
+            transform: rotate(360deg) translateY(-10px);
+        }
+    }
+    
+    /* Click effect */
+    .click-effect {
+        position: absolute;
+        pointer-events: none;
+        color: rgba(138, 43, 226, 1);
+        font-weight: bold;
+        font-size: 1.2rem;
+        z-index: 50;
+        animation: clickPop 1s ease forwards;
+    }
+    
+    @keyframes clickPop {
+        0% {
+            transform: scale(0.5);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1.5) translateY(-30px);
+            opacity: 0;
+        }
+    }
+    
+    /* Progress Bar */
+    .progress-container {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 400px;
+        background: rgba(0, 0, 20, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        border-radius: 25px;
+        padding: 1rem;
+        text-align: center;
+        z-index: 100;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        border-radius: 5px;
+        transition: width 0.3s ease;
+        width: 0%;
+    }
+    
+    .progress-text {
+        color: white;
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+    }
+    
+    /* Completion Modal */
+    .completion-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .completion-content {
+        background: linear-gradient(135deg, 
+            rgba(20, 20, 45, 0.95) 0%, 
+            rgba(40, 20, 60, 0.95) 100%);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(138, 43, 226, 0.6);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        color: white;
+        max-width: 500px;
+        margin: 1rem;
+        
+        /* Holographic border effect */
+        box-shadow: 
+            0 0 30px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+    
+    .completion-title {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(138, 43, 226, 0.8);
+    }
+    
+    .completion-stats {
+        margin: 2rem 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    
+    .completion-stat {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .completion-stat-value {
+        font-size: 1.5rem;
+        color: rgba(138, 43, 226, 1);
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .completion-stat-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    /* Instructions */
+    .instructions {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        margin: 1rem;
+        padding: 1rem;
+        background: rgba(0, 0, 20, 0.5);
+        border-radius: 10px;
+        border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .stats-panel, .controls-panel {
+            position: static;
+            margin: 1rem;
+            width: calc(100% - 2rem);
+        }
+        
+        .game-container {
+            margin: 0.5rem;
+            min-height: 60vh;
+        }
+        
+        .progress-container {
+            width: 95%;
+        }
+        
+        .game-object {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Instructions -->
+<div class="instructions">
+    <p><strong>🎯 Mission:</strong> Clear all space debris by clicking on the floating objects! 
+    Click quickly and efficiently to achieve a stellar performance rating.</p>
+</div>
+
+<!-- Game Container -->
+<div class="game-container" id="gameContainer">
+    <!-- Stats Panel -->
+    <div class="stats-panel">
+        <h3 style="margin: 0 0 1rem 0; color: rgba(138, 43, 226, 1);">Mission Stats</h3>
+        <div class="stat-item">
+            <span>Objects Remaining:</span>
+            <span class="stat-value" id="objectsRemaining">{{ objects|length }}</span>
+        </div>
+        <div class="stat-item">
+            <span>Total Clicks:</span>
+            <span class="stat-value" id="totalClicks">0</span>
+        </div>
+        <div class="stat-item">
+            <span>Time Elapsed:</span>
+            <span class="stat-value" id="timeElapsed">0.0s</span>
+        </div>
+        <div class="stat-item">
+            <span>Accuracy:</span>
+            <span class="stat-value" id="accuracy">100%</span>
+        </div>
+    </div>
+    
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+        <button class="game-btn" id="newGameBtn">New Mission</button>
+        <button class="game-btn" id="pauseBtn" disabled>Pause</button>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-text">Mission Progress</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0 of {{ objects|length }} objects cleared</div>
+    </div>
+    
+    <!-- Game Objects (populated by JavaScript) -->
+    <div id="gameObjects"></div>
+</div>
+
+<!-- Completion Modal -->
+<div class="completion-modal" id="completionModal">
+    <div class="completion-content">
+        <div class="completion-title" id="completionTitle">🌟 MISSION COMPLETE! 🌟</div>
+        <div id="completionRating" style="font-size: 1.5rem; margin: 1rem 0;"></div>
+        
+        <div class="completion-stats">
+            <div class="completion-stat">
+                <div class="completion-stat-value" id="finalTime">0.0s</div>
+                <div class="completion-stat-label">Completion Time</div>
+            </div>
+            <div class="completion-stat">
+                <div class="completion-stat-value" id="finalClicks">0</div>
+                <div class="completion-stat-label">Total Clicks</div>
+            </div>
+            <div class="completion-stat">
+                <div class="completion-stat-value" id="finalAccuracy">100%</div>
+                <div class="completion-stat-label">Final Accuracy</div>
+            </div>
+        </div>
+        
+        <button class="game-btn" onclick="startNewGame()" style="margin-top: 2rem;">
+            Start New Mission
+        </button>
+        <button class="game-btn" onclick="closeModal()" style="background: rgba(100,100,100,0.8);">
+            Close
+        </button>
+    </div>
+</div>
+
+<!-- Pass initial data to JavaScript -->
+<script type="application/json" id="initialObjects">
+{{ objects|tojson }}
+</script>
+
+<script>
+// Game state
+let gameState = {
+    objects: [],
+    totalObjects: 0,
+    clearedObjects: 0,
+    totalClicks: 0,
+    startTime: null,
+    gameActive: false,
+    timer: null
+};
+
+// Initialize game on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const initialObjects = JSON.parse(document.getElementById('initialObjects').textContent);
+    initializeGame(initialObjects);
+    
+    // Event listeners
+    document.getElementById('newGameBtn').addEventListener('click', startNewGame);
+    document.getElementById('gameContainer').addEventListener('click', handleGameAreaClick);
+});
+
+function initializeGame(objects) {
+    gameState.objects = objects;
+    gameState.totalObjects = objects.length;
+    gameState.clearedObjects = 0;
+    gameState.totalClicks = 0;
+    gameState.startTime = Date.now();
+    gameState.gameActive = true;
+    
+    renderObjects();
+    startTimer();
+    updateStats();
+}
+
+function renderObjects() {
+    const container = document.getElementById('gameObjects');
+    container.innerHTML = '';
+    
+    gameState.objects.forEach((obj, index) => {
+        const objEl = document.createElement('div');
+        objEl.className = 'game-object floating';
+        objEl.id = obj.id;
+        objEl.style.left = obj.x + '%';
+        objEl.style.top = obj.y + '%';
+        objEl.style.width = obj.size + 'px';
+        objEl.style.height = obj.size + 'px';
+        objEl.style.fontSize = (obj.size * 0.6) + 'px';
+        objEl.style.animationDuration = obj.animation_duration + 's';
+        objEl.style.animationDelay = obj.animation_delay + 's';
+        objEl.style.filter = `hue-rotate(${obj.color_hue}deg)`;
+        objEl.innerHTML = obj.emoji;
+        objEl.title = `${obj.type} - ${obj.points} points`;
+        
+        objEl.addEventListener('click', (e) => handleObjectClick(e, obj, index));
+        
+        container.appendChild(objEl);
+    });
+}
+
+function handleObjectClick(e, obj, index) {
+    e.stopPropagation();
+    
+    if (!gameState.gameActive) return;
+    
+    // Create click effect
+    const clickEffect = document.createElement('div');
+    clickEffect.className = 'click-effect';
+    clickEffect.textContent = '+' + obj.points;
+    clickEffect.style.left = e.pageX + 'px';
+    clickEffect.style.top = e.pageY + 'px';
+    document.body.appendChild(clickEffect);
+    
+    // Remove effect after animation
+    setTimeout(() => clickEffect.remove(), 1000);
+    
+    // Mark object as clicked
+    const objEl = document.getElementById(obj.id);
+    objEl.classList.add('clicked');
+    
+    // Remove object after animation
+    setTimeout(() => {
+        objEl.remove();
+        gameState.clearedObjects++;
+        updateStats();
+        checkCompletion();
+    }, 500);
+    
+    // Update server stats
+    fetch('/click_clear/object-clicked')
+        .catch(error => console.error('Error updating stats:', error));
+}
+
+function handleGameAreaClick(e) {
+    // Only count clicks on the game area itself (misses)
+    if (e.target.id === 'gameContainer') {
+        gameState.totalClicks++;
+        updateStats();
+    }
+}
+
+function updateStats() {
+    const remaining = gameState.totalObjects - gameState.clearedObjects;
+    const accuracy = gameState.totalClicks > 0 ? 
+        Math.round((gameState.clearedObjects / gameState.totalClicks) * 100) : 100;
+    
+    document.getElementById('objectsRemaining').textContent = remaining;
+    document.getElementById('totalClicks').textContent = gameState.totalClicks;
+    document.getElementById('accuracy').textContent = accuracy + '%';
+    
+    // Update progress bar
+    const progress = (gameState.clearedObjects / gameState.totalObjects) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+    document.getElementById('progressText').textContent = 
+        `${gameState.clearedObjects} of ${gameState.totalObjects} objects cleared`;
+}
+
+function startTimer() {
+    if (gameState.timer) clearInterval(gameState.timer);
+    
+    gameState.timer = setInterval(() => {
+        if (gameState.gameActive && gameState.startTime) {
+            const elapsed = (Date.now() - gameState.startTime) / 1000;
+            document.getElementById('timeElapsed').textContent = elapsed.toFixed(1) + 's';
+        }
+    }, 100);
+}
+
+function checkCompletion() {
+    if (gameState.clearedObjects >= gameState.totalObjects) {
+        gameState.gameActive = false;
+        clearInterval(gameState.timer);
+        
+        // Send completion data to server
+        fetch('/click_clear/game-complete')
+            .then(response => response.json())
+            .then(data => showCompletionModal(data))
+            .catch(error => {
+                console.error('Error completing game:', error);
+                showCompletionModal({
+                    completion_time: (Date.now() - gameState.startTime) / 1000,
+                    total_clicks: gameState.totalClicks,
+                    rating: "🌟 MISSION COMPLETE!"
+                });
+            });
+    }
+}
+
+function showCompletionModal(data) {
+    const accuracy = gameState.totalClicks > 0 ? 
+        Math.round((gameState.clearedObjects / gameState.totalClicks) * 100) : 100;
+    
+    document.getElementById('completionRating').textContent = data.rating;
+    document.getElementById('finalTime').textContent = data.completion_time.toFixed(1) + 's';
+    document.getElementById('finalClicks').textContent = data.total_clicks;
+    document.getElementById('finalAccuracy').textContent = accuracy + '%';
+    
+    document.getElementById('completionModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('completionModal').style.display = 'none';
+}
+
+async function startNewGame() {
+    try {
+        const response = await fetch('/click_clear/new-game');
+        const data = await response.json();
+        
+        if (data.success) {
+            closeModal();
+            initializeGame(data.objects);
+        }
+    } catch (error) {
+        console.error('Error starting new game:', error);
+        // Fallback: reload page
+        location.reload();
+    }
+}
+
+// Handle page visibility changes (pause/resume)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        gameState.gameActive = false;
+    } else if (gameState.clearedObjects < gameState.totalObjects) {
+        gameState.gameActive = true;
+    }
+});
+</script>
+{% endblock %}

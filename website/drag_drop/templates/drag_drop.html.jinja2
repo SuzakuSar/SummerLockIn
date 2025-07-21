@@ -1,0 +1,683 @@
+{% extends 'base.html' %}
+
+{% block title %}Space Cargo Manager{% endblock %}
+
+{% block header %}🚀 Space Cargo Manager 🚀{% endblock %}
+
+{% block head %}
+<style>
+    /* Space Cargo Manager Styles */
+    .cargo-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(15, 15, 35, 0.9) 0%, 
+            rgba(25, 25, 55, 0.8) 50%, 
+            rgba(35, 25, 65, 0.7) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Game Info Header */
+    .game-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .info-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+
+    /* Capacity Progress Bar */
+    .capacity-progress {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        height: 8px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+
+    .capacity-fill {
+        height: 100%;
+        background: linear-gradient(90deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .capacity-full {
+        background: linear-gradient(90deg, 
+            rgba(255, 50, 50, 0.8), 
+            rgba(200, 0, 0, 0.8)) !important;
+        animation: pulseRed 1s ease-in-out infinite;
+    }
+
+    @keyframes pulseRed {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+    }
+
+    /* Game Area Layout */
+    .game-area {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Available Items Section */
+    .available-section {
+        background: rgba(0, 0, 20, 0.6);
+        border: 2px solid rgba(0, 191, 255, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: rgba(0, 191, 255, 1);
+        text-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+    }
+
+    .items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+        min-height: 200px;
+    }
+
+    /* Cargo Bay Section */
+    .cargo-section {
+        background: rgba(20, 0, 40, 0.6);
+        border: 2px solid rgba(138, 43, 226, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .cargo-section.drag-over {
+        border-color: rgba(138, 43, 226, 0.8);
+        background: rgba(138, 43, 226, 0.1);
+        box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.3);
+    }
+
+    .cargo-section.full {
+        border-color: rgba(255, 50, 50, 0.8);
+        background: rgba(255, 50, 50, 0.1);
+        animation: cargoPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes cargoPulse {
+        0%, 100% { box-shadow: 0 0 10px rgba(255, 50, 50, 0.3); }
+        50% { box-shadow: 0 0 30px rgba(255, 50, 50, 0.6); }
+    }
+
+    .cargo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.5rem;
+        min-height: 200px;
+    }
+
+    /* Draggable Items */
+    .cargo-item {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1), 
+            rgba(255, 255, 255, 0.05));
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        padding: 0.8rem;
+        text-align: center;
+        cursor: grab;
+        transition: all 0.3s ease;
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cargo-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(138, 43, 226, 0.4);
+        border-color: rgba(138, 43, 226, 0.6);
+    }
+
+    .cargo-item:active {
+        cursor: grabbing;
+        transform: scale(1.05);
+    }
+
+    .cargo-item.dragging {
+        opacity: 0.5;
+        transform: rotate(5deg);
+    }
+
+    .item-emoji {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+
+    .item-name {
+        font-size: 0.7rem;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+
+    .item-details {
+        font-size: 0.6rem;
+        opacity: 0.8;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .item-size {
+        color: rgba(0, 191, 255, 1);
+    }
+
+    .item-value {
+        color: rgba(255, 215, 0, 1);
+    }
+
+    /* Control Buttons */
+    .controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .control-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(138, 43, 226, 0.5);
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 1), 
+            rgba(75, 0, 130, 1));
+    }
+
+    .control-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Message Display */
+    .message-area {
+        margin-top: 1rem;
+        text-align: center;
+        min-height: 2rem;
+    }
+
+    .message {
+        padding: 0.8rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        font-weight: bold;
+        animation: messageSlide 0.5s ease-out;
+    }
+
+    .message.success {
+        background: rgba(0, 255, 0, 0.2);
+        border: 1px solid rgba(0, 255, 0, 0.5);
+        color: rgba(0, 255, 0, 1);
+    }
+
+    .message.error {
+        background: rgba(255, 0, 0, 0.2);
+        border: 1px solid rgba(255, 0, 0, 0.5);
+        color: rgba(255, 0, 0, 1);
+    }
+
+    @keyframes messageSlide {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Drop Zone Feedback */
+    .drop-zone-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 150px;
+        border: 2px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .game-area {
+            grid-template-columns: 1fr;
+        }
+        
+        .cargo-container {
+            padding: 1rem;
+        }
+        
+        .controls {
+            flex-direction: column;
+        }
+        
+        .control-btn {
+            width: 100%;
+        }
+        
+        .items-grid,
+        .cargo-grid {
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        }
+    }
+
+    /* Accessibility */
+    .cargo-item:focus {
+        outline: 2px solid rgba(138, 43, 226, 0.8);
+        outline-offset: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="cargo-container">
+    <!-- Game Info Header -->
+    <div class="game-info">
+        <div class="info-card">
+            <div class="info-value" id="scoreValue">{{ score }}</div>
+            <div class="info-label">Credits Earned</div>
+        </div>
+        <div class="info-card">
+            <div class="info-value" id="capacityValue">{{ current_capacity }}/{{ max_capacity }}</div>
+            <div class="info-label">Cargo Capacity</div>
+            <div class="capacity-progress">
+                <div class="capacity-fill {% if is_full %}capacity-full{% endif %}" 
+                     id="capacityBar" 
+                     style="width: {{ (current_capacity / max_capacity * 100) }}%">
+                </div>
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="info-value">{{ available_items|length }}</div>
+            <div class="info-label">Items Available</div>
+        </div>
+        <div class="info-card">
+            <div class="info-value">{{ cargo_items|length }}</div>
+            <div class="info-label">Items in Cargo</div>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div class="game-area">
+        <!-- Available Items -->
+        <div class="available-section">
+            <h3 class="section-title">🌌 Available Items</h3>
+            <div class="items-grid" id="availableItems">
+                {% for item in available_items %}
+                <div class="cargo-item" 
+                     draggable="true" 
+                     data-item-id="{{ item.id }}"
+                     data-item-size="{{ item.size }}"
+                     data-item-value="{{ item.value }}"
+                     tabindex="0">
+                    <span class="item-emoji">{{ item.emoji }}</span>
+                    <div class="item-name">{{ item.name }}</div>
+                    <div class="item-details">
+                        <span class="item-size">Size: {{ item.size }}</span>
+                        <span class="item-value">{{ item.value }}¢</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Cargo Bay -->
+        <div class="cargo-section {% if is_full %}full{% endif %}" id="cargoSection">
+            <h3 class="section-title">🚀 Cargo Bay</h3>
+            <div class="cargo-grid" id="cargoItems">
+                {% if cargo_items %}
+                    {% for item in cargo_items %}
+                    <div class="cargo-item" 
+                         draggable="true" 
+                         data-item-id="{{ item.id }}"
+                         data-item-size="{{ item.size }}"
+                         data-item-value="{{ item.value }}"
+                         tabindex="0">
+                        <span class="item-emoji">{{ item.emoji }}</span>
+                        <div class="item-name">{{ item.name }}</div>
+                        <div class="item-details">
+                            <span class="item-size">Size: {{ item.size }}</span>
+                            <span class="item-value">{{ item.value }}¢</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="drop-zone-empty">
+                        Drag items here to load cargo
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="control-btn" onclick="resetGame()">🔄 Reset Cargo</button>
+        <button class="control-btn" onclick="newItems()">🆕 New Items</button>
+        <button class="control-btn" onclick="sellCargo()" {% if not cargo_items %}disabled{% endif %}>💰 Sell Cargo</button>
+    </div>
+
+    <!-- Message Area -->
+    <div class="message-area" id="messageArea"></div>
+</div>
+
+<script>
+// Drag and Drop Functionality
+let draggedItem = null;
+let currentCapacity = {{ current_capacity }};
+let maxCapacity = {{ max_capacity }};
+let currentScore = {{ score }};
+
+// Add drag event listeners to all items
+function initializeDragAndDrop() {
+    // Add listeners to available items
+    document.querySelectorAll('#availableItems .cargo-item').forEach(item => {
+        addDragListeners(item, 'available');
+    });
+    
+    // Add listeners to cargo items
+    document.querySelectorAll('#cargoItems .cargo-item').forEach(item => {
+        addDragListeners(item, 'cargo');
+    });
+    
+    // Add drop zone listeners
+    const cargoSection = document.getElementById('cargoSection');
+    const availableSection = document.querySelector('.available-section');
+    
+    [cargoSection, availableSection].forEach(zone => {
+        zone.addEventListener('dragover', handleDragOver);
+        zone.addEventListener('drop', handleDrop);
+        zone.addEventListener('dragenter', handleDragEnter);
+        zone.addEventListener('dragleave', handleDragLeave);
+    });
+}
+
+function addDragListeners(item, source) {
+    item.addEventListener('dragstart', (e) => handleDragStart(e, source));
+    item.addEventListener('dragend', handleDragEnd);
+    
+    // Keyboard accessibility
+    item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleKeyboardMove(item, source);
+        }
+    });
+}
+
+function handleDragStart(e, source) {
+    draggedItem = {
+        element: e.target,
+        source: source,
+        id: e.target.dataset.itemId,
+        size: parseInt(e.target.dataset.itemSize),
+        value: parseInt(e.target.dataset.itemValue)
+    };
+    
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    draggedItem = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    if (e.target.closest('.cargo-section')) {
+        e.target.closest('.cargo-section').classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(e) {
+    if (e.target.closest('.cargo-section')) {
+        e.target.closest('.cargo-section').classList.remove('drag-over');
+    }
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    
+    if (!draggedItem) return;
+    
+    const cargoSection = e.target.closest('.cargo-section');
+    const availableSection = e.target.closest('.available-section');
+    
+    // Remove drag-over class
+    if (cargoSection) {
+        cargoSection.classList.remove('drag-over');
+    }
+    
+    // Determine target and action
+    if (cargoSection && draggedItem.source === 'available') {
+        // Moving from available to cargo
+        addItemToCargo(draggedItem.id);
+    } else if (availableSection && draggedItem.source === 'cargo') {
+        // Moving from cargo to available
+        removeItemFromCargo(draggedItem.id);
+    }
+}
+
+function handleKeyboardMove(item, source) {
+    const itemId = item.dataset.itemId;
+    
+    if (source === 'available') {
+        addItemToCargo(itemId);
+    } else {
+        removeItemFromCargo(itemId);
+    }
+}
+
+// API Interactions
+async function addItemToCargo(itemId) {
+    try {
+        const response = await fetch('/drag_drop/add_item', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ item_id: itemId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(data.message, 'success');
+            updateGameState(data);
+            
+            // Move item visually
+            const item = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (item) {
+                item.remove();
+                refreshUI();
+            }
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error adding item to cargo', 'error');
+        console.error('Error:', error);
+    }
+}
+
+async function removeItemFromCargo(itemId) {
+    try {
+        const response = await fetch('/drag_drop/remove_item', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ item_id: itemId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(data.message, 'success');
+            updateGameState(data);
+            
+            // Move item visually
+            const item = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (item) {
+                item.remove();
+                refreshUI();
+            }
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error removing item from cargo', 'error');
+        console.error('Error:', error);
+    }
+}
+
+async function resetGame() {
+    try {
+        const response = await fetch('/drag_drop/reset');
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        }
+    } catch (error) {
+        showMessage('Error resetting game', 'error');
+    }
+}
+
+async function newItems() {
+    try {
+        const response = await fetch('/drag_drop/new_items');
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        }
+    } catch (error) {
+        showMessage('Error generating new items', 'error');
+    }
+}
+
+async function sellCargo() {
+    if (currentCapacity === 0) {
+        showMessage('No cargo to sell!', 'error');
+        return;
+    }
+    
+    showMessage(`Sold cargo for ${currentScore} credits! 🎉`, 'success');
+    setTimeout(() => resetGame(), 2000);
+}
+
+// UI Updates
+function updateGameState(data) {
+    currentCapacity = data.new_capacity;
+    currentScore = data.score;
+    
+    // Update UI elements
+    document.getElementById('scoreValue').textContent = currentScore;
+    document.getElementById('capacityValue').textContent = `${currentCapacity}/${maxCapacity}`;
+    
+    // Update progress bar
+    const progressBar = document.getElementById('capacityBar');
+    const percentage = (currentCapacity / maxCapacity) * 100;
+    progressBar.style.width = percentage + '%';
+    
+    // Update full state
+    const cargoSection = document.getElementById('cargoSection');
+    if (data.is_full) {
+        progressBar.classList.add('capacity-full');
+        cargoSection.classList.add('full');
+    } else {
+        progressBar.classList.remove('capacity-full');
+        cargoSection.classList.remove('full');
+    }
+}
+
+function refreshUI() {
+    // Re-initialize drag and drop for new items
+    setTimeout(() => {
+        initializeDragAndDrop();
+    }, 100);
+}
+
+function showMessage(text, type) {
+    const messageArea = document.getElementById('messageArea');
+    
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    message.textContent = text;
+    
+    messageArea.appendChild(message);
+    
+    // Remove message after 3 seconds
+    setTimeout(() => {
+        message.remove();
+    }, 3000);
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initializeDragAndDrop();
+    console.log('🚀 Space Cargo Manager initialized');
+});
+</script>
+{% endblock %}

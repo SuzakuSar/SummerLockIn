@@ -1,0 +1,800 @@
+{% extends 'base.html' %}
+
+{% block title %}Shell Game - SUMMERLOCKIN{% endblock %}
+
+{% block header %}🎪 Shell Game Challenge 🎪{% endblock %}
+
+{% block head %}
+<style>
+    /* Carnival theme colors */
+    :root {
+        --carnival-red: #ff1744;
+        --carnival-blue: #2196f3;
+        --carnival-yellow: #ffeb3b;
+        --carnival-green: #4caf50;
+        --carnival-purple: #9c27b0;
+        --gold: #ffd700;
+        --carnival-dark: #1a1a2e;
+        --carnival-light: #16213e;
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--carnival-dark) 0%, var(--carnival-light) 100%);
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+    }
+    
+    .game-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        border-radius: 20px;
+        border: 2px solid rgba(255,255,255,0.2);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+    
+    .stats-panel {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(255,255,255,0.05);
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: linear-gradient(145deg, var(--carnival-purple), var(--carnival-blue));
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        display: block;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+    
+    .game-area {
+        margin: 3rem 0;
+        padding: 2rem;
+        background: radial-gradient(circle at center, rgba(255,215,0,0.1), transparent);
+        border-radius: 15px;
+        min-height: 300px;
+        position: relative;
+    }
+    
+    .game-instructions {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        color: rgba(255,255,255,0.9);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .buckets-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 3rem;
+        height: 200px;
+        margin: 2rem 0;
+        position: relative;
+    }
+    
+    .bucket {
+        width: 120px;
+        height: 120px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        transform-origin: bottom center;
+    }
+    
+    .bucket:hover {
+        transform: scale(1.05);
+    }
+    
+    .bucket.disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
+    .bucket.shuffling {
+        cursor: not-allowed;
+    }
+    
+    .bucket-body {
+        width: 100%;
+        height: 80px;
+        border-radius: 0 0 50px 50px;
+        background: linear-gradient(145deg, var(--carnival-red), var(--carnival-blue));
+        border: 3px solid rgba(255,255,255,0.3);
+        box-shadow: 
+            0 8px 15px rgba(0,0,0,0.3),
+            inset 0 -5px 10px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .bucket:nth-child(1) .bucket-body {
+        background: linear-gradient(145deg, var(--carnival-red), #d32f2f);
+    }
+    
+    .bucket:nth-child(2) .bucket-body {
+        background: linear-gradient(145deg, var(--carnival-blue), #1976d2);
+    }
+    
+    .bucket:nth-child(3) .bucket-body {
+        background: linear-gradient(145deg, var(--carnival-green), #388e3c);
+    }
+    
+    .bucket-rim {
+        width: 110%;
+        height: 20px;
+        background: linear-gradient(145deg, #666, #333);
+        border-radius: 50px;
+        position: absolute;
+        top: -10px;
+        left: -5%;
+        box-shadow: 
+            0 4px 8px rgba(0,0,0,0.3),
+            inset 0 2px 4px rgba(255,255,255,0.2);
+    }
+    
+    .ball {
+        width: 40px;
+        height: 40px;
+        background: radial-gradient(circle at 30% 30%, var(--gold), #ff8f00);
+        border-radius: 50%;
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 
+            0 5px 15px rgba(0,0,0,0.4),
+            inset -5px -5px 10px rgba(0,0,0,0.2),
+            inset 5px 5px 10px rgba(255,255,255,0.3);
+        transition: all 0.5s ease;
+        z-index: 10;
+    }
+    
+    .ball.hidden {
+        bottom: 20px;
+        opacity: 0;
+    }
+    
+    .ball.revealed {
+        bottom: -20px;
+        opacity: 1;
+        animation: ballBounce 0.6s ease;
+    }
+    
+    @keyframes ballBounce {
+        0% { transform: translateX(-50%) translateY(0) scale(1); }
+        50% { transform: translateX(-50%) translateY(-20px) scale(1.1); }
+        100% { transform: translateX(-50%) translateY(0) scale(1); }
+    }
+    
+    .bucket.correct {
+        animation: correctBucket 1s ease;
+    }
+    
+    .bucket.wrong {
+        animation: wrongBucket 0.5s ease;
+    }
+    
+    @keyframes correctBucket {
+        0%, 100% { transform: scale(1); }
+        25% { transform: scale(1.1) rotateZ(-5deg); }
+        75% { transform: scale(1.1) rotateZ(5deg); }
+    }
+    
+    @keyframes wrongBucket {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+    
+    .bucket-number {
+        position: absolute;
+        top: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(145deg, var(--carnival-yellow), #f57c00);
+        color: var(--carnival-dark);
+        font-weight: bold;
+        font-size: 1.2rem;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    }
+    
+    .control-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .game-btn {
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    
+    .game-btn:active {
+        transform: translateY(0);
+    }
+    
+    .btn-start {
+        background: linear-gradient(145deg, var(--carnival-green), #2e7d32);
+        color: white;
+    }
+    
+    .btn-reset {
+        background: linear-gradient(145deg, var(--carnival-red), #c62828);
+        color: white;
+    }
+    
+    .btn-start:disabled,
+    .btn-reset:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .game-status {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin: 1rem 0;
+        min-height: 2rem;
+        color: rgba(255,255,255,0.9);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .status-waiting {
+        color: var(--carnival-yellow);
+    }
+    
+    .status-shuffling {
+        color: var(--carnival-blue);
+        animation: pulse 1s ease-in-out infinite;
+    }
+    
+    .status-guessing {
+        color: var(--carnival-purple);
+    }
+    
+    .status-correct {
+        color: var(--carnival-green);
+    }
+    
+    .status-wrong {
+        color: var(--carnival-red);
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .countdown {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--carnival-yellow);
+        text-shadow: 0 0 10px rgba(255,235,59,0.5);
+        margin: 1rem 0;
+    }
+    
+    /* Shuffle animation */
+    .bucket.swapping {
+        z-index: 20;
+        transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .buckets-container {
+            gap: 1.5rem;
+        }
+        
+        .bucket {
+            width: 90px;
+            height: 90px;
+        }
+        
+        .bucket-body {
+            height: 60px;
+        }
+        
+        .ball {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .control-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-btn {
+            width: 100%;
+            max-width: 250px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .stats-panel {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .buckets-container {
+            gap: 1rem;
+        }
+        
+        .bucket {
+            width: 70px;
+            height: 70px;
+        }
+        
+        .bucket-body {
+            height: 50px;
+        }
+        
+        .ball {
+            width: 25px;
+            height: 25px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="game-container">
+    <!-- Statistics Panel -->
+    <div class="stats-panel">
+        <div class="stat-item">
+            <span class="stat-value" id="score">{{ session.get('shell_game_score', 0) }}</span>
+            <div class="stat-label">Correct Guesses</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" id="total-games">{{ session.get('shell_game_total_games', 0) }}</span>
+            <div class="stat-label">Total Games</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" id="streak">{{ session.get('shell_game_streak', 0) }}</span>
+            <div class="stat-label">Current Streak</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" id="accuracy">
+                {% if session.get('shell_game_total_games', 0) > 0 %}
+                    {{ "%.1f"|format((session.get('shell_game_score', 0) / session.get('shell_game_total_games', 1)) * 100) }}%
+                {% else %}
+                    0.0%
+                {% endif %}
+            </span>
+            <div class="stat-label">Accuracy</div>
+        </div>
+    </div>
+    
+    <!-- Game Instructions -->
+    <div class="game-instructions">
+        Watch the golden ball, then track which bucket it's under as they shuffle!
+    </div>
+    
+    <!-- Game Status -->
+    <div class="game-status" id="game-status">
+        Click "Start New Game" to begin the challenge!
+    </div>
+    
+    <!-- Countdown Display -->
+    <div class="countdown" id="countdown" style="display: none;"></div>
+    
+    <!-- Game Area -->
+    <div class="game-area">
+        <div class="buckets-container" id="buckets-container">
+            <div class="bucket disabled" data-bucket="0">
+                <div class="bucket-number">1</div>
+                <div class="bucket-rim"></div>
+                <div class="bucket-body"></div>
+                <div class="ball hidden" id="ball-0"></div>
+            </div>
+            <div class="bucket disabled" data-bucket="1">
+                <div class="bucket-number">2</div>
+                <div class="bucket-rim"></div>
+                <div class="bucket-body"></div>
+                <div class="ball hidden" id="ball-1"></div>
+            </div>
+            <div class="bucket disabled" data-bucket="2">
+                <div class="bucket-number">3</div>
+                <div class="bucket-rim"></div>
+                <div class="bucket-body"></div>
+                <div class="ball hidden" id="ball-2"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+        <button class="game-btn btn-start" id="start-btn" onclick="startNewGame()">
+            🎯 Start New Game
+        </button>
+        <button class="game-btn btn-reset" id="reset-btn" onclick="resetStats()">
+            🔄 Reset Stats
+        </button>
+    </div>
+</div>
+
+<script>
+let gameState = {
+    active: false,
+    shuffling: false,
+    correctBucket: null,
+    gameStarted: false
+};
+
+// Start a new game
+async function startNewGame() {
+    if (gameState.shuffling) return;
+    
+    // Reset visual state
+    resetBuckets();
+    updateStatus('Starting new game...', 'status-waiting');
+    
+    try {
+        const response = await fetch('{{ url_for("shell_game.new_game") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            gameState.correctBucket = data.correct_bucket;
+            gameState.active = true;
+            gameState.gameStarted = true;
+            
+            // Show the ball under the correct bucket initially
+            showBallUnderBucket(data.correct_bucket);
+            updateStatus('Remember where the ball is!', 'status-waiting');
+            
+            // Wait 2 seconds, then start shuffling
+            setTimeout(() => {
+                startShuffling(data.shuffle_sequence);
+            }, 2000);
+            
+            // Disable start button during game
+            document.getElementById('start-btn').disabled = true;
+        }
+    } catch (error) {
+        console.error('Error starting game:', error);
+        updateStatus('Error starting game. Please try again.', 'status-wrong');
+    }
+}
+
+// Show ball under specific bucket
+function showBallUnderBucket(bucketIndex) {
+    // Hide all balls first
+    for (let i = 0; i < 3; i++) {
+        const ball = document.getElementById(`ball-${i}`);
+        ball.classList.add('hidden');
+        ball.classList.remove('revealed');
+    }
+    
+    // Show ball under correct bucket
+    const ball = document.getElementById(`ball-${bucketIndex}`);
+    ball.classList.remove('hidden');
+    ball.classList.add('revealed');
+}
+
+// Start the shuffling animation
+function startShuffling(shuffleSequence) {
+    gameState.shuffling = true;
+    updateStatus('Shuffling buckets...', 'status-shuffling');
+    
+    // Hide the ball
+    for (let i = 0; i < 3; i++) {
+        const ball = document.getElementById(`ball-${i}`);
+        ball.classList.add('hidden');
+        ball.classList.remove('revealed');
+    }
+    
+    // Mark buckets as shuffling
+    const buckets = document.querySelectorAll('.bucket');
+    buckets.forEach(bucket => {
+        bucket.classList.add('shuffling');
+        bucket.classList.add('disabled');
+    });
+    
+    // Start countdown
+    startCountdown(5);
+    
+    // Execute shuffle sequence
+    executeShuffleSequence(shuffleSequence, () => {
+        // Shuffling complete
+        gameState.shuffling = false;
+        
+        // Remove shuffling class and enable clicking
+        buckets.forEach(bucket => {
+            bucket.classList.remove('shuffling', 'disabled');
+        });
+        
+        updateStatus('Click on a bucket to make your guess!', 'status-guessing');
+        document.getElementById('countdown').style.display = 'none';
+    });
+}
+
+// Execute the shuffle sequence with timing
+function executeShuffleSequence(shuffleSequence, callback) {
+    let currentStep = 0;
+    const stepDuration = 5000 / shuffleSequence.length; // Distribute over 5 seconds
+    
+    function executeNextStep() {
+        if (currentStep >= shuffleSequence.length) {
+            callback();
+            return;
+        }
+        
+        const [pos1, pos2] = shuffleSequence[currentStep];
+        swapBuckets(pos1, pos2);
+        
+        currentStep++;
+        setTimeout(executeNextStep, stepDuration);
+    }
+    
+    executeNextStep();
+}
+
+// Swap two buckets visually
+function swapBuckets(pos1, pos2) {
+    const buckets = document.querySelectorAll('.bucket');
+    const bucket1 = buckets[pos1];
+    const bucket2 = buckets[pos2];
+    
+    // Get current positions
+    const container = document.getElementById('buckets-container');
+    const containerRect = container.getBoundingClientRect();
+    const bucket1Rect = bucket1.getBoundingClientRect();
+    const bucket2Rect = bucket2.getBoundingClientRect();
+    
+    // Calculate relative positions
+    const bucket1Left = bucket1Rect.left - containerRect.left;
+    const bucket2Left = bucket2Rect.left - containerRect.left;
+    
+    // Add swapping class for higher z-index
+    bucket1.classList.add('swapping');
+    bucket2.classList.add('swapping');
+    
+    // Animate the swap
+    bucket1.style.transform = `translateX(${bucket2Left - bucket1Left}px)`;
+    bucket2.style.transform = `translateX(${bucket1Left - bucket2Left}px)`;
+    
+    // After animation, actually swap the DOM elements
+    setTimeout(() => {
+        // Reset transforms
+        bucket1.style.transform = '';
+        bucket2.style.transform = '';
+        
+        // Swap in DOM
+        const temp = bucket1.nextSibling;
+        bucket1.parentNode.insertBefore(bucket1, bucket2.nextSibling);
+        bucket2.parentNode.insertBefore(bucket2, temp);
+        
+        // Remove swapping class
+        bucket1.classList.remove('swapping');
+        bucket2.classList.remove('swapping');
+    }, 800);
+}
+
+// Handle bucket click
+function handleBucketClick(bucketIndex) {
+    if (!gameState.active || gameState.shuffling) return;
+    
+    makeGuess(bucketIndex);
+}
+
+// Make a guess
+async function makeGuess(guess) {
+    if (!gameState.active) return;
+    
+    gameState.active = false;
+    updateStatus('Checking your guess...', 'status-waiting');
+    
+    // Disable all buckets
+    const buckets = document.querySelectorAll('.bucket');
+    buckets.forEach(bucket => bucket.classList.add('disabled'));
+    
+    try {
+        const response = await fetch('{{ url_for("shell_game.make_guess") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ guess: guess })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            updateStatus('Error: ' + data.error, 'status-wrong');
+            return;
+        }
+        
+        // Show result
+        showResult(data);
+        
+    } catch (error) {
+        console.error('Error making guess:', error);
+        updateStatus('Error processing guess. Please try again.', 'status-wrong');
+    }
+}
+
+// Show game result
+function showResult(data) {
+    const buckets = document.querySelectorAll('.bucket');
+    const correctBucket = buckets[data.correct_bucket];
+    
+    // Show the ball under correct bucket
+    showBallUnderBucket(data.correct_bucket);
+    
+    if (data.correct) {
+        updateStatus('🎉 Correct! Great job!', 'status-correct');
+        correctBucket.classList.add('correct');
+    } else {
+        updateStatus('❌ Wrong! The ball was under bucket ' + (data.correct_bucket + 1), 'status-wrong');
+        correctBucket.classList.add('correct');
+        buckets[data.guess] && buckets[data.guess].classList.add('wrong');
+    }
+    
+    // Update statistics
+    updateStats(data);
+    
+    // Re-enable start button after delay
+    setTimeout(() => {
+        resetBuckets();
+        document.getElementById('start-btn').disabled = false;
+        updateStatus('Click "Start New Game" to play again!', 'status-waiting');
+    }, 3000);
+}
+
+// Update statistics display
+function updateStats(data) {
+    document.getElementById('score').textContent = data.score;
+    document.getElementById('total-games').textContent = data.total_games;
+    document.getElementById('streak').textContent = data.streak;
+    document.getElementById('accuracy').textContent = data.accuracy + '%';
+}
+
+// Reset buckets to initial state
+function resetBuckets() {
+    const buckets = document.querySelectorAll('.bucket');
+    buckets.forEach(bucket => {
+        bucket.classList.remove('correct', 'wrong', 'disabled', 'shuffling', 'swapping');
+        bucket.style.transform = '';
+    });
+    
+    // Hide all balls
+    for (let i = 0; i < 3; i++) {
+        const ball = document.getElementById(`ball-${i}`);
+        ball.classList.add('hidden');
+        ball.classList.remove('revealed');
+    }
+}
+
+// Update game status
+function updateStatus(message, className) {
+    const statusEl = document.getElementById('game-status');
+    statusEl.textContent = message;
+    statusEl.className = 'game-status ' + (className || '');
+}
+
+// Start countdown
+function startCountdown(seconds) {
+    const countdownEl = document.getElementById('countdown');
+    countdownEl.style.display = 'block';
+    
+    let remaining = seconds;
+    
+    function updateCountdown() {
+        countdownEl.textContent = remaining;
+        
+        if (remaining > 0) {
+            remaining--;
+            setTimeout(updateCountdown, 1000);
+        } else {
+            countdownEl.style.display = 'none';
+        }
+    }
+    
+    updateCountdown();
+}
+
+// Reset statistics
+async function resetStats() {
+    if (!confirm('Are you sure you want to reset all statistics?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('{{ url_for("shell_game.reset_stats") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Reset display
+            document.getElementById('score').textContent = '0';
+            document.getElementById('total-games').textContent = '0';
+            document.getElementById('streak').textContent = '0';
+            document.getElementById('accuracy').textContent = '0.0%';
+            
+            updateStatus('Statistics reset successfully!', 'status-correct');
+            
+            // Reset game state
+            gameState = {
+                active: false,
+                shuffling: false,
+                correctBucket: null,
+                gameStarted: false
+            };
+            
+            resetBuckets();
+            document.getElementById('start-btn').disabled = false;
+        }
+    } catch (error) {
+        console.error('Error resetting stats:', error);
+        updateStatus('Error resetting statistics.', 'status-wrong');
+    }
+}
+
+// Add click event listeners to buckets
+document.addEventListener('DOMContentLoaded', function() {
+    const buckets = document.querySelectorAll('.bucket');
+    buckets.forEach((bucket, index) => {
+        bucket.addEventListener('click', () => handleBucketClick(index));
+    });
+});
+</script>
+{% endblock %}

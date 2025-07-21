@@ -1,0 +1,541 @@
+{% extends 'base.html' %}
+
+{% block title %}Wire Matching Game{% endblock %}
+
+{% block header %}🔌 ELECTRICAL TASK: Wire Matching{% endblock %}
+
+{% block head %}
+<style>
+    /* Wire Matching Game Styles */
+    .wire-game-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 20, 0.9) 0%, 
+            rgba(20, 20, 40, 0.8) 50%, 
+            rgba(40, 20, 60, 0.7) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .game-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #8a2be2;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.25rem;
+    }
+
+    .wire-panel-container {
+        display: flex;
+        gap: 3rem;
+        justify-content: space-between;
+        margin: 2rem 0;
+        position: relative;
+        min-height: 400px;
+    }
+
+    .wire-panel {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 2rem 1rem;
+        position: relative;
+    }
+
+    .wire-panel h3 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .wire-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .wire {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        min-height: 50px;
+    }
+
+    .wire:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    .wire.selected {
+        border-color: #ffd700;
+        background: rgba(255, 215, 0, 0.1);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .wire.connected {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: rgba(0, 255, 0, 0.1);
+        border-color: rgba(0, 255, 0, 0.3);
+    }
+
+    .wire.connected:hover {
+        transform: none;
+    }
+
+    .wire-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 
+            0 0 10px rgba(255, 255, 255, 0.2),
+            inset 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .wire-label {
+        font-weight: 500;
+        text-transform: capitalize;
+        letter-spacing: 0.05em;
+    }
+
+    /* Wire colors */
+    .color-red { background: linear-gradient(45deg, #ff4444, #cc0000); }
+    .color-blue { background: linear-gradient(45deg, #4444ff, #0000cc); }
+    .color-green { background: linear-gradient(45deg, #44ff44, #00cc00); }
+    .color-yellow { background: linear-gradient(45deg, #ffff44, #cccc00); }
+    .color-purple { background: linear-gradient(45deg, #ff44ff, #cc00cc); }
+    .color-orange { background: linear-gradient(45deg, #ff8844, #cc4400); }
+
+    /* Connection SVG overlay */
+    .connection-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .connection-line {
+        stroke: #00ff00;
+        stroke-width: 3;
+        fill: none;
+        stroke-dasharray: 5,5;
+        animation: connectionPulse 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 5px #00ff00);
+    }
+
+    @keyframes connectionPulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
+    .game-status {
+        text-align: center;
+        margin: 2rem 0;
+        padding: 1rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .status-info {
+        background: rgba(138, 43, 226, 0.2);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .status-success {
+        background: rgba(0, 255, 0, 0.2);
+        border: 1px solid rgba(0, 255, 0, 0.4);
+        color: #00ff00;
+        animation: successGlow 0.5s ease-in-out;
+    }
+
+    .status-error {
+        background: rgba(255, 0, 0, 0.2);
+        border: 1px solid rgba(255, 0, 0, 0.4);
+        color: #ff4444;
+        animation: errorShake 0.5s ease-in-out;
+    }
+
+    @keyframes successGlow {
+        0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.3); }
+        50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.6); }
+    }
+
+    @keyframes errorShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .cosmic-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: inherit;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cosmic-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 10px 30px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    .cosmic-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .instructions {
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 4px solid rgba(138, 43, 226, 0.6);
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .instructions h4 {
+        margin-bottom: 0.5rem;
+        color: rgba(138, 43, 226, 1);
+    }
+
+    .instructions p {
+        margin: 0.25rem 0;
+        opacity: 0.9;
+        line-height: 1.4;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .wire-panel-container {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .wire-game-container {
+            padding: 1rem;
+        }
+        
+        .game-stats {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="wire-game-container">
+    <!-- Instructions -->
+    <div class="instructions">
+        <h4>🔧 Mission Briefing</h4>
+        <p>• Click on a wire from the LEFT panel</p>
+        <p>• Then click on the matching colored wire from the RIGHT panel</p>
+        <p>• Connect all wires correctly to complete the task</p>
+        <p>• One wrong connection ends the mission!</p>
+    </div>
+
+    <!-- Game Statistics -->
+    <div class="game-stats">
+        <div class="stat-item">
+            <div class="stat-label">Tasks Completed</div>
+            <div class="stat-value">{{ games_won }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Total Attempts</div>
+            <div class="stat-value">{{ games_played }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Success Rate</div>
+            <div class="stat-value">
+                {% if games_played > 0 %}
+                    {{ "%.1f" | format((games_won / games_played * 100)) }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Status -->
+    <div id="gameStatus" class="game-status status-info">
+        Select a wire from the left panel to begin
+    </div>
+
+    <!-- Wire Panels -->
+    <div class="wire-panel-container">
+        <!-- Left Panel -->
+        <div class="wire-panel">
+            <h3>⚡ Input Wires</h3>
+            <div class="wire-list" id="leftWires">
+                {% for i in range(puzzle.left_wires|length) %}
+                <div class="wire" data-index="{{ i }}" data-color="{{ puzzle.left_wires[i] }}" onclick="selectLeftWire({{ i }})">
+                    <div class="wire-color color-{{ puzzle.left_wires[i] }}"></div>
+                    <div class="wire-label">{{ puzzle.left_wires[i] }} wire</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Connection Overlay -->
+        <svg class="connection-overlay" id="connectionOverlay"></svg>
+
+        <!-- Right Panel -->
+        <div class="wire-panel">
+            <h3>🔌 Output Terminals</h3>
+            <div class="wire-list" id="rightWires">
+                {% for i in range(puzzle.right_wires|length) %}
+                <div class="wire" data-index="{{ i }}" data-color="{{ puzzle.right_wires[i] }}" onclick="selectRightWire({{ i }})">
+                    <div class="wire-color color-{{ puzzle.right_wires[i] }}"></div>
+                    <div class="wire-label">{{ puzzle.right_wires[i] }} terminal</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div class="game-controls">
+        <button class="cosmic-btn" onclick="newGame()">🔄 New Task</button>
+        <button class="cosmic-btn" onclick="resetConnections()" id="resetBtn" disabled>
+            ⚠️ Reset Connections
+        </button>
+    </div>
+</div>
+
+<script>
+let selectedLeftWire = null;
+let gameComplete = false;
+let connections = [];
+
+function selectLeftWire(index) {
+    if (gameComplete) return;
+    
+    // Clear previous selection
+    document.querySelectorAll('#leftWires .wire').forEach(wire => {
+        wire.classList.remove('selected');
+    });
+    
+    // Check if this wire is already connected
+    const isConnected = connections.some(conn => conn.left_index === index);
+    if (isConnected) {
+        updateStatus('This wire is already connected!', 'error');
+        return;
+    }
+    
+    // Select the wire
+    const wireEl = document.querySelector(`#leftWires .wire[data-index="${index}"]`);
+    wireEl.classList.add('selected');
+    selectedLeftWire = index;
+    
+    const color = wireEl.dataset.color;
+    updateStatus(`Selected ${color} wire. Now select the matching terminal.`, 'info');
+}
+
+function selectRightWire(index) {
+    if (gameComplete || selectedLeftWire === null) {
+        if (selectedLeftWire === null) {
+            updateStatus('Please select a wire from the left panel first!', 'error');
+        }
+        return;
+    }
+    
+    // Make connection attempt
+    connectWires(selectedLeftWire, index);
+}
+
+async function connectWires(leftIndex, rightIndex) {
+    try {
+        const response = await fetch('/wirematching/connect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                left_index: leftIndex,
+                right_index: rightIndex
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.correct) {
+                // Successful connection
+                connections.push(result.connection);
+                drawConnection(result.connection);
+                markWireAsConnected(leftIndex, 'left');
+                
+                if (result.game_complete) {
+                    updateStatus(result.message, 'success');
+                    gameComplete = true;
+                    document.getElementById('resetBtn').disabled = true;
+                } else {
+                    updateStatus(result.message, 'success');
+                    document.getElementById('resetBtn').disabled = false;
+                }
+            } else {
+                // Wrong connection
+                updateStatus(result.message, 'error');
+                setTimeout(() => {
+                    if (result.game_over) {
+                        updateStatus('Mission failed! Starting new task...', 'error');
+                        setTimeout(newGame, 2000);
+                    }
+                }, 1500);
+            }
+        }
+        
+        // Clear selection
+        clearSelection();
+        
+    } catch (error) {
+        console.error('Error connecting wires:', error);
+        updateStatus('Connection error! Please try again.', 'error');
+    }
+}
+
+function drawConnection(connection) {
+    const svg = document.getElementById('connectionOverlay');
+    const leftWire = document.querySelector(`#leftWires .wire[data-index="${connection.left_index}"]`);
+    const rightWire = document.querySelector(`#rightWires .wire[data-index="${connection.right_index}"]`);
+    
+    const leftRect = leftWire.getBoundingClientRect();
+    const rightRect = rightWire.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    
+    const x1 = leftRect.right - svgRect.left;
+    const y1 = leftRect.top + leftRect.height / 2 - svgRect.top;
+    const x2 = rightRect.left - svgRect.left;
+    const y2 = rightRect.top + rightRect.height / 2 - svgRect.top;
+    
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.classList.add('connection-line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    
+    svg.appendChild(line);
+}
+
+function markWireAsConnected(index, side) {
+    const wireEl = document.querySelector(`#${side}Wires .wire[data-index="${index}"]`);
+    wireEl.classList.add('connected');
+    wireEl.onclick = null;
+}
+
+function clearSelection() {
+    document.querySelectorAll('.wire').forEach(wire => {
+        wire.classList.remove('selected');
+    });
+    selectedLeftWire = null;
+}
+
+function updateStatus(message, type) {
+    const statusEl = document.getElementById('gameStatus');
+    statusEl.textContent = message;
+    statusEl.className = `game-status status-${type}`;
+}
+
+async function newGame() {
+    try {
+        const response = await fetch('/wirematching/new-game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error starting new game:', error);
+    }
+}
+
+function resetConnections() {
+    if (confirm('Are you sure you want to reset all connections?')) {
+        newGame();
+    }
+}
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', function() {
+    updateStatus('Select a wire from the left panel to begin', 'info');
+    console.log('🔌 Wire Matching Game initialized');
+});
+</script>
+{% endblock %}

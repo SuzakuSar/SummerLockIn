@@ -1,0 +1,50 @@
+<!-- File: website/do_not_click/templates/warning.html -->
+{% extends 'base.html' %}
+
+{% block header %}⚠️ FINAL WARNING ⚠️{% endblock %}
+
+{% block head %}
+<style>
+    .final-warning {
+        text-align: center;
+        padding: 3rem;
+        color: #ff6b6b;
+        font-size: 1.8rem;
+        animation: urgentFlash 0.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes urgentFlash {
+        0% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    .countdown {
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 2rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="final-warning">
+    <h2>You clicked the forbidden button!</h2>
+    <p>Redirecting to the void in...</p>
+    <div class="countdown" id="countdown">3</div>
+</div>
+
+<script>
+let count = 3;
+const countdownEl = document.getElementById('countdown');
+
+const timer = setInterval(() => {
+    count--;
+    countdownEl.textContent = count;
+    
+    if (count <= 0) {
+        clearInterval(timer);
+        window.location.href = "{{ url_for('do_not_click.clicked') }}";
+    }
+}, 1000);
+</script>
+{% endblock %}
