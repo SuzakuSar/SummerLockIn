@@ -1,0 +1,540 @@
+<!-- website/i_spy/templates/i_spy.html -->
+{% extends 'base.html' %}
+
+{% block header %}🔍 I Spy Game 🔍{% endblock %}
+
+{% block head %}
+<style>
+    /* I Spy Game - Bright, colorful theme */
+    :root {
+        --primary-color: #ff6b35;
+        --secondary-color: #f7931e;
+        --accent-color: #ffcd3c;
+        --success-color: #4ecdc4;
+        --game-bg: linear-gradient(45deg, #ffeaa7, #fab1a0, #fd79a8, #a29bfe);
+    }
+    
+    .i-spy-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+    }
+    
+    .game-header {
+        text-align: center;
+        background: var(--game-bg);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        animation: headerFloat 3s ease-in-out infinite;
+    }
+    
+    @keyframes headerFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    .score-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2d3436;
+        text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 10px;
+        margin: 1rem 0;
+        overflow: hidden;
+        border: 2px solid #fff;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--success-color), var(--accent-color));
+        border-radius: 8px;
+        transition: width 0.5s ease;
+        box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
+    }
+    
+    .game-area {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        background: linear-gradient(135deg, #74b9ff, #0984e3, #00b894, #00cec9);
+        border-radius: 15px;
+        border: 5px solid #fff;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        cursor: crosshair;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .game-object {
+        position: absolute;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+        color: #fff;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        opacity: 0;
+        animation: objectFloat 4s ease-in-out infinite;
+    }
+    
+    .game-object.found {
+        opacity: 1;
+        transform: scale(1.2);
+        animation: foundPulse 1s ease-in-out infinite;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 20px var(--accent-color);
+    }
+    
+    @keyframes objectFloat {
+        0%, 100% { transform: translateY(0px) scale(1); }
+        50% { transform: translateY(-3px) scale(1.05); }
+    }
+    
+    @keyframes foundPulse {
+        0%, 100% { box-shadow: 0 0 20px var(--accent-color); }
+        50% { box-shadow: 0 0 30px var(--accent-color), 0 0 40px var(--success-color); }
+    }
+    
+    .checklist {
+        background: rgba(255,255,255,0.9);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .checklist h3 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        text-align: center;
+        font-size: 1.5rem;
+    }
+    
+    .object-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .object-item {
+        display: flex;
+        align-items: center;
+        padding: 0.8rem;
+        border-radius: 10px;
+        background: #f8f9fa;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .object-item.found {
+        background: var(--success-color);
+        color: #fff;
+        border-color: var(--accent-color);
+        transform: scale(1.02);
+    }
+    
+    .object-checkbox {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 3px solid #ddd;
+        margin-right: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .object-item.found .object-checkbox {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+    }
+    
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .control-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        font-family: inherit;
+    }
+    
+    .control-btn:hover {
+        background: var(--secondary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    
+    .control-btn.secondary {
+        background: var(--success-color);
+    }
+    
+    .control-btn.secondary:hover {
+        background: #45b7aa;
+    }
+    
+    .click-feedback {
+        position: absolute;
+        pointer-events: none;
+        font-size: 1.5rem;
+        font-weight: bold;
+        z-index: 100;
+        animation: clickPop 1s ease-out forwards;
+    }
+    
+    @keyframes clickPop {
+        0% {
+            opacity: 1;
+            transform: scale(0.5);
+        }
+        50% {
+            transform: scale(1.2);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(1) translateY(-30px);
+        }
+    }
+    
+    .completion-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-content {
+        background: var(--game-bg);
+        padding: 3rem;
+        border-radius: 20px;
+        text-align: center;
+        animation: modalPop 0.5s ease-out;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    
+    @keyframes modalPop {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .modal-content h2 {
+        color: #2d3436;
+        margin-bottom: 1rem;
+        font-size: 2.5rem;
+    }
+    
+    .message-display {
+        text-align: center;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 10px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        min-height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .message-display.success {
+        background: var(--success-color);
+        color: #fff;
+    }
+    
+    .message-display.info {
+        background: var(--accent-color);
+        color: #2d3436;
+    }
+    
+    .message-display.empty {
+        opacity: 0.5;
+        background: #f8f9fa;
+        color: #6c757d;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .game-area {
+            height: 400px;
+        }
+        
+        .object-list {
+            grid-template-columns: 1fr;
+        }
+        
+        .game-controls {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .control-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="i-spy-container">
+    <!-- Game Header -->
+    <div class="game-header">
+        <div class="score-display">
+            Score: <span id="scoreValue">{{ score }}</span> | 
+            Found: <span id="foundCount">{{ found_count }}</span>/{{ total_count }}
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ (found_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
+        </div>
+        <p style="margin: 0.5rem 0 0 0; color: #2d3436;">
+            Click on the game area to find hidden objects!
+        </p>
+    </div>
+    
+    <!-- Game Area -->
+    <div class="game-area" id="gameArea">
+        {% for obj in objects %}
+        <div class="game-object {{ 'found' if obj.found else '' }}" 
+             style="left: {{ obj.x }}%; 
+                    top: {{ obj.y }}%; 
+                    width: {{ obj.size }}px; 
+                    height: {{ obj.size }}px;
+                    background: {{ obj.color }};
+                    animation-delay: {{ loop.index0 * 0.5 }}s;"
+             data-object-id="{{ obj.id }}">
+            {{ obj.name.split()[0] }}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Message Display -->
+    <div class="message-display empty" id="messageDisplay">
+        Click anywhere to start looking for objects!
+    </div>
+    
+    <!-- Object Checklist -->
+    <div class="checklist">
+        <h3>🎯 Objects to Find</h3>
+        <div class="object-list">
+            {% for obj in objects %}
+            <div class="object-item {{ 'found' if obj.found else '' }}" id="item-{{ obj.id }}">
+                <div class="object-checkbox">
+                    {% if obj.found %}✓{% endif %}
+                </div>
+                <span>{{ obj.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Game Controls -->
+    <div class="game-controls">
+        <button class="control-btn" onclick="resetGame()">🔄 Reset Game</button>
+        <button class="control-btn secondary" onclick="getHint()">💡 Get Hint</button>
+    </div>
+</div>
+
+<!-- Completion Modal -->
+<div class="completion-modal" id="completionModal">
+    <div class="modal-content">
+        <h2>🎉 Congratulations! 🎉</h2>
+        <p>You found all {{ total_count }} objects!</p>
+        <p>Final Score: <strong>{{ score }}</strong></p>
+        <button class="control-btn" onclick="closeModal(); resetGame();">Play Again</button>
+    </div>
+</div>
+
+<script>
+// I Spy Game JavaScript
+class ISpyGame {
+    constructor() {
+        this.gameArea = document.getElementById('gameArea');
+        this.messageDisplay = document.getElementById('messageDisplay');
+        this.scoreValue = document.getElementById('scoreValue');
+        this.foundCount = document.getElementById('foundCount');
+        this.completionModal = document.getElementById('completionModal');
+        
+        this.initializeGame();
+    }
+    
+    initializeGame() {
+        // Add click listener to game area
+        this.gameArea.addEventListener('click', (e) => this.handleGameClick(e));
+        
+        // Check if game is already complete
+        const foundObjects = document.querySelectorAll('.game-object.found').length;
+        const totalObjects = {{ total_count }};
+        
+        if (foundObjects === totalObjects && totalObjects > 0) {
+            setTimeout(() => this.showCompletionModal(), 500);
+        }
+    }
+    
+    async handleGameClick(e) {
+        const rect = this.gameArea.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        // Show click feedback
+        this.showClickFeedback(e.clientX, e.clientY, '🔍');
+        
+        try {
+            const response = await fetch('{{ url_for("i_spy.handle_click") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ x: x, y: y })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.handleFoundObject(result);
+            } else {
+                this.showMessage(result.message, 'info');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.showMessage('Something went wrong! Try again.', 'info');
+        }
+    }
+    
+    handleFoundObject(result) {
+        // Update object visual
+        const objectEl = document.querySelector(`[data-object-id="${result.object_id}"]`);
+        if (objectEl) {
+            objectEl.classList.add('found');
+        }
+        
+        // Update checklist item
+        const itemEl = document.getElementById(`item-${result.object_id}`);
+        if (itemEl) {
+            itemEl.classList.add('found');
+            const checkbox = itemEl.querySelector('.object-checkbox');
+            if (checkbox) {
+                checkbox.textContent = '✓';
+            }
+        }
+        
+        // Update score and count
+        this.scoreValue.textContent = result.score;
+        this.foundCount.textContent = result.total_found;
+        
+        // Update progress bar
+        const progressFill = document.querySelector('.progress-fill');
+        const progressPercent = (result.total_found / {{ total_count }}) * 100;
+        progressFill.style.width = progressPercent + '%';
+        
+        // Show success message
+        this.showMessage(`🎉 Found ${result.found_object}! +10 points`, 'success');
+        
+        // Check if game is complete
+        if (result.game_complete) {
+            setTimeout(() => this.showCompletionModal(), 1000);
+        }
+    }
+    
+    showClickFeedback(x, y, emoji) {
+        const feedback = document.createElement('div');
+        feedback.className = 'click-feedback';
+        feedback.textContent = emoji;
+        feedback.style.left = x + 'px';
+        feedback.style.top = y + 'px';
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            document.body.removeChild(feedback);
+        }, 1000);
+    }
+    
+    showMessage(text, type) {
+        this.messageDisplay.textContent = text;
+        this.messageDisplay.className = `message-display ${type}`;
+        
+        // Clear message after a few seconds
+        setTimeout(() => {
+            this.messageDisplay.textContent = 'Keep looking for more objects!';
+            this.messageDisplay.className = 'message-display empty';
+        }, 3000);
+    }
+    
+    showCompletionModal() {
+        this.completionModal.style.display = 'flex';
+    }
+}
+
+// Game control functions
+async function resetGame() {
+    try {
+        const response = await fetch('{{ url_for("i_spy.reset_game") }}');
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error resetting game:', error);
+    }
+}
+
+async function getHint() {
+    try {
+        const response = await fetch('{{ url_for("i_spy.get_hint") }}');
+        const result = await response.json();
+        
+        if (result.hint) {
+            game.showMessage(`💡 Hint: ${result.hint}`, 'info');
+        }
+    } catch (error) {
+        console.error('Error getting hint:', error);
+    }
+}
+
+function closeModal() {
+    document.getElementById('completionModal').style.display = 'none';
+}
+
+// Initialize game when page loads
+let game;
+document.addEventListener('DOMContentLoaded', () => {
+    game = new ISpyGame();
+    console.log('🔍 I Spy Game initialized!');
+});
+</script>
+{% endblock %}

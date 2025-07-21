@@ -1,0 +1,694 @@
+{% extends 'base.html' %}
+
+{% block title %}Space Memory - Playing{% endblock %}
+
+{% block header %}🎴 COSMIC MEMORY GRID 🎴{% endblock %}
+
+{% block head %}
+<style>
+    .memory-game-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .game-header {
+        background: linear-gradient(135deg, 
+            rgba(0, 20, 40, 0.9) 0%, 
+            rgba(20, 0, 60, 0.8) 100%);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 100, 255, 0.4);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .game-stats {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .stat-display {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: rgba(255, 100, 255, 1);
+        text-shadow: 0 0 10px rgba(255, 100, 255, 0.6);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .control-button {
+        background: linear-gradient(135deg, 
+            rgba(255, 0, 128, 0.7), 
+            rgba(128, 0, 255, 0.7));
+        color: white;
+        border: 1px solid rgba(255, 100, 255, 0.5);
+        padding: 0.7rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .control-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 0, 128, 0.4);
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .control-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .memory-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        max-width: 400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 30, 0.8) 0%, 
+            rgba(30, 0, 50, 0.6) 100%);
+        border: 2px solid rgba(255, 100, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.6),
+            inset 0 0 20px rgba(255, 100, 255, 0.1);
+    }
+    
+    .memory-square {
+        aspect-ratio: 1;
+        background: linear-gradient(135deg, 
+            rgba(20, 20, 60, 0.8) 0%, 
+            rgba(40, 20, 80, 0.6) 100%);
+        border: 2px solid rgba(255, 100, 255, 0.4);
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 100px;
+    }
+    
+    .memory-square::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            45deg,
+            transparent 30%,
+            rgba(255, 100, 255, 0.1) 50%,
+            transparent 70%
+        );
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+    
+    .memory-square:hover::before {
+        transform: translateX(100%);
+    }
+    
+    .memory-square:hover {
+        transform: scale(1.05);
+        border-color: rgba(255, 100, 255, 0.8);
+        box-shadow: 0 0 20px rgba(255, 100, 255, 0.5);
+    }
+    
+    .memory-square.active {
+        background: linear-gradient(135deg, 
+            rgba(255, 100, 255, 0.9), 
+            rgba(255, 0, 128, 0.9));
+        border-color: rgba(255, 255, 255, 0.9);
+        box-shadow: 
+            0 0 30px rgba(255, 100, 255, 0.8),
+            inset 0 0 20px rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+        color: white;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+    
+    .memory-square.correct {
+        animation: correctPulse 0.6s ease;
+    }
+    
+    .memory-square.wrong {
+        animation: wrongShake 0.6s ease;
+        background: linear-gradient(135deg, 
+            rgba(255, 50, 50, 0.9), 
+            rgba(200, 0, 0, 0.9));
+    }
+    
+    .memory-square.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    @keyframes correctPulse {
+        0% { transform: scale(1); }
+        50% { 
+            transform: scale(1.2);
+            box-shadow: 0 0 40px rgba(0, 255, 0, 0.8);
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 0, 0.9), 
+                rgba(0, 200, 0, 0.9));
+        }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes wrongShake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .game-status {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 100, 255, 0.3);
+        border-radius: 15px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .status-message {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-align: center;
+        line-height: 1.4;
+    }
+    
+    .status-waiting {
+        color: rgba(255, 255, 100, 1);
+        text-shadow: 0 0 10px rgba(255, 255, 100, 0.6);
+    }
+    
+    .status-showing {
+        color: rgba(100, 200, 255, 1);
+        text-shadow: 0 0 10px rgba(100, 200, 255, 0.6);
+    }
+    
+    .status-playing {
+        color: rgba(255, 100, 255, 1);
+        text-shadow: 0 0 10px rgba(255, 100, 255, 0.6);
+    }
+    
+    .status-won {
+        color: rgba(100, 255, 100, 1);
+        text-shadow: 0 0 15px rgba(100, 255, 100, 0.8);
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .status-lost {
+        color: rgba(255, 100, 100, 1);
+        text-shadow: 0 0 15px rgba(255, 100, 100, 0.8);
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .sequence-display {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 100, 255, 0.2);
+        border-radius: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .victory-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1000;
+    }
+    
+    .victory-star {
+        position: absolute;
+        color: rgba(255, 100, 255, 1);
+        font-size: 2rem;
+        animation: victoryFloat 3s ease-out forwards;
+    }
+    
+    @keyframes victoryFloat {
+        0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-20vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .memory-game-container {
+            padding: 1rem;
+        }
+        
+        .game-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .game-stats {
+            justify-content: center;
+        }
+        
+        .memory-grid {
+            gap: 10px;
+            padding: 1.5rem;
+            max-width: 300px;
+        }
+        
+        .memory-square {
+            min-height: 80px;
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="memory-game-container">
+    <!-- Game Header with Stats and Controls -->
+    <div class="game-header">
+        <div class="game-stats">
+            <div class="stat-display">
+                <div class="stat-value" id="currentRound">1</div>
+                <div class="stat-label">Round</div>
+            </div>
+            <div class="stat-display">
+                <div class="stat-value" id="sequenceLength">0</div>
+                <div class="stat-label">Sequence</div>
+            </div>
+            <div class="stat-display">
+                <div class="stat-value" id="playerScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+        
+        <div class="game-controls">
+            <button class="control-button" id="newGameBtn" onclick="startNewGame()">
+                🚀 New Game
+            </button>
+            <button class="control-button" id="nextRoundBtn" onclick="startNextRound()" disabled>
+                ⭐ Next Round
+            </button>
+            <a href="{{ url_for('space_memory_game.index') }}" class="control-button">
+                🌌 Menu
+            </a>
+        </div>
+    </div>
+    
+    <!-- Game Status Display -->
+    <div class="game-status">
+        <div class="status-message" id="statusMessage">
+            Click "Next Round" to begin your cosmic memory challenge!
+        </div>
+    </div>
+    
+    <!-- Memory Grid (3x3) -->
+    <div class="memory-grid">
+        <div class="memory-square" data-square="0" onclick="handleSquareClick(0)">✦</div>
+        <div class="memory-square" data-square="1" onclick="handleSquareClick(1)">⭐</div>
+        <div class="memory-square" data-square="2" onclick="handleSquareClick(2)">🌟</div>
+        <div class="memory-square" data-square="3" onclick="handleSquareClick(3)">💫</div>
+        <div class="memory-square" data-square="4" onclick="handleSquareClick(4)">⚡</div>
+        <div class="memory-square" data-square="5" onclick="handleSquareClick(5)">🔮</div>
+        <div class="memory-square" data-square="6" onclick="handleSquareClick(6)">💎</div>
+        <div class="memory-square" data-square="7" onclick="handleSquareClick(7)">🌌</div>
+        <div class="memory-square" data-square="8" onclick="handleSquareClick(8)">🚀</div>
+    </div>
+    
+    <!-- Debug Info (hidden in production) -->
+    <div class="sequence-display" id="debugInfo" style="display: none;">
+        <div>Expected Sequence: <span id="expectedSequence">[]</span></div>
+        <div>Player Sequence: <span id="playerSequence">[]</span></div>
+        <div>Game State: <span id="gameState">waiting</span></div>
+    </div>
+</div>
+
+<!-- Victory Animation Container -->
+<div class="victory-animation" id="victoryAnimation"></div>
+
+<script>
+// Game state variables
+let gameState = {
+    sequence: [],
+    playerSequence: [],
+    round: 1,
+    status: 'waiting',
+    score: 0,
+    isShowing: false,
+    isPlayerTurn: false
+};
+
+// DOM elements
+const statusMessage = document.getElementById('statusMessage');
+const currentRoundEl = document.getElementById('currentRound');
+const sequenceLengthEl = document.getElementById('sequenceLength');
+const playerScoreEl = document.getElementById('playerScore');
+const nextRoundBtn = document.getElementById('nextRoundBtn');
+const newGameBtn = document.getElementById('newGameBtn');
+const squares = document.querySelectorAll('.memory-square');
+
+// Debug elements (hidden by default)
+const debugInfo = document.getElementById('debugInfo');
+const expectedSequenceEl = document.getElementById('expectedSequence');
+const playerSequenceEl = document.getElementById('playerSequence');
+const gameStateEl = document.getElementById('gameState');
+
+// Enable debug mode (set to false for production)
+const DEBUG_MODE = false;
+if (DEBUG_MODE) {
+    debugInfo.style.display = 'block';
+}
+
+// Initialize game
+async function startNewGame() {
+    try {
+        const response = await fetch('/api/new-game', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            gameState.sequence = [];
+            gameState.playerSequence = [];
+            gameState.round = 1;
+            gameState.status = 'waiting';
+            gameState.score = 0;
+            
+            updateDisplay();
+            clearSquareStates();
+            enableSquares(false);
+            
+            nextRoundBtn.disabled = false;
+            statusMessage.textContent = 'Ready for launch! Click "Next Round" to start.';
+            statusMessage.className = 'status-message status-waiting';
+        }
+    } catch (error) {
+        console.error('Error starting new game:', error);
+        statusMessage.textContent = 'Error starting game. Please try again.';
+        statusMessage.className = 'status-message status-lost';
+    }
+}
+
+// Start next round
+async function startNextRound() {
+    try {
+        nextRoundBtn.disabled = true;
+        newGameBtn.disabled = true;
+        
+        statusMessage.textContent = 'Generating new sequence...';
+        statusMessage.className = 'status-message status-waiting';
+        
+        const response = await fetch('/api/next-round', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.status === 'won') {
+            // Player has won the entire game!
+            gameState.status = 'won';
+            gameState.score = data.score;
+            showVictory();
+            updateDisplay();
+            newGameBtn.disabled = false;
+            return;
+        }
+        
+        if (data.status === 'success') {
+            gameState.sequence = data.sequence;
+            gameState.playerSequence = [];
+            gameState.round = data.round;
+            gameState.status = 'showing';
+            
+            updateDisplay();
+            await showSequence();
+        }
+    } catch (error) {
+        console.error('Error starting next round:', error);
+        statusMessage.textContent = 'Error loading round. Please try again.';
+        statusMessage.className = 'status-message status-lost';
+        nextRoundBtn.disabled = false;
+        newGameBtn.disabled = false;
+    }
+}
+
+// Show the sequence to the player
+async function showSequence() {
+    gameState.isShowing = true;
+    enableSquares(false);
+    
+    statusMessage.textContent = `Round ${gameState.round}: Watch the sequence...`;
+    statusMessage.className = 'status-message status-showing';
+    
+    // Clear all square states
+    clearSquareStates();
+    
+    // Show each square in sequence
+    for (let i = 0; i < gameState.sequence.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 600)); // Pause between squares
+        
+        const squareIndex = gameState.sequence[i];
+        const square = squares[squareIndex];
+        
+        // Light up the square
+        square.classList.add('active');
+        
+        // Turn off after a moment
+        await new Promise(resolve => setTimeout(resolve, 800));
+        square.classList.remove('active');
+    }
+    
+    // Player's turn
+    await new Promise(resolve => setTimeout(resolve, 500));
+    gameState.isShowing = false;
+    gameState.isPlayerTurn = true;
+    gameState.status = 'playing';
+    
+    enableSquares(true);
+    statusMessage.textContent = `Your turn! Repeat the sequence (${gameState.sequence.length} squares)`;
+    statusMessage.className = 'status-message status-playing';
+    
+    newGameBtn.disabled = false;
+}
+
+// Handle square click
+async function handleSquareClick(squareIndex) {
+    if (!gameState.isPlayerTurn || gameState.isShowing) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/player-input', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ square_id: squareIndex })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'wrong') {
+            // Wrong input - game over
+            gameState.status = 'lost';
+            gameState.playerSequence = data.player_sequence;
+            
+            showWrongSquare(squareIndex);
+            enableSquares(false);
+            
+            statusMessage.textContent = `Mission failed! Wrong sequence. The correct sequence was: ${data.correct_sequence.join(', ')}`;
+            statusMessage.className = 'status-message status-lost';
+            
+            nextRoundBtn.disabled = true;
+            newGameBtn.disabled = false;
+            
+        } else if (data.status === 'correct') {
+            // Correct input, but sequence not complete
+            gameState.playerSequence = data.player_sequence;
+            showCorrectSquare(squareIndex);
+            
+            statusMessage.textContent = `Correct! Continue the sequence (${data.player_sequence.length}/${data.expected_length})`;
+            statusMessage.className = 'status-message status-playing';
+            
+        } else if (data.status === 'round_complete') {
+            // Round completed successfully
+            gameState.playerSequence = data.player_sequence;
+            gameState.round = data.round;
+            gameState.status = 'waiting';
+            gameState.isPlayerTurn = false;
+            
+            showCorrectSquare(squareIndex);
+            enableSquares(false);
+            
+            statusMessage.textContent = `Round ${gameState.round - 1} complete! Ready for round ${gameState.round}?`;
+            statusMessage.className = 'status-message status-waiting';
+            
+            nextRoundBtn.disabled = false;
+            
+        } else if (data.status === 'won') {
+            // Player won the entire game!
+            gameState.status = 'won';
+            gameState.score = data.score;
+            gameState.round = data.round;
+            
+            showCorrectSquare(squareIndex);
+            enableSquares(false);
+            
+            showVictory();
+            
+            nextRoundBtn.disabled = true;
+            newGameBtn.disabled = false;
+        }
+        
+        updateDisplay();
+        
+    } catch (error) {
+        console.error('Error handling square click:', error);
+        statusMessage.textContent = 'Error processing input. Please try again.';
+        statusMessage.className = 'status-message status-lost';
+    }
+}
+
+// Visual feedback functions
+function showCorrectSquare(squareIndex) {
+    const square = squares[squareIndex];
+    square.classList.add('correct');
+    setTimeout(() => {
+        square.classList.remove('correct');
+    }, 600);
+}
+
+function showWrongSquare(squareIndex) {
+    const square = squares[squareIndex];
+    square.classList.add('wrong');
+    setTimeout(() => {
+        square.classList.remove('wrong');
+    }, 600);
+}
+
+function clearSquareStates() {
+    squares.forEach(square => {
+        square.classList.remove('active', 'correct', 'wrong');
+    });
+}
+
+function enableSquares(enabled) {
+    squares.forEach(square => {
+        if (enabled) {
+            square.classList.remove('disabled');
+        } else {
+            square.classList.add('disabled');
+        }
+    });
+}
+
+// Victory animation
+function showVictory() {
+    statusMessage.textContent = `🎉 COSMIC MASTERY ACHIEVED! 🎉\nAll 9 rounds completed! Score: ${gameState.score}`;
+    statusMessage.className = 'status-message status-won';
+    
+    // Create floating stars animation
+    const victoryContainer = document.getElementById('victoryAnimation');
+    
+    for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+            const star = document.createElement('div');
+            star.className = 'victory-star';
+            star.textContent = ['✦', '⭐', '🌟', '💫', '⚡'][Math.floor(Math.random() * 5)];
+            star.style.left = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 1 + 's';
+            victoryContainer.appendChild(star);
+            
+            setTimeout(() => {
+                star.remove();
+            }, 3000);
+        }, i * 150);
+    }
+}
+
+// Update display
+function updateDisplay() {
+    currentRoundEl.textContent = gameState.round;
+    sequenceLengthEl.textContent = gameState.sequence.length;
+    playerScoreEl.textContent = gameState.score;
+    
+    if (DEBUG_MODE) {
+        expectedSequenceEl.textContent = JSON.stringify(gameState.sequence);
+        playerSequenceEl.textContent = JSON.stringify(gameState.playerSequence);
+        gameStateEl.textContent = gameState.status;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    enableSquares(false);
+    updateDisplay();
+    
+    console.log('🎴 Space Memory Game initialized');
+    console.log('Ready for cosmic memory challenges!');
+});
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '9') {
+        const squareIndex = parseInt(e.key) - 1;
+        if (squareIndex >= 0 && squareIndex < 9) {
+            handleSquareClick(squareIndex);
+        }
+    } else if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        if (!nextRoundBtn.disabled) {
+            startNextRound();
+        }
+    } else if (e.key === 'n' || e.key === 'N') {
+        startNewGame();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,514 @@
+<!-- File: website/water_drinker/templates/water_drinker.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Water Drinker Simulator{% endblock %}
+
+{% block header %}💧 Water Drinker Simulator 💧{% endblock %}
+
+{% block head %}
+<style>
+    /* Water-themed styling that works with space theme */
+    .hydration-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(0, 20, 40, 0.8) 0%, 
+            rgba(0, 40, 80, 0.6) 50%, 
+            rgba(0, 60, 120, 0.4) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(100, 200, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 
+            0 8px 32px rgba(0, 100, 200, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Animated water background */
+    .hydration-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(0, 150, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(0, 200, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(100, 200, 255, 0.05) 0%, transparent 50%);
+        animation: waterFlow 6s ease-in-out infinite;
+        z-index: -1;
+    }
+    
+    @keyframes waterFlow {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        33% { transform: translateX(10px) translateY(-5px); }
+        66% { transform: translateX(-5px) translateY(10px); }
+    }
+    
+    .hydration-status {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .status-text {
+        font-size: 1.5rem;
+        font-weight: 300;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .intake-display {
+        font-size: 3rem;
+        font-weight: 200;
+        color: var(--status-color, #44aaff);
+        text-shadow: 0 0 20px currentColor;
+        animation: hydrationGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes hydrationGlow {
+        0%, 100% { text-shadow: 0 0 20px currentColor; }
+        50% { text-shadow: 0 0 30px currentColor, 0 0 40px currentColor; }
+    }
+    
+    /* Water level meter */
+    .water-meter {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(100, 200, 255, 0.5);
+        border-radius: 15px;
+        margin: 2rem 0;
+        overflow: hidden;
+    }
+    
+    .water-level {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg,
+            rgba(0, 150, 255, 0.8) 0%,
+            rgba(0, 200, 255, 0.9) 50%,
+            rgba(100, 220, 255, 1) 100%);
+        transition: height 0.8s ease-out;
+        border-radius: 0 0 13px 13px;
+    }
+    
+    .water-level::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.3) 25%,
+            rgba(255, 255, 255, 0.6) 50%,
+            rgba(255, 255, 255, 0.3) 75%,
+            transparent 100%);
+        animation: waterSurface 2s ease-in-out infinite;
+    }
+    
+    @keyframes waterSurface {
+        0%, 100% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+    }
+    
+    .meter-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: white;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        z-index: 10;
+    }
+    
+    /* Cup selection */
+    .cup-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .cup-btn {
+        background: linear-gradient(135deg, 
+            rgba(0, 100, 200, 0.8), 
+            rgba(0, 150, 255, 0.8));
+        color: white;
+        border: 2px solid rgba(100, 200, 255, 0.5);
+        padding: 1rem;
+        border-radius: 15px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cup-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 10px 25px rgba(0, 150, 255, 0.4),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        border-color: rgba(100, 200, 255, 0.8);
+    }
+    
+    .cup-btn:active {
+        transform: translateY(-1px);
+    }
+    
+    .cup-icon {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cup-label {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .cup-amount {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 0.2rem;
+    }
+    
+    /* Stats display */
+    .hydration-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(100, 200, 255, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: rgba(100, 200, 255, 1);
+        text-shadow: 0 0 10px rgba(100, 200, 255, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.3rem;
+    }
+    
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .action-btn {
+        background: linear-gradient(135deg, 
+            rgba(200, 50, 100, 0.8), 
+            rgba(150, 50, 150, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 100, 200, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-family: inherit;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(200, 50, 100, 0.4);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .hydration-container {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .cup-selection {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-btn {
+            width: 100%;
+        }
+    }
+    
+    /* Success animation */
+    @keyframes drinkSuccess {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .drink-success {
+        animation: drinkSuccess 0.5s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="hydration-container" id="hydrationContainer">
+    <!-- Hydration Status Display -->
+    <div class="hydration-status">
+        <div class="status-text" id="statusText" style="color: {{ status_color }};">
+            {{ hydration_status }}
+        </div>
+        <div class="intake-display" id="intakeDisplay" style="--status-color: {{ status_color }};">
+            {{ intake }}mL
+        </div>
+        <div style="opacity: 0.8; margin-top: 0.5rem;">
+            Goal: {{ goal }}mL
+        </div>
+    </div>
+    
+    <!-- Water Level Meter -->
+    <div class="water-meter">
+        <div class="water-level" id="waterLevel" style="height: {{ progress }}%;"></div>
+        <div class="meter-label" id="meterLabel">
+            {{ "%.0f"|format(progress) }}%
+        </div>
+    </div>
+    
+    <!-- Cup Selection -->
+    <div class="cup-selection">
+        {% for size, amount in cup_sizes.items() %}
+        <button class="cup-btn" onclick="drinkWater('{{ size }}')">
+            <span class="cup-icon">
+                {% if size == 'small' %}🥃
+                {% elif size == 'medium' %}🥛
+                {% elif size == 'large' %}🍺
+                {% else %}🍼
+                {% endif %}
+            </span>
+            <div class="cup-label">{{ size.title() }}</div>
+            <div class="cup-amount">{{ amount }}mL</div>
+        </button>
+        {% endfor %}
+    </div>
+    
+    <!-- Hydration Stats -->
+    <div class="hydration-stats">
+        <div class="stat-item">
+            <div class="stat-value" id="progressPercent">{{ "%.0f"|format(progress) }}%</div>
+            <div class="stat-label">Daily Progress</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="remainingAmount">{{ goal - intake if goal > intake else 0 }}mL</div>
+            <div class="stat-label">Remaining</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="cupsCount">{{ (intake // 250)|int }}</div>
+            <div class="stat-label">Cups Today</div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="action-btn" onclick="resetIntake()">
+            🔄 Reset Day
+        </button>
+        <button class="action-btn" onclick="showTips()">
+            💡 Hydration Tips
+        </button>
+    </div>
+</div>
+
+<!-- Tips Modal (simple) -->
+<div id="tipsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 2rem;">
+    <div style="background: linear-gradient(135deg, rgba(0, 20, 40, 0.95), rgba(0, 40, 80, 0.95)); max-width: 500px; margin: 2rem auto; padding: 2rem; border-radius: 15px; border: 1px solid rgba(100, 200, 255, 0.3);">
+        <h3 style="color: #44aaff; margin-bottom: 1rem;">💧 Hydration Tips</h3>
+        <ul style="list-style: none; padding: 0; line-height: 1.6;">
+            <li>🌅 Start your day with a glass of water</li>
+            <li>⏰ Set reminders every 2 hours</li>
+            <li>🍽️ Drink water before meals</li>
+            <li>🏃 Increase intake during exercise</li>
+            <li>🌡️ Drink more in hot weather</li>
+            <li>🥤 Add lemon or mint for flavor</li>
+        </ul>
+        <button onclick="hideTips()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #44aaff; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+    </div>
+</div>
+
+<script>
+// Water drinking functionality
+async function drinkWater(cupSize) {
+    try {
+        const formData = new FormData();
+        formData.append('cup_size', cupSize);
+        
+        const response = await fetch('/waterdrinker/drink', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update displays
+            updateDisplay(data.intake, data.progress);
+            
+            // Success animation
+            const container = document.getElementById('hydrationContainer');
+            container.classList.add('drink-success');
+            setTimeout(() => container.classList.remove('drink-success'), 500);
+            
+            // Show feedback
+            showDrinkFeedback(data.amount_added);
+        } else {
+            console.error('Error:', data.error);
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+    }
+}
+
+function updateDisplay(intake, progress) {
+    // Update intake display
+    document.getElementById('intakeDisplay').textContent = intake + 'mL';
+    
+    // Update water level
+    document.getElementById('waterLevel').style.height = progress + '%';
+    document.getElementById('meterLabel').textContent = Math.round(progress) + '%';
+    
+    // Update stats
+    document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+    document.getElementById('remainingAmount').textContent = Math.max(0, 2000 - intake) + 'mL';
+    document.getElementById('cupsCount').textContent = Math.floor(intake / 250);
+    
+    // Update status based on progress
+    updateHydrationStatus(intake, progress);
+}
+
+function updateHydrationStatus(intake, progress) {
+    const statusText = document.getElementById('statusText');
+    const intakeDisplay = document.getElementById('intakeDisplay');
+    
+    let status, color;
+    
+    if (intake >= 2000) {
+        status = "Perfectly Hydrated! 💧";
+        color = "#00ff88";
+    } else if (intake >= 1500) {
+        status = "Well Hydrated 💦";
+        color = "#44aaff";
+    } else if (intake >= 1000) {
+        status = "Getting There 🌊";
+        color = "#ffaa44";
+    } else if (intake >= 500) {
+        status = "Need More Water 💧";
+        color = "#ff8844";
+    } else {
+        status = "Dehydrated! 🏜️";
+        color = "#ff4444";
+    }
+    
+    statusText.textContent = status;
+    statusText.style.color = color;
+    intakeDisplay.style.setProperty('--status-color', color);
+}
+
+function showDrinkFeedback(amount) {
+    // Create temporary feedback element
+    const feedback = document.createElement('div');
+    feedback.textContent = `+${amount}mL`;
+    feedback.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 150, 255, 0.9);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        z-index: 1000;
+        pointer-events: none;
+        animation: feedbackPop 1s ease-out forwards;
+    `;
+    
+    // Add animation keyframes
+    if (!document.getElementById('feedbackStyles')) {
+        const style = document.createElement('style');
+        style.id = 'feedbackStyles';
+        style.textContent = `
+            @keyframes feedbackPop {
+                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(feedback);
+    setTimeout(() => feedback.remove(), 1000);
+}
+
+async function resetIntake() {
+    if (confirm('Reset your daily water intake? This cannot be undone.')) {
+        try {
+            const response = await fetch('/waterdrinker/reset', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                updateDisplay(0, 0);
+            }
+        } catch (error) {
+            console.error('Reset error:', error);
+        }
+    }
+}
+
+function showTips() {
+    document.getElementById('tipsModal').style.display = 'block';
+}
+
+function hideTips() {
+    document.getElementById('tipsModal').style.display = 'none';
+}
+
+// Initialize
+console.log('💧 Water Drinker Simulator loaded');
+</script>
+{% endblock %}

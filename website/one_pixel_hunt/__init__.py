@@ -1,0 +1,1 @@
+from .one_pixel_hunt import one_pixel_hunt

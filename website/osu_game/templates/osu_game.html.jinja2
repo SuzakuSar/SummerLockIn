@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+
+{% block title %}OSU! Clone{% endblock %}
+
+{% block header %}🎯 SPACE RHYTHM{% endblock %}
+
+{% block head %}
+<style>
+    /* Game container */
+    .osu-container {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(20, 20, 50, 0.9) 0%, 
+            rgba(40, 20, 80, 0.8) 100%);
+        border: 2px solid rgba(138, 43, 226, 0.5);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.6),
+            inset 0 2px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Game stats header */
+    .game-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .score-display {
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: #fff;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.8);
+    }
+    
+    .high-score {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-shadow: 0 0 5px rgba(255, 215, 0, 0.6);
+    }
+    
+    /* Game area */
+    .game-area {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        background: radial-gradient(ellipse at center, 
+            rgba(10, 10, 30, 0.8) 0%, 
+            rgba(5, 5, 15, 0.9) 100%);
+        border: 2px solid rgba(138, 43, 226, 0.3);
+        border-radius: 15px;
+        overflow: hidden;
+        cursor: crosshair;
+        user-select: none;
+    }
+    
+    /* Circles */
+    .osu-circle {
+        position: absolute;
+        border-radius: 50%;
+        cursor: pointer;
+        transform: scale(0);
+        animation: circleAppear var(--circle-lifetime) ease-out forwards;
+        background: radial-gradient(circle at 30% 30%, 
+            rgba(255, 255, 255, 0.9) 0%,
+            var(--circle-color) 20%,
+            var(--circle-color-dark) 80%,
+            rgba(0, 0, 0, 0.5) 100%);
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 
+            0 0 20px var(--circle-glow),
+            inset 0 0 10px rgba(255, 255, 255, 0.3);
+        transition: all 0.1s ease;
+    }
+    
+    .osu-circle:hover {
+        transform: scale(var(--hover-scale, 1.1));
+        box-shadow: 
+            0 0 30px var(--circle-glow),
+            inset 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Circle number */
+    .circle-number {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        pointer-events: none;
+    }
+    
+    /* Circle approach ring */
+    .approach-ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 3px solid rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: approachShrink var(--circle-lifetime) linear forwards;
+    }
+    
+    /* Animations */
+    @keyframes circleAppear {
+        0% { 
+            transform: scale(0);
+            opacity: 0;
+        }
+        10% { 
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        20% { 
+            transform: scale(1);
+        }
+        90% { 
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% { 
+            transform: scale(0.8);
+            opacity: 0.5;
+        }
+    }
+    
+    @keyframes approachShrink {
+        0% { 
+            width: 120px;
+            height: 120px;
+            opacity: 1;
+        }
+        100% { 
+            width: 60px;
+            height: 60px;
+            opacity: 0;
+        }
+    }
+    
+    @keyframes hitEffect {
+        0% { 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        100% { 
+            transform: translate(-50%, -50%) scale(2);
+            opacity: 0;
+        }
+    }
+    
+    /* Hit effect */
+    .hit-effect {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 60px;
+        height: 60px;
+        border: 3px solid #00ff00;
+        border-radius: 50%;
+        pointer-events: none;
+        animation: hitEffect 0.3s ease-out forwards;
+    }
+    
+    /* Control buttons */
+    .game-controls {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .osu-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8),
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        font-family: 'Times New Roman', Times, serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        margin: 0.5rem;
+        min-width: 150px;
+    }
+    
+    .osu-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 8px 25px rgba(138, 43, 226, 0.6),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+    
+    .osu-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Game over screen */
+    .game-over-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 15px;
+        z-index: 100;
+    }
+    
+    .game-over-content {
+        text-align: center;
+        background: linear-gradient(135deg, 
+            rgba(50, 20, 80, 0.9),
+            rgba(80, 20, 50, 0.9));
+        padding: 3rem;
+        border-radius: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    }
+    
+    .game-over-title {
+        font-size: 2.5rem;
+        color: #ff4444;
+        text-shadow: 0 0 20px rgba(255, 68, 68, 0.8);
+        margin-bottom: 1rem;
+    }
+    
+    .final-score {
+        font-size: 2rem;
+        color: #fff;
+        margin: 1rem 0;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.8);
+    }
+    
+    /* Instructions */
+    .game-instructions {
+        text-align: center;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .game-instructions p {
+        margin: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .osu-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .game-area {
+            height: 400px;
+        }
+        
+        .game-stats {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .score-display,
+        .high-score {
+            font-size: 1.2rem;
+        }
+        
+        .circle-number {
+            font-size: 1.2rem;
+        }
+        
+        .osu-btn {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="osu-container">
+    <!-- Game instructions -->
+    <div class="game-instructions">
+        <p>🎯 <strong>Click the circles before they disappear!</strong></p>
+        <p>⚡ Miss a circle and it's game over. There's no way to win - just survive as long as you can!</p>
+    </div>
+    
+    <!-- Game stats -->
+    <div class="game-stats">
+        <div class="score-display">
+            Score: <span id="currentScore">0</span>
+        </div>
+        <div class="high-score">
+            High Score: <span id="highScore">{{ session.get('osu_high_score', 0) }}</span>
+        </div>
+    </div>
+    
+    <!-- Game area -->
+    <div class="game-area" id="gameArea">
+        <!-- Game over overlay -->
+        <div class="game-over-overlay" id="gameOverOverlay">
+            <div class="game-over-content">
+                <div class="game-over-title">GAME OVER</div>
+                <div class="final-score">Final Score: <span id="finalScore">0</span></div>
+                <div style="margin: 1rem 0; color: rgba(255, 255, 255, 0.8);">
+                    High Score: <span id="finalHighScore">0</span>
+                </div>
+                <button class="osu-btn" onclick="startGame()">Play Again</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game controls -->
+    <div class="game-controls">
+        <button class="osu-btn" id="startBtn" onclick="startGame()">Start Game</button>
+        <button class="osu-btn" onclick="location.href='{{ url_for('home.index') }}'">Back to Hub</button>
+    </div>
+</div>
+
+<script>
+// Game state
+let gameActive = false;
+let currentScore = 0;
+let circleCounter = 1;
+let gameInterval;
+let spawnRate = 2000; // Start spawning every 2 seconds
+let minSpawnRate = 800; // Fastest spawn rate
+let circleLifetime = 3000; // How long circles stay alive
+let minCircleLifetime = 1500; // Shortest lifetime
+
+// Circle colors for variety
+const circleColors = [
+    { color: 'rgba(138, 43, 226, 0.8)', dark: 'rgba(75, 0, 130, 0.8)', glow: 'rgba(138, 43, 226, 0.6)' },
+    { color: 'rgba(255, 20, 147, 0.8)', dark: 'rgba(139, 0, 139, 0.8)', glow: 'rgba(255, 20, 147, 0.6)' },
+    { color: 'rgba(0, 191, 255, 0.8)', dark: 'rgba(0, 100, 200, 0.8)', glow: 'rgba(0, 191, 255, 0.6)' },
+    { color: 'rgba(50, 205, 50, 0.8)', dark: 'rgba(0, 128, 0, 0.8)', glow: 'rgba(50, 205, 50, 0.6)' },
+    { color: 'rgba(255, 140, 0, 0.8)', dark: 'rgba(255, 69, 0, 0.8)', glow: 'rgba(255, 140, 0, 0.6)' }
+];
+
+// Start the game
+async function startGame() {
+    gameActive = true;
+    currentScore = 0;
+    circleCounter = 1;
+    spawnRate = 2000;
+    circleLifetime = 3000;
+    
+    // Update UI
+    document.getElementById('currentScore').textContent = currentScore;
+    document.getElementById('startBtn').textContent = 'Game Running...';
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('gameOverOverlay').style.display = 'none';
+    
+    // Clear any existing circles
+    const gameArea = document.getElementById('gameArea');
+    const existingCircles = gameArea.querySelectorAll('.osu-circle');
+    existingCircles.forEach(circle => circle.remove());
+    
+    // Call server to start game
+    try {
+        await fetch('{{ url_for("osu_game.start_game") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error('Error starting game:', error);
+    }
+    
+    // Start spawning circles
+    spawnCircle();
+    gameInterval = setInterval(spawnCircle, spawnRate);
+}
+
+// Spawn a new circle
+function spawnCircle() {
+    if (!gameActive) return;
+    
+    const gameArea = document.getElementById('gameArea');
+    const circle = document.createElement('div');
+    const circleSize = 60;
+    
+    // Random position (keeping circle fully inside game area)
+    const maxX = gameArea.clientWidth - circleSize;
+    const maxY = gameArea.clientHeight - circleSize;
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+    
+    // Random color
+    const colorData = circleColors[Math.floor(Math.random() * circleColors.length)];
+    
+    // Create circle
+    circle.className = 'osu-circle';
+    circle.style.left = x + 'px';
+    circle.style.top = y + 'px';
+    circle.style.width = circleSize + 'px';
+    circle.style.height = circleSize + 'px';
+    circle.style.setProperty('--circle-color', colorData.color);
+    circle.style.setProperty('--circle-color-dark', colorData.dark);
+    circle.style.setProperty('--circle-glow', colorData.glow);
+    circle.style.setProperty('--circle-lifetime', circleLifetime + 'ms');
+    circle.style.setProperty('--hover-scale', '1.1');
+    
+    // Add circle number
+    const numberEl = document.createElement('div');
+    numberEl.className = 'circle-number';
+    numberEl.textContent = circleCounter;
+    circle.appendChild(numberEl);
+    
+    // Add approach ring
+    const ring = document.createElement('div');
+    ring.className = 'approach-ring';
+    ring.style.setProperty('--circle-lifetime', circleLifetime + 'ms');
+    circle.appendChild(ring);
+    
+    // Add click handler
+    circle.addEventListener('click', () => hitCircle(circle));
+    
+    // Add to game area
+    gameArea.appendChild(circle);
+    
+    // Remove circle after lifetime (game over if not clicked)
+    setTimeout(() => {
+        if (circle.parentNode && gameActive) {
+            missCircle();
+        }
+    }, circleLifetime);
+    
+    circleCounter++;
+    
+    // Increase difficulty gradually
+    if (spawnRate > minSpawnRate) {
+        spawnRate = Math.max(minSpawnRate, spawnRate - 50);
+        clearInterval(gameInterval);
+        gameInterval = setInterval(spawnCircle, spawnRate);
+    }
+    
+    if (circleLifetime > minCircleLifetime) {
+        circleLifetime = Math.max(minCircleLifetime, circleLifetime - 50);
+    }
+}
+
+// Handle circle hit
+async function hitCircle(circle) {
+    if (!gameActive) return;
+    
+    // Visual hit effect
+    const hitEffect = document.createElement('div');
+    hitEffect.className = 'hit-effect';
+    hitEffect.style.left = circle.style.left;
+    hitEffect.style.top = circle.style.top;
+    
+    const gameArea = document.getElementById('gameArea');
+    gameArea.appendChild(hitEffect);
+    
+    // Remove hit effect after animation
+    setTimeout(() => {
+        hitEffect.remove();
+    }, 300);
+    
+    // Remove circle
+    circle.remove();
+    
+    // Update score
+    currentScore++;
+    document.getElementById('currentScore').textContent = currentScore;
+    
+    // Call server to record hit
+    try {
+        await fetch('{{ url_for("osu_game.hit_circle") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error('Error recording hit:', error);
+    }
+}
+
+// Handle missed circle (game over)
+async function missCircle() {
+    if (!gameActive) return;
+    
+    gameActive = false;
+    clearInterval(gameInterval);
+    
+    // Call server to record miss and get final scores
+    try {
+        const response = await fetch('{{ url_for("osu_game.miss_circle") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        // Update UI with final scores
+        document.getElementById('finalScore').textContent = data.final_score;
+        document.getElementById('finalHighScore').textContent = data.high_score;
+        document.getElementById('highScore').textContent = data.high_score;
+        
+    } catch (error) {
+        console.error('Error recording miss:', error);
+        // Fallback to current score
+        document.getElementById('finalScore').textContent = currentScore;
+    }
+    
+    // Show game over screen
+    document.getElementById('gameOverOverlay').style.display = 'flex';
+    document.getElementById('startBtn').textContent = 'Start Game';
+    document.getElementById('startBtn').disabled = false;
+    
+    // Clear remaining circles
+    const gameArea = document.getElementById('gameArea');
+    const existingCircles = gameArea.querySelectorAll('.osu-circle');
+    existingCircles.forEach(circle => circle.remove());
+}
+
+// Initialize game on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎯 OSU! Clone initialized');
+    console.log('Click Start Game to begin!');
+});
+
+// Prevent context menu in game area
+document.getElementById('gameArea').addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+});
+</script>
+{% endblock %}

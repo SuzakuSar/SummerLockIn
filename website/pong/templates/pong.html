@@ -1,0 +1,607 @@
+{% extends 'base.html' %}
+
+{% block title %}Cosmic Pong{% endblock %}
+
+{% block header %}🏓 COSMIC PONG 🏓{% endblock %}
+
+{% block head %}
+<style>
+    .pong-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        min-height: calc(100vh - 200px);
+    }
+    
+    .game-board {
+        background: linear-gradient(135deg, 
+            rgba(10, 10, 30, 0.9) 0%, 
+            rgba(20, 20, 50, 0.8) 50%, 
+            rgba(30, 10, 60, 0.9) 100%);
+        border: 2px solid rgba(138, 43, 226, 0.6);
+        border-radius: 15px;
+        padding: 1rem;
+        box-shadow: 
+            0 0 30px rgba(138, 43, 226, 0.3),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-board::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, 
+            rgba(138, 43, 226, 0.1) 0%, 
+            transparent 70%);
+        animation: nebulaPulse 8s ease-in-out infinite;
+        pointer-events: none;
+    }
+    
+    @keyframes nebulaPulse {
+        0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.3; }
+        50% { transform: rotate(180deg) scale(1.2); opacity: 0.1; }
+    }
+    
+    #gameCanvas {
+        background: rgba(0, 0, 0, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.2);
+        position: relative;
+        z-index: 10;
+    }
+    
+    .game-ui {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 800px;
+        max-width: 95vw;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .score-display {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(138, 43, 226, 0.5);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        min-width: 120px;
+        backdrop-filter: blur(5px);
+    }
+    
+    .score-value {
+        font-size: 2rem;
+        font-weight: 300;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        margin-bottom: 0.5rem;
+    }
+    
+    .score-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    
+    .game-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .game-status {
+        font-size: 1.2rem;
+        font-weight: 300;
+        text-align: center;
+        min-height: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    
+    .controls {
+        margin-top: 1rem;
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        max-width: 600px;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .controls h3 {
+        margin-bottom: 1rem;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .control-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .control-item {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 0.8rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .control-key {
+        background: rgba(138, 43, 226, 0.3);
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        font-family: monospace;
+        font-weight: bold;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    
+    .game-button {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: 'Times New Roman', Times, serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 5px 20px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .game-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .stats-panel {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        min-width: 120px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    
+    @media (max-width: 768px) {
+        .pong-container {
+            padding: 1rem;
+        }
+        
+        .game-ui {
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+        }
+        
+        .control-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-panel {
+            flex-direction: column;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="pong-container">
+    <!-- Game UI -->
+    <div class="game-ui">
+        <div class="score-display">
+            <div class="score-value" id="playerScore">0</div>
+            <div class="score-label">Player</div>
+        </div>
+        
+        <div class="game-center">
+            <div class="game-status" id="gameStatus">Press SPACE to start</div>
+            <button class="game-button" id="startButton" onclick="startGame()">Start Game</button>
+        </div>
+        
+        <div class="score-display">
+            <div class="score-value" id="aiScore">0</div>
+            <div class="score-label">AI</div>
+        </div>
+    </div>
+    
+    <!-- Game Board -->
+    <div class="game-board">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+    </div>
+    
+    <!-- Controls -->
+    <div class="controls">
+        <h3>Controls</h3>
+        <div class="control-grid">
+            <div class="control-item">
+                <span class="control-key">↑ ↓</span> Move Paddle
+            </div>
+            <div class="control-item">
+                <span class="control-key">SPACE</span> Start/Pause
+            </div>
+            <div class="control-item">
+                <span class="control-key">R</span> Reset Game
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Panel -->
+    <div class="stats-panel">
+        <div class="stat-card">
+            <div class="stat-value" id="highScore">{{ session.get('pong_high_score', 0) }}</div>
+            <div class="stat-label">High Score</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="gamesPlayed">{{ session.get('pong_games_played', 0) }}</div>
+            <div class="stat-label">Games Played</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Game variables
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gameStatus = document.getElementById('gameStatus');
+const startButton = document.getElementById('startButton');
+
+// Game state
+let gameRunning = false;
+let gameStarted = false;
+let animationId = null;
+
+// Game objects
+const game = {
+    width: canvas.width,
+    height: canvas.height,
+    
+    ball: {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 8,
+        speedX: 5,
+        speedY: 3,
+        maxSpeed: 8
+    },
+    
+    playerPaddle: {
+        x: 20,
+        y: canvas.height / 2 - 50,
+        width: 12,
+        height: 100,
+        speed: 6
+    },
+    
+    aiPaddle: {
+        x: canvas.width - 32,
+        y: canvas.height / 2 - 50,
+        width: 12,
+        height: 100,
+        speed: 4
+    },
+    
+    score: {
+        player: 0,
+        ai: 0
+    }
+};
+
+// Input handling
+const keys = {};
+document.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+    
+    if (e.key === ' ') {
+        e.preventDefault();
+        if (!gameStarted) {
+            startGame();
+        } else {
+            togglePause();
+        }
+    }
+    
+    if (e.key.toLowerCase() === 'r') {
+        resetGame();
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    keys[e.key] = false;
+});
+
+// Game functions
+function startGame() {
+    if (!gameStarted) {
+        gameStarted = true;
+        gameRunning = true;
+        startButton.textContent = 'Pause';
+        startButton.onclick = togglePause;
+        gameStatus.textContent = 'Game in progress...';
+        gameLoop();
+    }
+}
+
+function togglePause() {
+    gameRunning = !gameRunning;
+    if (gameRunning) {
+        startButton.textContent = 'Pause';
+        gameStatus.textContent = 'Game in progress...';
+        gameLoop();
+    } else {
+        startButton.textContent = 'Resume';
+        gameStatus.textContent = 'Game paused';
+        cancelAnimationFrame(animationId);
+    }
+}
+
+function resetGame() {
+    gameRunning = false;
+    gameStarted = false;
+    cancelAnimationFrame(animationId);
+    
+    // Reset positions
+    game.ball.x = game.width / 2;
+    game.ball.y = game.height / 2;
+    game.ball.speedX = 5 * (Math.random() > 0.5 ? 1 : -1);
+    game.ball.speedY = 3 * (Math.random() > 0.5 ? 1 : -1);
+    
+    game.playerPaddle.y = game.height / 2 - 50;
+    game.aiPaddle.y = game.height / 2 - 50;
+    
+    // Save final score and reset
+    if (game.score.player > 0 || game.score.ai > 0) {
+        saveScore(Math.max(game.score.player, game.score.ai));
+    }
+    
+    game.score.player = 0;
+    game.score.ai = 0;
+    
+    updateScoreDisplay();
+    
+    startButton.textContent = 'Start Game';
+    startButton.onclick = startGame;
+    gameStatus.textContent = 'Press SPACE to start';
+    
+    draw();
+}
+
+function updatePaddles() {
+    // Player paddle controls
+    if (keys['ArrowUp'] && game.playerPaddle.y > 0) {
+        game.playerPaddle.y -= game.playerPaddle.speed;
+    }
+    if (keys['ArrowDown'] && game.playerPaddle.y < game.height - game.playerPaddle.height) {
+        game.playerPaddle.y += game.playerPaddle.speed;
+    }
+    
+    // AI paddle (follows ball with some delay for difficulty)
+    const paddleCenter = game.aiPaddle.y + game.aiPaddle.height / 2;
+    const ballCenter = game.ball.y;
+    
+    if (paddleCenter < ballCenter - 10 && game.aiPaddle.y < game.height - game.aiPaddle.height) {
+        game.aiPaddle.y += game.aiPaddle.speed;
+    } else if (paddleCenter > ballCenter + 10 && game.aiPaddle.y > 0) {
+        game.aiPaddle.y -= game.aiPaddle.speed;
+    }
+}
+
+function updateBall() {
+    // Move ball
+    game.ball.x += game.ball.speedX;
+    game.ball.y += game.ball.speedY;
+    
+    // Wall collisions (top/bottom)
+    if (game.ball.y <= game.ball.radius || game.ball.y >= game.height - game.ball.radius) {
+        game.ball.speedY = -game.ball.speedY;
+    }
+    
+    // Paddle collisions
+    // Player paddle
+    if (game.ball.x <= game.playerPaddle.x + game.playerPaddle.width + game.ball.radius &&
+        game.ball.x >= game.playerPaddle.x &&
+        game.ball.y >= game.playerPaddle.y &&
+        game.ball.y <= game.playerPaddle.y + game.playerPaddle.height) {
+        
+        game.ball.speedX = -game.ball.speedX;
+        game.ball.x = game.playerPaddle.x + game.playerPaddle.width + game.ball.radius;
+        
+        // Add some spin based on where the ball hits the paddle
+        const hitPos = (game.ball.y - game.playerPaddle.y) / game.playerPaddle.height;
+        game.ball.speedY += (hitPos - 0.5) * 2;
+        
+        // Speed up slightly
+        game.ball.speedX *= 1.02;
+        game.ball.speedY *= 1.02;
+        
+        // Cap maximum speed
+        game.ball.speedX = Math.min(Math.abs(game.ball.speedX), game.ball.maxSpeed) * Math.sign(game.ball.speedX);
+        game.ball.speedY = Math.min(Math.abs(game.ball.speedY), game.ball.maxSpeed) * Math.sign(game.ball.speedY);
+    }
+    
+    // AI paddle
+    if (game.ball.x >= game.aiPaddle.x - game.ball.radius &&
+        game.ball.x <= game.aiPaddle.x + game.aiPaddle.width &&
+        game.ball.y >= game.aiPaddle.y &&
+        game.ball.y <= game.aiPaddle.y + game.aiPaddle.height) {
+        
+        game.ball.speedX = -game.ball.speedX;
+        game.ball.x = game.aiPaddle.x - game.ball.radius;
+        
+        // Add some spin
+        const hitPos = (game.ball.y - game.aiPaddle.y) / game.aiPaddle.height;
+        game.ball.speedY += (hitPos - 0.5) * 2;
+        
+        // Speed up slightly
+        game.ball.speedX *= 1.02;
+        game.ball.speedY *= 1.02;
+        
+        // Cap maximum speed
+        game.ball.speedX = Math.min(Math.abs(game.ball.speedX), game.ball.maxSpeed) * Math.sign(game.ball.speedX);
+        game.ball.speedY = Math.min(Math.abs(game.ball.speedY), game.ball.maxSpeed) * Math.sign(game.ball.speedY);
+    }
+    
+    // Scoring
+    if (game.ball.x < 0) {
+        game.score.ai++;
+        resetBall();
+        updateScoreDisplay();
+    } else if (game.ball.x > game.width) {
+        game.score.player++;
+        resetBall();
+        updateScoreDisplay();
+    }
+}
+
+function resetBall() {
+    game.ball.x = game.width / 2;
+    game.ball.y = game.height / 2;
+    game.ball.speedX = 5 * (Math.random() > 0.5 ? 1 : -1);
+    game.ball.speedY = 3 * (Math.random() > 0.5 ? 1 : -1);
+}
+
+function draw() {
+    // Clear canvas
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, game.width, game.height);
+    
+    // Draw center line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 10]);
+    ctx.beginPath();
+    ctx.moveTo(game.width / 2, 0);
+    ctx.lineTo(game.width / 2, game.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Draw paddles with glow effect
+    ctx.shadowColor = 'rgba(138, 43, 226, 0.8)';
+    ctx.shadowBlur = 10;
+    
+    // Player paddle
+    ctx.fillStyle = 'rgba(138, 43, 226, 0.9)';
+    ctx.fillRect(game.playerPaddle.x, game.playerPaddle.y, game.playerPaddle.width, game.playerPaddle.height);
+    
+    // AI paddle
+    ctx.fillStyle = 'rgba(255, 100, 100, 0.9)';
+    ctx.fillRect(game.aiPaddle.x, game.aiPaddle.y, game.aiPaddle.width, game.aiPaddle.height);
+    
+    // Draw ball with glow
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(game.ball.x, game.ball.y, game.ball.radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+}
+
+function updateScoreDisplay() {
+    document.getElementById('playerScore').textContent = game.score.player;
+    document.getElementById('aiScore').textContent = game.score.ai;
+}
+
+function gameLoop() {
+    if (!gameRunning) return;
+    
+    updatePaddles();
+    updateBall();
+    draw();
+    
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+async function saveScore(finalScore) {
+    try {
+        const response = await fetch('/pong/api/score', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ score: finalScore })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('highScore').textContent = data.high_score;
+            document.getElementById('gamesPlayed').textContent = data.games_played;
+            
+            if (data.is_new_high) {
+                gameStatus.textContent = '🎉 New High Score! 🎉';
+            }
+        }
+    } catch (error) {
+        console.error('Error saving score:', error);
+    }
+}
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', () => {
+    resetGame();
+    console.log('🏓 Cosmic Pong initialized');
+});
+</script>
+{% endblock %}

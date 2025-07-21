@@ -1,0 +1,820 @@
+{% extends 'base.html' %}
+
+{% block title %}2048 - Space Edition{% endblock %}
+
+{% block header %}🌌 2048 - COSMIC EDITION 🌌{% endblock %}
+
+{% block head %}
+<style>
+    /* Game Container */
+    .game-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 30, 0.9) 0%, 
+            rgba(20, 20, 50, 0.8) 50%, 
+            rgba(40, 20, 60, 0.7) 100%);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(138, 43, 226, 0.3);
+        border-radius: 20px;
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.7),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Holographic border effect */
+    .game-container::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        background: linear-gradient(45deg, 
+            #ff0080, #ff8000, #00ff00, #00ffff, 
+            #0080ff, #8000ff, #ff0080);
+        background-size: 400% 400%;
+        border-radius: 20px;
+        opacity: 0;
+        z-index: -1;
+        animation: holographicBorder 4s ease infinite;
+    }
+    
+    .game-container:hover::before {
+        opacity: 0.2;
+    }
+    
+    @keyframes holographicBorder {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    
+    /* Score Display */
+    .score-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+    
+    .score-box {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .score-box::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba(138, 43, 226, 0.2), 
+            transparent);
+        animation: scoreShimmer 3s ease infinite;
+    }
+    
+    @keyframes scoreShimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+    
+    .score-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    
+    .score-value {
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    /* Game Board */
+    .game-board {
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+        aspect-ratio: 1;
+        position: relative;
+    }
+    
+    /* Tile Styles */
+    .tile {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .tile.tile-0 {
+        background: rgba(255, 255, 255, 0.05);
+        color: transparent;
+    }
+    
+    /* Tile value colors - space themed */
+    .tile.tile-2 { 
+        background: linear-gradient(135deg, rgba(100, 149, 237, 0.8), rgba(70, 130, 180, 0.8));
+        color: white;
+        text-shadow: 0 0 10px rgba(100, 149, 237, 0.5);
+    }
+    
+    .tile.tile-4 { 
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.8), rgba(75, 0, 130, 0.8));
+        color: white;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .tile.tile-8 { 
+        background: linear-gradient(135deg, rgba(255, 20, 147, 0.8), rgba(199, 21, 133, 0.8));
+        color: white;
+        text-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+    }
+    
+    .tile.tile-16 { 
+        background: linear-gradient(135deg, rgba(255, 69, 0, 0.8), rgba(255, 140, 0, 0.8));
+        color: white;
+        text-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
+    }
+    
+    .tile.tile-32 { 
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0.9));
+        color: rgba(0, 0, 0, 0.8);
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    
+    .tile.tile-64 { 
+        background: linear-gradient(135deg, rgba(0, 255, 127, 0.8), rgba(0, 250, 154, 0.8));
+        color: rgba(0, 0, 0, 0.8);
+        text-shadow: 0 0 10px rgba(0, 255, 127, 0.5);
+    }
+    
+    .tile.tile-128 { 
+        background: linear-gradient(135deg, rgba(0, 191, 255, 0.8), rgba(30, 144, 255, 0.8));
+        color: white;
+        text-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
+        font-size: 1.3rem;
+    }
+    
+    .tile.tile-256 { 
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.9), rgba(148, 0, 211, 0.9));
+        color: white;
+        text-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+        font-size: 1.3rem;
+    }
+    
+    .tile.tile-512 { 
+        background: linear-gradient(135deg, rgba(255, 20, 147, 0.9), rgba(255, 105, 180, 0.9));
+        color: white;
+        text-shadow: 0 0 20px rgba(255, 20, 147, 0.8);
+        font-size: 1.2rem;
+    }
+    
+    .tile.tile-1024 { 
+        background: linear-gradient(135deg, rgba(255, 215, 0, 1), rgba(255, 69, 0, 1));
+        color: rgba(0, 0, 0, 0.8);
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        font-size: 1.1rem;
+        animation: pulsate 2s ease-in-out infinite;
+    }
+    
+    .tile.tile-2048 { 
+        background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(255, 215, 0, 1));
+        color: rgba(0, 0, 0, 0.9);
+        text-shadow: 0 0 25px rgba(255, 255, 255, 1);
+        font-size: 1rem;
+        animation: victory 3s ease-in-out infinite;
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Higher tiles */
+    .tile.tile-4096, .tile.tile-8192 { 
+        background: linear-gradient(135deg, rgba(255, 0, 255, 1), rgba(138, 43, 226, 1));
+        color: white;
+        text-shadow: 0 0 30px rgba(255, 0, 255, 1);
+        font-size: 0.9rem;
+        animation: cosmic 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulsate {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    @keyframes victory {
+        0%, 100% { 
+            transform: scale(1) rotate(0deg);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+        }
+        50% { 
+            transform: scale(1.1) rotate(1deg);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 1);
+        }
+    }
+    
+    @keyframes cosmic {
+        0%, 100% { 
+            transform: scale(1);
+            filter: hue-rotate(0deg);
+        }
+        50% { 
+            transform: scale(1.05);
+            filter: hue-rotate(180deg);
+        }
+    }
+    
+    /* New tile animation */
+    .tile.new-tile {
+        animation: tileAppear 0.3s ease;
+    }
+    
+    @keyframes tileAppear {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* Merge animation */
+    .tile.merged-tile {
+        animation: tileMerge 0.3s ease;
+    }
+    
+    @keyframes tileMerge {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Controls */
+    .controls {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .control-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: 'Times New Roman', Times, serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        margin: 0 0.5rem;
+    }
+    
+    .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 5px 20px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .control-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Game Over/Win Modal */
+    .game-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-content {
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 30, 0.95) 0%, 
+            rgba(20, 20, 50, 0.95) 50%, 
+            rgba(40, 20, 60, 0.95) 100%);
+        border: 2px solid rgba(138, 43, 226, 0.5);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+    
+    .modal-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px currentColor;
+    }
+    
+    .modal-title.win {
+        color: rgba(255, 215, 0, 1);
+        animation: celebration 2s ease-in-out infinite;
+    }
+    
+    .modal-title.lose {
+        color: rgba(255, 69, 0, 1);
+    }
+    
+    @keyframes celebration {
+        0%, 100% { 
+            transform: scale(1);
+            filter: hue-rotate(0deg);
+        }
+        50% { 
+            transform: scale(1.05);
+            filter: hue-rotate(60deg);
+        }
+    }
+    
+    /* Instructions */
+    .instructions {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        font-size: 0.9rem;
+        opacity: 0.8;
+        line-height: 1.5;
+    }
+    
+    .instructions h4 {
+        margin-bottom: 0.5rem;
+        color: rgba(138, 43, 226, 1);
+    }
+    
+    /* Mobile Controls */
+    .mobile-controls {
+        display: none;
+        margin-top: 1rem;
+        text-align: center;
+    }
+    
+    .direction-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        cursor: pointer;
+        margin: 0.25rem;
+        transition: all 0.3s ease;
+    }
+    
+    .direction-btn:hover, .direction-btn:active {
+        background: rgba(138, 43, 226, 0.3);
+        transform: scale(1.1);
+    }
+    
+    .direction-grid {
+        display: inline-grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .direction-btn.up { grid-column: 2; grid-row: 1; }
+    .direction-btn.left { grid-column: 1; grid-row: 2; }
+    .direction-btn.right { grid-column: 3; grid-row: 2; }
+    .direction-btn.down { grid-column: 2; grid-row: 3; }
+    
+    /* Score popup */
+    .score-popup {
+        position: absolute;
+        color: rgba(138, 43, 226, 1);
+        font-weight: bold;
+        font-size: 1.2rem;
+        pointer-events: none;
+        z-index: 100;
+        animation: scoreFloat 1s ease-out forwards;
+    }
+    
+    @keyframes scoreFloat {
+        0% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .game-container {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .mobile-controls {
+            display: block;
+        }
+        
+        .tile {
+            font-size: 1.2rem;
+        }
+        
+        .tile.tile-128, .tile.tile-256 {
+            font-size: 1rem;
+        }
+        
+        .tile.tile-512, .tile.tile-1024 {
+            font-size: 0.9rem;
+        }
+        
+        .tile.tile-2048, .tile.tile-4096, .tile.tile-8192 {
+            font-size: 0.8rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .score-container {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .score-box {
+            padding: 0.8rem;
+        }
+        
+        .score-value {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="game-container">
+    <!-- Score Display -->
+    <div class="score-container">
+        <div class="score-box">
+            <div class="score-label">Score</div>
+            <div class="score-value" id="currentScore">{{ score }}</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Best</div>
+            <div class="score-value" id="bestScore">{{ best_score }}</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Moves</div>
+            <div class="score-value" id="movesCount">{{ moves }}</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Max Tile</div>
+            <div class="score-value" id="maxTile">{{ max_tile if max_tile > 0 else '—' }}</div>
+        </div>
+    </div>
+    
+    <!-- Game Board -->
+    <div class="game-board" id="gameBoard">
+        {% for i in range(4) %}
+            {% for j in range(4) %}
+                <div class="tile tile-{{ board[i][j] }}" 
+                     data-row="{{ i }}" 
+                     data-col="{{ j }}"
+                     id="tile-{{ i }}-{{ j }}">
+                    {% if board[i][j] > 0 %}{{ board[i][j] }}{% endif %}
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div class="mobile-controls">
+        <div class="direction-grid">
+            <button class="direction-btn up" onclick="makeMove('up')">↑</button>
+            <button class="direction-btn left" onclick="makeMove('left')">←</button>
+            <button class="direction-btn right" onclick="makeMove('right')">→</button>
+            <button class="direction-btn down" onclick="makeMove('down')">↓</button>
+        </div>
+    </div>
+    
+    <!-- Controls -->
+    <div class="controls">
+        <button class="control-btn" onclick="newGame()">New Game</button>
+        <button class="control-btn" onclick="showInstructions()">Instructions</button>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="instructions" id="instructions" style="display: none;">
+        <h4>🎮 How to Play:</h4>
+        <p>Use <strong>WASD</strong> or <strong>Arrow Keys</strong> to move tiles. When two tiles with the same number touch, they merge into one! Reach <strong>2048</strong> to win, but you can keep playing to reach higher tiles!</p>
+        <p><strong>Goal:</strong> Combine tiles to reach 2048 and beyond in this cosmic adventure!</p>
+    </div>
+</div>
+
+<!-- Game Over/Win Modal -->
+<div class="game-modal" id="gameModal">
+    <div class="modal-content">
+        <div class="modal-title" id="modalTitle">Game Over!</div>
+        <p id="modalMessage">No more moves possible!</p>
+        <div style="margin: 1.5rem 0;">
+            <div>Final Score: <span id="finalScore">{{ score }}</span></div>
+            <div>Max Tile: <span id="finalMaxTile">{{ max_tile }}</span></div>
+        </div>
+        <button class="control-btn" onclick="newGame(); closeModal();">New Game</button>
+        <button class="control-btn" onclick="closeModal()">Continue</button>
+    </div>
+</div>
+
+<script>
+// Game state
+let gameState = {
+    board: {{ board|tojson }},
+    score: {{ score }},
+    bestScore: {{ best_score }},
+    moves: {{ moves }},
+    maxTile: {{ max_tile }},
+    gameOver: {{ 'true' if game_over else 'false' }},
+    won: {{ 'true' if won else 'false' }},
+    isAnimating: false
+};
+
+// Check initial game state
+if (gameState.gameOver) {
+    setTimeout(() => showGameOver(), 500);
+} else if (gameState.won && !localStorage.getItem('2048_won_message_shown')) {
+    setTimeout(() => showWin(), 500);
+    localStorage.setItem('2048_won_message_shown', 'true');
+}
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+    if (gameState.isAnimating) return;
+    
+    const keyMap = {
+        'ArrowUp': 'up', 'KeyW': 'up',
+        'ArrowDown': 'down', 'KeyS': 'down', 
+        'ArrowLeft': 'left', 'KeyA': 'left',
+        'ArrowRight': 'right', 'KeyD': 'right'
+    };
+    
+    const direction = keyMap[e.code];
+    if (direction) {
+        e.preventDefault();
+        makeMove(direction);
+    }
+});
+
+// Touch controls for mobile
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+});
+
+document.addEventListener('touchend', (e) => {
+    if (gameState.isAnimating) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    const minSwipeDistance = 50;
+    
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (Math.abs(deltaX) > minSwipeDistance) {
+            makeMove(deltaX > 0 ? 'right' : 'left');
+        }
+    } else {
+        if (Math.abs(deltaY) > minSwipeDistance) {
+            makeMove(deltaY > 0 ? 'down' : 'up');
+        }
+    }
+});
+
+// Make move function
+async function makeMove(direction) {
+    if (gameState.isAnimating || gameState.gameOver) return;
+    
+    gameState.isAnimating = true;
+    
+    try {
+        const response = await fetch('/game2048/move', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ direction: direction })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.moved) {
+            gameState.isAnimating = false;
+            return;
+        }
+        
+        // Show score gain animation
+        if (data.score_gained > 0) {
+            showScoreGain(data.score_gained);
+        }
+        
+        // Update game state
+        gameState = {
+            board: data.board,
+            score: data.score,
+            bestScore: data.best_score,
+            moves: data.moves,
+            maxTile: data.max_tile,
+            gameOver: data.game_over,
+            won: data.won,
+            isAnimating: false
+        };
+        
+        // Update display
+        updateBoard(data.board);
+        updateScores(data);
+        
+        // Check win condition (only show once)
+        if (data.won && !localStorage.getItem('2048_won_message_shown')) {
+            setTimeout(() => showWin(), 300);
+            localStorage.setItem('2048_won_message_shown', 'true');
+        } else if (data.game_over) {
+            setTimeout(() => showGameOver(), 300);
+        }
+        
+    } catch (error) {
+        console.error('Error making move:', error);
+        gameState.isAnimating = false;
+    }
+}
+
+// Update board display
+function updateBoard(board) {
+    for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+            const tile = document.getElementById(`tile-${i}-${j}`);
+            const value = board[i][j];
+            
+            // Remove old classes
+            tile.className = `tile tile-${value}`;
+            
+            // Update content
+            tile.textContent = value > 0 ? value : '';
+            
+            // Add animation class for new tiles
+            if (value > 0 && !tile.hasAttribute('data-value')) {
+                tile.classList.add('new-tile');
+                setTimeout(() => tile.classList.remove('new-tile'), 300);
+            }
+            
+            tile.setAttribute('data-value', value);
+        }
+    }
+}
+
+// Update score displays
+function updateScores(data) {
+    document.getElementById('currentScore').textContent = data.score;
+    document.getElementById('bestScore').textContent = data.best_score;
+    document.getElementById('movesCount').textContent = data.moves;
+    document.getElementById('maxTile').textContent = data.max_tile > 0 ? data.max_tile : '—';
+}
+
+// Show score gain animation
+function showScoreGain(points) {
+    const popup = document.createElement('div');
+    popup.className = 'score-popup';
+    popup.textContent = `+${points}`;
+    popup.style.left = '50%';
+    popup.style.top = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    
+    document.querySelector('.game-container').appendChild(popup);
+    
+    setTimeout(() => popup.remove(), 1000);
+}
+
+// New game function
+async function newGame() {
+    try {
+        const response = await fetch('/game2048/new-game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        gameState = {
+            board: data.board,
+            score: data.score,
+            bestScore: data.best_score,
+            moves: data.moves,
+            maxTile: data.max_tile,
+            gameOver: data.game_over,
+            won: data.won,
+            isAnimating: false
+        };
+        
+        updateBoard(data.board);
+        updateScores(data);
+        
+        // Reset win message flag
+        localStorage.removeItem('2048_won_message_shown');
+        
+    } catch (error) {
+        console.error('Error starting new game:', error);
+    }
+}
+
+// Modal functions
+function showGameOver() {
+    const modal = document.getElementById('gameModal');
+    const title = document.getElementById('modalTitle');
+    const message = document.getElementById('modalMessage');
+    const finalScore = document.getElementById('finalScore');
+    const finalMaxTile = document.getElementById('finalMaxTile');
+    
+    title.textContent = 'Game Over!';
+    title.className = 'modal-title lose';
+    message.textContent = 'No more moves possible. Try again to beat your score!';
+    finalScore.textContent = gameState.score;
+    finalMaxTile.textContent = gameState.maxTile;
+    
+    modal.style.display = 'flex';
+}
+
+function showWin() {
+    const modal = document.getElementById('gameModal');
+    const title = document.getElementById('modalTitle');
+    const message = document.getElementById('modalMessage');
+    const finalScore = document.getElementById('finalScore');
+    const finalMaxTile = document.getElementById('finalMaxTile');
+    
+    title.textContent = '🌟 Victory! 🌟';
+    title.className = 'modal-title win';
+    message.textContent = 'Congratulations! You reached 2048! You can continue playing to reach higher tiles.';
+    finalScore.textContent = gameState.score;
+    finalMaxTile.textContent = gameState.maxTile;
+    
+    modal.style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('gameModal').style.display = 'none';
+}
+
+function showInstructions() {
+    const instructions = document.getElementById('instructions');
+    instructions.style.display = instructions.style.display === 'none' ? 'block' : 'none';
+}
+
+// Initialize display
+document.addEventListener('DOMContentLoaded', () => {
+    updateBoard(gameState.board);
+    console.log('🌌 2048 - Cosmic Edition initialized');
+    console.log(`Current score: ${gameState.score}, Best: ${gameState.bestScore}`);
+});
+</script>
+{% endblock %}

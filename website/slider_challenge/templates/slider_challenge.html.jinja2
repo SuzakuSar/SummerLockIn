@@ -1,0 +1,522 @@
+<!-- website/slider_challenge/templates/slider_challenge.html -->
+{% extends 'base.html' %}
+
+{% block title %}Slider Challenge - Precision Nightmare{% endblock %}
+
+{% block header %}🎚️ Precision Slider Challenge 🎚️{% endblock %}
+
+{% block head %}
+<style>
+    .slider-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(0, 30, 60, 0.9) 0%, 
+            rgba(30, 0, 60, 0.8) 50%, 
+            rgba(60, 0, 90, 0.7) 100%);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .instructions {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .instruction-text {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+    }
+
+    .warning {
+        font-size: 0.9rem;
+        color: rgba(255, 100, 100, 0.8);
+        font-style: italic;
+    }
+
+    .target-display {
+        text-align: center;
+        margin: 2rem 0;
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(138, 43, 226, 0.4);
+        border-radius: 15px;
+    }
+
+    .target-number {
+        font-size: 4rem;
+        font-weight: bold;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 
+            0 0 20px rgba(138, 43, 226, 0.8),
+            0 0 40px rgba(138, 43, 226, 0.6);
+        margin-bottom: 0.5rem;
+        animation: targetGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes targetGlow {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+    }
+
+    .target-label {
+        font-size: 1.2rem;
+        opacity: 0.8;
+    }
+
+    .slider-section {
+        margin: 3rem 0;
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .slider-wrapper {
+        position: relative;
+        margin: 2rem 0;
+    }
+
+    /* Custom slider styling */
+    .precision-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 20px;
+        border-radius: 10px;
+        background: linear-gradient(90deg, 
+            rgba(255, 0, 0, 0.5) 0%,
+            rgba(255, 255, 0, 0.5) 25%,
+            rgba(0, 255, 0, 0.5) 50%,
+            rgba(0, 255, 255, 0.5) 75%,
+            rgba(255, 0, 255, 0.5) 100%);
+        outline: none;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+    }
+
+    /* Webkit browsers (Chrome, Safari) */
+    .precision-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, 
+            rgba(255, 100, 100, 1) 0%,
+            rgba(255, 150, 100, 1) 100%);
+        cursor: pointer;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 
+            0 0 10px rgba(255, 100, 100, 0.8),
+            0 0 20px rgba(255, 100, 100, 0.5);
+        transition: all 0.2s ease;
+    }
+
+    .precision-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 
+            0 0 15px rgba(255, 100, 100, 1),
+            0 0 30px rgba(255, 100, 100, 0.7);
+    }
+
+    /* Firefox */
+    .precision-slider::-moz-range-thumb {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, 
+            rgba(255, 100, 100, 1) 0%,
+            rgba(255, 150, 100, 1) 100%);
+        cursor: pointer;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 
+            0 0 10px rgba(255, 100, 100, 0.8),
+            0 0 20px rgba(255, 100, 100, 0.5);
+    }
+
+    .current-value {
+        text-align: center;
+        margin: 1rem 0;
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: rgba(255, 150, 100, 1);
+        text-shadow: 0 0 15px rgba(255, 150, 100, 0.6);
+        font-family: 'Courier New', monospace;
+    }
+
+    .value-range {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+
+    .message-box {
+        min-height: 60px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(138, 43, 226, 0.3);
+        border-radius: 15px;
+        padding: 1rem;
+        margin: 2rem 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .message-box.success {
+        border-color: rgba(0, 255, 0, 0.6);
+        background: rgba(0, 255, 0, 0.1);
+        color: rgba(0, 255, 0, 1);
+        text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        animation: successPulse 1s ease-in-out;
+    }
+
+    .message-box.close {
+        border-color: rgba(255, 255, 0, 0.6);
+        background: rgba(255, 255, 0, 0.1);
+        color: rgba(255, 255, 0, 1);
+    }
+
+    .message-box.far {
+        border-color: rgba(255, 0, 0, 0.6);
+        background: rgba(255, 0, 0, 0.1);
+        color: rgba(255, 0, 0, 1);
+    }
+
+    @keyframes successPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .cosmic-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cosmic-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 5px 20px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+
+    .cosmic-btn:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+        .slider-container {
+            padding: 1rem;
+        }
+        
+        .target-number {
+            font-size: 3rem;
+        }
+        
+        .current-value {
+            font-size: 2rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="slider-container">
+    <!-- Instructions -->
+    <div class="instructions">
+        <div class="instruction-text">
+            🎯 Move the slider to hit the target number EXACTLY!
+        </div>
+        <div class="warning">
+            Warning: The slider is intentionally difficult to control precisely.
+        </div>
+    </div>
+
+    <!-- Target Display -->
+    <div class="target-display">
+        <div class="target-number" id="targetNumber">{{ session.get('sc_target', '???') }}</div>
+        <div class="target-label">TARGET NUMBER</div>
+    </div>
+
+    <!-- Slider Section -->
+    <div class="slider-section">
+        <div class="slider-wrapper">
+            <input type="range" 
+                   min="0" 
+                   max="1000" 
+                   value="500" 
+                   class="precision-slider" 
+                   id="precisionSlider">
+            <div class="value-range">
+                <span>0</span>
+                <span>1000</span>
+            </div>
+        </div>
+        
+        <div class="current-value" id="currentValue">500</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="attempts">{{ session.get('sc_attempts', 0) }}</div>
+            <div class="stat-label">Attempts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="bestDiff">{{ session.get('sc_best_diff', '—') }}</div>
+            <div class="stat-label">Best Miss</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="currentDiff">?</div>
+            <div class="stat-label">Current Diff</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="percentage">0%</div>
+            <div class="stat-label">Accuracy</div>
+        </div>
+    </div>
+
+    <!-- Message Display -->
+    <div class="message-box" id="messageBox">
+        Move the slider and click "Check Value" to begin your exercise in futility!
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+        <button class="cosmic-btn" onclick="checkValue()">
+            🎯 Check Value
+        </button>
+        <button class="cosmic-btn" onclick="newTarget()">
+            🔄 New Target
+        </button>
+        <button class="cosmic-btn" onclick="resetGame()">
+            📊 Reset Stats
+        </button>
+    </div>
+</div>
+
+<script>
+// Game state
+let currentTarget = {{ session.get('sc_target', 500) }};
+let currentAttempts = {{ session.get('sc_attempts', 0) }};
+let bestDiff = {{ session.get('sc_best_diff', 'null') }};
+
+// DOM elements
+const slider = document.getElementById('precisionSlider');
+const currentValueDisplay = document.getElementById('currentValue');
+const targetDisplay = document.getElementById('targetNumber');
+const messageBox = document.getElementById('messageBox');
+
+// Initialize
+function initializeGame() {
+    updateDisplay();
+    
+    // Add slider event listener
+    slider.addEventListener('input', function() {
+        currentValueDisplay.textContent = this.value;
+        updateCurrentDiff();
+    });
+    
+    // Make slider extra sensitive (harder to control)
+    slider.addEventListener('mousemove', function(e) {
+        if (e.buttons === 1) { // If mouse is pressed
+            // Add slight random variation to make it harder
+            const randomOffset = (Math.random() - 0.5) * 2;
+            const newValue = parseInt(this.value) + randomOffset;
+            this.value = Math.max(0, Math.min(1000, Math.round(newValue)));
+            currentValueDisplay.textContent = this.value;
+            updateCurrentDiff();
+        }
+    });
+}
+
+function updateDisplay() {
+    targetDisplay.textContent = currentTarget;
+    currentValueDisplay.textContent = slider.value;
+    document.getElementById('attempts').textContent = currentAttempts;
+    document.getElementById('bestDiff').textContent = bestDiff !== null ? bestDiff : '—';
+    updateCurrentDiff();
+}
+
+function updateCurrentDiff() {
+    const currentValue = parseInt(slider.value);
+    const diff = Math.abs(currentValue - currentTarget);
+    document.getElementById('currentDiff').textContent = diff;
+    
+    // Calculate accuracy percentage (closer = higher percentage)
+    const accuracy = Math.max(0, 100 - (diff / 10));
+    document.getElementById('percentage').textContent = Math.round(accuracy) + '%';
+}
+
+async function checkValue() {
+    const value = parseInt(slider.value);
+    
+    try {
+        const response = await fetch('/slider_challenge/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ value: value })
+        });
+        
+        const result = await response.json();
+        
+        // Update stats
+        currentAttempts = result.attempts;
+        bestDiff = result.best_diff;
+        updateDisplay();
+        
+        // Show message with appropriate styling
+        messageBox.textContent = result.message;
+        messageBox.className = 'message-box';
+        
+        if (result.is_exact) {
+            messageBox.classList.add('success');
+        } else if (result.difference <= 3) {
+            messageBox.classList.add('close');
+        } else if (result.difference > 25) {
+            messageBox.classList.add('far');
+        }
+        
+    } catch (error) {
+        console.error('Error checking value:', error);
+        messageBox.textContent = 'Error checking value. Try again!';
+        messageBox.className = 'message-box far';
+    }
+}
+
+async function newTarget() {
+    try {
+        const response = await fetch('/slider_challenge/new-target', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        currentTarget = result.target;
+        currentAttempts = 0;
+        bestDiff = null;
+        
+        // Reset slider to random position
+        slider.value = Math.floor(Math.random() * 1000);
+        
+        updateDisplay();
+        
+        messageBox.textContent = result.message;
+        messageBox.className = 'message-box';
+        
+    } catch (error) {
+        console.error('Error getting new target:', error);
+    }
+}
+
+function resetGame() {
+    currentAttempts = 0;
+    bestDiff = null;
+    updateDisplay();
+    
+    messageBox.textContent = 'Stats reset. Ready to waste more time!';
+    messageBox.className = 'message-box';
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initializeGame);
+
+// Add keyboard controls for "precision"
+document.addEventListener('keydown', (e) => {
+    const currentValue = parseInt(slider.value);
+    
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        slider.value = Math.max(0, currentValue - 1);
+        currentValueDisplay.textContent = slider.value;
+        updateCurrentDiff();
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        slider.value = Math.min(1000, currentValue + 1);
+        currentValueDisplay.textContent = slider.value;
+        updateCurrentDiff();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        checkValue();
+    }
+});
+</script>
+{% endblock %}

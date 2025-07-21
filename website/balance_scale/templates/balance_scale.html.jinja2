@@ -1,0 +1,685 @@
+{% extends 'base.html' %}
+
+{% block title %}Balance Scale Game{% endblock %}
+
+{% block header %}⚖️ Cosmic Balance Scale ⚖️{% endblock %}
+
+{% block head %}
+<style>
+    /* Game container */
+    .balance-game-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+    
+    /* Game stats */
+    .game-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.2), 
+            rgba(255, 140, 0, 0.1));
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        backdrop-filter: blur(5px);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: rgba(255, 215, 0, 1);
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    /* Balance scale container */
+    .scale-container {
+        position: relative;
+        height: 300px;
+        margin: 2rem 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* Scale base and fulcrum */
+    .scale-base {
+        position: absolute;
+        bottom: 20px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.8), 
+            rgba(255, 140, 0, 0.6));
+        border-radius: 50%;
+        box-shadow: 
+            0 0 20px rgba(255, 215, 0, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+    
+    .scale-fulcrum {
+        position: absolute;
+        bottom: 80px;
+        width: 20px;
+        height: 40px;
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 1), 
+            rgba(255, 140, 0, 0.8));
+        border-radius: 10px 10px 0 0;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+    }
+    
+    /* Scale beam */
+    .scale-beam {
+        position: absolute;
+        bottom: 120px;
+        width: 400px;
+        height: 8px;
+        background: linear-gradient(90deg, 
+            rgba(255, 215, 0, 1), 
+            rgba(255, 255, 255, 0.9), 
+            rgba(255, 215, 0, 1));
+        border-radius: 4px;
+        transform-origin: center center;
+        transition: transform 0.5s ease;
+        box-shadow: 
+            0 0 10px rgba(255, 215, 0, 0.8),
+            0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Scale plates */
+    .scale-plate {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.9), 
+            rgba(255, 140, 0, 0.7));
+        border: 3px solid rgba(255, 215, 0, 1);
+        border-radius: 50%;
+        bottom: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 
+            0 0 20px rgba(255, 215, 0, 0.6),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        transition: transform 0.5s ease;
+    }
+    
+    .scale-plate.left {
+        left: calc(50% - 260px);
+    }
+    
+    .scale-plate.right {
+        right: calc(50% - 260px);
+    }
+    
+    /* Weight display in plates */
+    .plate-weight {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 1);
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        margin-bottom: 0.5rem;
+    }
+    
+    .plate-label {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    
+    /* Weight orbs on plates */
+    .weight-orbs {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-width: 100px;
+        justify-content: center;
+    }
+    
+    .weight-orb {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: radial-gradient(circle, 
+            rgba(138, 43, 226, 1), 
+            rgba(75, 0, 130, 0.8));
+        box-shadow: 0 0 8px rgba(138, 43, 226, 0.8);
+        animation: orbFloat 2s ease-in-out infinite;
+    }
+    
+    .weight-orb.size-2 {
+        width: 16px;
+        height: 16px;
+        background: radial-gradient(circle, 
+            rgba(0, 191, 255, 1), 
+            rgba(0, 100, 200, 0.8));
+        box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+    }
+    
+    .weight-orb.size-3 {
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, 
+            rgba(255, 20, 147, 1), 
+            rgba(200, 0, 100, 0.8));
+        box-shadow: 0 0 12px rgba(255, 20, 147, 0.8);
+    }
+    
+    .weight-orb.size-5 {
+        width: 24px;
+        height: 24px;
+        background: radial-gradient(circle, 
+            rgba(255, 215, 0, 1), 
+            rgba(255, 140, 0, 0.8));
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+    
+    @keyframes orbFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+    }
+    
+    /* Control buttons */
+    .game-controls {
+        display: flex;
+        justify-content: space-around;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .control-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .control-label {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: rgba(255, 215, 0, 1);
+        text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+    
+    .weight-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .weight-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.6));
+        color: white;
+        border: 2px solid rgba(138, 43, 226, 0.5);
+        padding: 0.8rem 1.2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    .weight-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 1), 
+            rgba(75, 0, 130, 0.8));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(138, 43, 226, 0.5);
+    }
+    
+    .weight-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Special button colors for different weights */
+    .weight-btn[data-weight="2"] {
+        background: linear-gradient(135deg, 
+            rgba(0, 191, 255, 0.8), 
+            rgba(0, 100, 200, 0.6));
+        border-color: rgba(0, 191, 255, 0.5);
+    }
+    
+    .weight-btn[data-weight="2"]:hover {
+        background: linear-gradient(135deg, 
+            rgba(0, 191, 255, 1), 
+            rgba(0, 100, 200, 0.8));
+        box-shadow: 0 5px 15px rgba(0, 191, 255, 0.5);
+    }
+    
+    .weight-btn[data-weight="3"] {
+        background: linear-gradient(135deg, 
+            rgba(255, 20, 147, 0.8), 
+            rgba(200, 0, 100, 0.6));
+        border-color: rgba(255, 20, 147, 0.5);
+    }
+    
+    .weight-btn[data-weight="3"]:hover {
+        background: linear-gradient(135deg, 
+            rgba(255, 20, 147, 1), 
+            rgba(200, 0, 100, 0.8));
+        box-shadow: 0 5px 15px rgba(255, 20, 147, 0.5);
+    }
+    
+    .weight-btn[data-weight="5"] {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.8), 
+            rgba(255, 140, 0, 0.6));
+        border-color: rgba(255, 215, 0, 0.5);
+        color: rgba(0, 0, 0, 0.8);
+    }
+    
+    .weight-btn[data-weight="5"]:hover {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 1), 
+            rgba(255, 140, 0, 0.8));
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.5);
+    }
+    
+    /* Game action buttons */
+    .game-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.8), 
+            rgba(255, 140, 0, 0.6));
+        color: rgba(0, 0, 0, 0.8);
+        border: 2px solid rgba(255, 215, 0, 0.5);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .action-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 1), 
+            rgba(255, 140, 0, 0.8));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+    }
+    
+    /* Balance status indicator */
+    .balance-status {
+        text-align: center;
+        margin: 1rem 0;
+        padding: 1rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .balance-status.balanced {
+        background: linear-gradient(135deg, 
+            rgba(0, 255, 127, 0.2), 
+            rgba(0, 200, 100, 0.1));
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        color: rgba(0, 255, 127, 1);
+    }
+    
+    .balance-status.unbalanced {
+        background: linear-gradient(135deg, 
+            rgba(255, 69, 0, 0.2), 
+            rgba(255, 0, 0, 0.1));
+        border: 1px solid rgba(255, 69, 0, 0.3);
+        color: rgba(255, 69, 0, 1);
+    }
+    
+    /* Progress indicator */
+    .target-progress {
+        margin: 1rem 0;
+        text-align: center;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, 
+            rgba(138, 43, 226, 1), 
+            rgba(255, 20, 147, 1));
+        border-radius: 10px;
+        transition: width 0.5s ease;
+        box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .balance-game-container {
+            padding: 1rem;
+        }
+        
+        .scale-container {
+            height: 250px;
+        }
+        
+        .scale-beam {
+            width: 300px;
+        }
+        
+        .scale-plate {
+            width: 90px;
+            height: 90px;
+        }
+        
+        .scale-plate.left {
+            left: calc(50% - 190px);
+        }
+        
+        .scale-plate.right {
+            right: calc(50% - 190px);
+        }
+        
+        .game-controls {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="balance-game-container">
+    <!-- Game Statistics -->
+    <div class="game-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ game.current_score }}</div>
+            <div class="stat-label">Current Score</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ game.best_score }}</div>
+            <div class="stat-label">Best Score</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ game.moves }}</div>
+            <div class="stat-label">Moves</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ game.target }}</div>
+            <div class="stat-label">Target Weight</div>
+        </div>
+    </div>
+    
+    <!-- Target Progress -->
+    <div class="target-progress">
+        <div>Progress to Target: <span id="totalWeight">{{ game.left_weight + game.right_weight }}</span> / {{ game.target }}</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: {{ ((game.left_weight + game.right_weight) / game.target * 100) | round }}%"></div>
+        </div>
+    </div>
+    
+    <!-- Balance Status -->
+    <div class="balance-status" id="balanceStatus">
+        <strong id="balanceText">
+            {% if game.balance_state.is_balanced %}
+                ✅ PERFECTLY BALANCED! ✅
+            {% else %}
+                ⚖️ Difference: {{ game.balance_state.difference }} units
+            {% endif %}
+        </strong>
+    </div>
+    
+    <!-- Balance Scale -->
+    <div class="scale-container">
+        <div class="scale-base"></div>
+        <div class="scale-fulcrum"></div>
+        <div class="scale-beam" id="scaleBeam" style="transform: rotate({{ game.balance_state.tilt }}deg)"></div>
+        
+        <!-- Left Plate -->
+        <div class="scale-plate left" id="leftPlate">
+            <div class="plate-weight" id="leftWeight">{{ game.left_weight }}</div>
+            <div class="plate-label">Left Side</div>
+            <div class="weight-orbs" id="leftOrbs"></div>
+        </div>
+        
+        <!-- Right Plate -->
+        <div class="scale-plate right" id="rightPlate">
+            <div class="plate-weight" id="rightWeight">{{ game.right_weight }}</div>
+            <div class="plate-label">Right Side</div>
+            <div class="weight-orbs" id="rightOrbs"></div>
+        </div>
+    </div>
+    
+    <!-- Game Controls -->
+    <div class="game-controls">
+        <div class="control-section">
+            <div class="control-label">⬅️ Add to Left</div>
+            <div class="weight-buttons">
+                <button class="weight-btn" data-weight="1" data-side="left">1</button>
+                <button class="weight-btn" data-weight="2" data-side="left">2</button>
+                <button class="weight-btn" data-weight="3" data-side="left">3</button>
+                <button class="weight-btn" data-weight="5" data-side="left">5</button>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <div class="control-label">Add to Right ➡️</div>
+            <div class="weight-buttons">
+                <button class="weight-btn" data-weight="1" data-side="right">1</button>
+                <button class="weight-btn" data-weight="2" data-side="right">2</button>
+                <button class="weight-btn" data-weight="3" data-side="right">3</button>
+                <button class="weight-btn" data-weight="5" data-side="right">5</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Actions -->
+    <div class="game-actions">
+        <button class="action-btn" onclick="resetGame()">Reset Game</button>
+        <button class="action-btn" onclick="newChallenge()">New Challenge</button>
+    </div>
+</div>
+
+<script>
+// Game state
+let gameData = {
+    leftWeight: {{ game.left_weight }},
+    rightWeight: {{ game.right_weight }},
+    moves: {{ game.moves }},
+    currentScore: {{ game.current_score }},
+    bestScore: {{ game.best_score }},
+    target: {{ game.target }}
+};
+
+// Update visual elements
+function updateScale(data) {
+    // Update weights
+    document.getElementById('leftWeight').textContent = data.left_weight;
+    document.getElementById('rightWeight').textContent = data.right_weight;
+    
+    // Update tilt
+    const beam = document.getElementById('scaleBeam');
+    beam.style.transform = `rotate(${data.balance_state.tilt}deg)`;
+    
+    // Update plates position (subtle movement)
+    const leftPlate = document.getElementById('leftPlate');
+    const rightPlate = document.getElementById('rightPlate');
+    leftPlate.style.transform = `translateY(${data.balance_state.tilt * 0.3}px)`;
+    rightPlate.style.transform = `translateY(${-data.balance_state.tilt * 0.3}px)`;
+    
+    // Update stats
+    document.querySelector('.stat-card .stat-value').textContent = data.current_score;
+    document.querySelectorAll('.stat-card .stat-value')[1].textContent = data.best_score;
+    document.querySelectorAll('.stat-card .stat-value')[2].textContent = data.moves;
+    
+    // Update progress
+    const totalWeight = data.left_weight + data.right_weight;
+    document.getElementById('totalWeight').textContent = totalWeight;
+    const progressPercent = Math.min((totalWeight / data.target) * 100, 100);
+    document.getElementById('progressFill').style.width = progressPercent + '%';
+    
+    // Update balance status
+    const balanceStatus = document.getElementById('balanceStatus');
+    const balanceText = document.getElementById('balanceText');
+    
+    if (data.balance_state.is_balanced) {
+        balanceStatus.className = 'balance-status balanced';
+        balanceText.textContent = '✅ PERFECTLY BALANCED! ✅';
+    } else {
+        balanceStatus.className = 'balance-status unbalanced';
+        balanceText.textContent = `⚖️ Difference: ${data.balance_state.difference} units`;
+    }
+    
+    // Update weight orbs
+    updateWeightOrbs('leftOrbs', data.left_weight);
+    updateWeightOrbs('rightOrbs', data.right_weight);
+    
+    // Check for target completion
+    if (data.target_reached && data.balance_state.is_balanced) {
+        setTimeout(() => {
+            alert(`🎉 Challenge Complete! Perfect balance with ${data.current_score} points! 🎉`);
+        }, 500);
+    }
+}
+
+// Update weight orbs visualization
+function updateWeightOrbs(containerId, totalWeight) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    // Create orbs representing the weight
+    let remainingWeight = totalWeight;
+    const orbTypes = [
+        {weight: 5, class: 'size-5'},
+        {weight: 3, class: 'size-3'},
+        {weight: 2, class: 'size-2'},
+        {weight: 1, class: ''}
+    ];
+    
+    orbTypes.forEach(orbType => {
+        while (remainingWeight >= orbType.weight) {
+            const orb = document.createElement('div');
+            orb.className = `weight-orb ${orbType.class}`;
+            orb.style.animationDelay = Math.random() * 2 + 's';
+            container.appendChild(orb);
+            remainingWeight -= orbType.weight;
+        }
+    });
+}
+
+// Add weight function
+async function addWeight(side, weight) {
+    try {
+        const response = await fetch('{{ url_for("balance_scale.add_weight") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                side: side,
+                weight: weight
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            updateScale(data);
+            gameData = data;
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error adding weight:', error);
+        alert('Failed to add weight. Please try again.');
+    }
+}
+
+// Reset game function
+async function resetGame() {
+    try {
+        const response = await fetch('{{ url_for("balance_scale.reset_game") }}', {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error resetting game:', error);
+        alert('Failed to reset game. Please refresh the page.');
+    }
+}
+
+// New challenge function
+async function newChallenge() {
+    try {
+        const response = await fetch('{{ url_for("balance_scale.new_challenge") }}', {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error starting new challenge:', error);
+        alert('Failed to start new challenge. Please refresh the page.');
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click listeners to weight buttons
+    document.querySelectorAll('.weight-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const weight = parseInt(this.dataset.weight);
+            const side = this.dataset.side;
+            addWeight(side, weight);
+        });
+    });
+    
+    // Initialize weight orbs
+    updateWeightOrbs('leftOrbs', {{ game.left_weight }});
+    updateWeightOrbs('rightOrbs', {{ game.right_weight }});
+    
+    console.log('🌌 Balance Scale Game initialized');
+});
+</script>
+{% endblock %}

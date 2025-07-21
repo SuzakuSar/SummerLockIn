@@ -1,0 +1,557 @@
+# File: website/tortoise_temp/templates/tortoise_temp.html
+{% extends 'base.html' %}
+
+{% block title %}Lucky's Temperature Control{% endblock %}
+
+{% block header %}🐢 Keep Lucky Comfortable! 🌡️{% endblock %}
+
+{% block head %}
+<style>
+    /* Tortoise-themed earthy colors */
+    :root {
+        --tortoise-green: #4a5d23;
+        --tortoise-brown: #8b4513;
+        --tortoise-shell: #d2b48c;
+        --healthy-green: #32cd32;
+        --warning-yellow: #ffd700;
+        --danger-red: #ff4500;
+        --cool-blue: #87ceeb;
+    }
+    
+    .tortoise-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(74, 93, 35, 0.1) 0%, 
+            rgba(139, 69, 19, 0.1) 100%);
+        border-radius: 20px;
+        border: 2px solid var(--tortoise-shell);
+    }
+    
+    .game-area {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        gap: 2rem;
+        align-items: center;
+        margin: 2rem 0;
+    }
+    
+    /* Lucky the Tortoise Display */
+    .tortoise-display {
+        text-align: center;
+        padding: 1.5rem;
+        background: radial-gradient(circle, var(--tortoise-shell), var(--tortoise-brown));
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .tortoise-emoji {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .tortoise-status {
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.9rem;
+    }
+    
+    /* Temperature status styling */
+    .tortoise-display.healthy {
+        box-shadow: 0 0 30px var(--healthy-green);
+        border: 3px solid var(--healthy-green);
+    }
+    
+    .tortoise-display.cold {
+        box-shadow: 0 0 30px var(--cool-blue);
+        border: 3px solid var(--cool-blue);
+    }
+    
+    .tortoise-display.hot {
+        box-shadow: 0 0 30px var(--warning-yellow);
+        border: 3px solid var(--warning-yellow);
+    }
+    
+    .tortoise-display.critically_cold {
+        box-shadow: 0 0 30px var(--cool-blue);
+        border: 3px solid var(--cool-blue);
+        animation: shiver 0.5s infinite;
+    }
+    
+    .tortoise-display.critically_hot {
+        box-shadow: 0 0 30px var(--danger-red);
+        border: 3px solid var(--danger-red);
+        animation: overheat 0.5s infinite;
+    }
+    
+    @keyframes shiver {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    @keyframes overheat {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    /* Thermometer */
+    .thermometer-container {
+        text-align: center;
+        position: relative;
+    }
+    
+    .thermometer {
+        width: 60px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 30px;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .thermometer-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, 
+            var(--danger-red) 0%, 
+            var(--warning-yellow) 50%, 
+            var(--cool-blue) 100%);
+        transition: height 0.3s ease;
+        border-radius: 0 0 27px 27px;
+    }
+    
+    .thermometer-bulb {
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 40px;
+        background: var(--danger-red);
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .temperature-reading {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 1rem 0;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .healthy-range {
+        margin-top: 1rem;
+        padding: 0.5rem;
+        background: rgba(50, 205, 50, 0.2);
+        border-radius: 10px;
+        border: 1px solid var(--healthy-green);
+    }
+    
+    /* Control Buttons */
+    .control-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .control-btn {
+        padding: 1.5rem 1rem;
+        border: none;
+        border-radius: 15px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .fan-btn {
+        background: linear-gradient(135deg, var(--cool-blue), #4682b4);
+        color: white;
+        box-shadow: 0 5px 15px rgba(135, 206, 235, 0.4);
+    }
+    
+    .fan-btn:hover {
+        background: linear-gradient(135deg, #4682b4, var(--cool-blue));
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(135, 206, 235, 0.6);
+    }
+    
+    .heater-btn {
+        background: linear-gradient(135deg, var(--danger-red), #dc143c);
+        color: white;
+        box-shadow: 0 5px 15px rgba(255, 69, 0, 0.4);
+    }
+    
+    .heater-btn:hover {
+        background: linear-gradient(135deg, #dc143c, var(--danger-red));
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255, 69, 0, 0.6);
+    }
+    
+    .control-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Stats Panel */
+    .stats-panel {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--healthy-green);
+        text-shadow: 0 0 10px rgba(50, 205, 50, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    /* Game Instructions */
+    .instructions {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border-left: 4px solid var(--tortoise-green);
+    }
+    
+    .instructions h3 {
+        color: var(--healthy-green);
+        margin-bottom: 1rem;
+    }
+    
+    .instructions ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    
+    .instructions li {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    
+    .instructions li::before {
+        content: "🌡️";
+        position: absolute;
+        left: 0;
+    }
+    
+    /* Reset button */
+    .reset-btn {
+        background: linear-gradient(135deg, var(--tortoise-brown), #a0522d);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .reset-btn:hover {
+        background: linear-gradient(135deg, #a0522d, var(--tortoise-brown));
+        transform: translateY(-2px);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .game-area {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .tortoise-container {
+            padding: 1rem;
+        }
+        
+        .thermometer {
+            width: 50px;
+            height: 250px;
+        }
+        
+        .control-buttons {
+            flex-direction: row;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            flex: 1;
+            max-width: 200px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="tortoise-container">
+    <!-- Game Instructions -->
+    <div class="instructions">
+        <h3>🐢 How to Care for Lucky</h3>
+        <ul>
+            <li>Lucky's temperature changes naturally over time</li>
+            <li>Keep Lucky's temperature between {{ healthy_min }}°F and {{ healthy_max }}°F</li>
+            <li>Use the Fan ❄️ when Lucky gets too hot</li>
+            <li>Use the Heater 🔥 when Lucky gets too cold</li>
+            <li>Score points for every second Lucky stays healthy!</li>
+        </ul>
+    </div>
+    
+    <!-- Main Game Area -->
+    <div class="game-area">
+        <!-- Control Buttons -->
+        <div class="control-buttons">
+            <button class="control-btn fan-btn" onclick="useFan()">
+                ❄️<br>Fan<br><small>-2°F</small>
+            </button>
+            <button class="control-btn heater-btn" onclick="useHeater()">
+                🔥<br>Heater<br><small>+2°F</small>
+            </button>
+        </div>
+        
+        <!-- Thermometer -->
+        <div class="thermometer-container">
+            <div class="thermometer">
+                <div class="thermometer-fill" id="thermometerFill"></div>
+                <div class="thermometer-bulb"></div>
+            </div>
+            <div class="temperature-reading" id="temperatureReading">
+                {{ current_temp }}°F
+            </div>
+            <div class="healthy-range">
+                Healthy: {{ healthy_min }}°F - {{ healthy_max }}°F
+            </div>
+        </div>
+        
+        <!-- Lucky Display -->
+        <div class="tortoise-display {{ status }}" id="tortoiseDisplay">
+            <span class="tortoise-emoji" id="tortoiseEmoji">🐢</span>
+            <div class="tortoise-status" id="tortoiseStatus">
+                {% if status == 'healthy' %}HAPPY{% endif %}
+                {% if status == 'cold' %}CHILLY{% endif %}
+                {% if status == 'hot' %}WARM{% endif %}
+                {% if status == 'critically_cold' %}FREEZING!{% endif %}
+                {% if status == 'critically_hot' %}OVERHEATING!{% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Panel -->
+    <div class="stats-panel">
+        <div class="stat-card">
+            <div class="stat-value" id="scoreValue">{{ score }}</div>
+            <div class="stat-label">Score (seconds)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="healthTimeValue">{{ "%.1f"|format(health_time) }}</div>
+            <div class="stat-label">Healthy Time</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="currentTempValue">{{ current_temp }}°F</div>
+            <div class="stat-label">Current Temp</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statusValue">
+                {% if status == 'healthy' %}😊{% endif %}
+                {% if status == 'cold' %}🥶{% endif %}
+                {% if status == 'hot' %}🥵{% endif %}
+                {% if status == 'critically_cold' %}🧊{% endif %}
+                {% if status == 'critically_hot' %}🔥{% endif %}
+            </div>
+            <div class="stat-label">Lucky's Mood</div>
+        </div>
+    </div>
+    
+    <!-- Reset Button -->
+    <div style="text-align: center;">
+        <button class="reset-btn" onclick="resetGame()">
+            🔄 Start New Game
+        </button>
+    </div>
+</div>
+
+<script>
+// Game state
+let gameInterval;
+const HEALTHY_MIN = {{ healthy_min }};
+const HEALTHY_MAX = {{ healthy_max }};
+
+// Status messages and emojis
+const statusConfig = {
+    'healthy': { emoji: '😊', message: 'HAPPY', className: 'healthy' },
+    'cold': { emoji: '🥶', message: 'CHILLY', className: 'cold' },
+    'hot': { emoji: '🥵', message: 'WARM', className: 'hot' },
+    'critically_cold': { emoji: '🧊', message: 'FREEZING!', className: 'critically_cold' },
+    'critically_hot': { emoji: '🔥', message: 'OVERHEATING!', className: 'critically_hot' }
+};
+
+// Update display based on temperature data
+function updateDisplay(data) {
+    const temp = data.temperature;
+    const status = data.status;
+    const config = statusConfig[status];
+    
+    // Update temperature reading
+    document.getElementById('temperatureReading').textContent = temp + '°F';
+    document.getElementById('currentTempValue').textContent = temp + '°F';
+    
+    // Update thermometer fill (50°F = 0%, 100°F = 100%)
+    const fillPercentage = ((temp - 50) / 50) * 100;
+    document.getElementById('thermometerFill').style.height = Math.max(0, Math.min(100, fillPercentage)) + '%';
+    
+    // Update Lucky's display
+    const tortoiseDisplay = document.getElementById('tortoiseDisplay');
+    tortoiseDisplay.className = 'tortoise-display ' + config.className;
+    document.getElementById('tortoiseEmoji').textContent = '🐢';
+    document.getElementById('tortoiseStatus').textContent = config.message;
+    
+    // Update stats
+    document.getElementById('scoreValue').textContent = data.score;
+    document.getElementById('healthTimeValue').textContent = data.health_time.toFixed(1);
+    document.getElementById('statusValue').textContent = config.emoji;
+}
+
+// Fetch current temperature
+async function updateTemperature() {
+    try {
+        const response = await fetch('/tortoise_temp/api/temperature');
+        const data = await response.json();
+        updateDisplay(data);
+    } catch (error) {
+        console.error('Error updating temperature:', error);
+    }
+}
+
+// Use fan to cool down
+async function useFan() {
+    try {
+        const response = await fetch('/tortoise_temp/api/use_fan', { method: 'POST' });
+        const data = await response.json();
+        updateDisplay(data);
+        
+        // Visual feedback
+        showActionFeedback('❄️ Fan used! -2°F', 'cool');
+    } catch (error) {
+        console.error('Error using fan:', error);
+    }
+}
+
+// Use heater to warm up
+async function useHeater() {
+    try {
+        const response = await fetch('/tortoise_temp/api/use_heater', { method: 'POST' });
+        const data = await response.json();
+        updateDisplay(data);
+        
+        // Visual feedback
+        showActionFeedback('🔥 Heater used! +2°F', 'warm');
+    } catch (error) {
+        console.error('Error using heater:', error);
+    }
+}
+
+// Reset game
+async function resetGame() {
+    try {
+        const response = await fetch('/tortoise_temp/api/reset');
+        await response.json();
+        updateTemperature();
+        
+        showActionFeedback('🔄 Game reset! Take care of Lucky!', 'neutral');
+    } catch (error) {
+        console.error('Error resetting game:', error);
+    }
+}
+
+// Show action feedback
+function showActionFeedback(message, type) {
+    // Create feedback element
+    const feedback = document.createElement('div');
+    feedback.textContent = message;
+    feedback.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: bold;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    
+    if (type === 'cool') {
+        feedback.style.border = '2px solid #87ceeb';
+        feedback.style.boxShadow = '0 0 20px rgba(135, 206, 235, 0.5)';
+    } else if (type === 'warm') {
+        feedback.style.border = '2px solid #ff4500';
+        feedback.style.boxShadow = '0 0 20px rgba(255, 69, 0, 0.5)';
+    } else {
+        feedback.style.border = '2px solid #32cd32';
+        feedback.style.boxShadow = '0 0 20px rgba(50, 205, 50, 0.5)';
+    }
+    
+    document.body.appendChild(feedback);
+    
+    // Animate in
+    setTimeout(() => feedback.style.opacity = '1', 100);
+    
+    // Remove after delay
+    setTimeout(() => {
+        feedback.style.opacity = '0';
+        setTimeout(() => feedback.remove(), 300);
+    }, 2000);
+}
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', () => {
+    // Update temperature every 2 seconds
+    gameInterval = setInterval(updateTemperature, 2000);
+    
+    // Initial update
+    updateTemperature();
+    
+    console.log('🐢 Lucky\'s Temperature Control initialized!');
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (gameInterval) {
+        clearInterval(gameInterval);
+    }
+});
+</script>
+{% endblock %}

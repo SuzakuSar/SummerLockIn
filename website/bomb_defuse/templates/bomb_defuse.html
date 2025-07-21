@@ -1,0 +1,576 @@
+<!-- File: website/bomb_defuse/templates/bomb_defuse.html -->
+{% extends 'base.html' %}
+
+{% block title %}Bomb Defuser{% endblock %}
+
+{% block header %}🧨 BOMB DEFUSER 🧨{% endblock %}
+
+{% block head %}
+<style>
+    /* Danger theme styling */
+    body {
+        background: linear-gradient(135deg, 
+            #1a0000 0%, 
+            #330000 25%, 
+            #1a0000 50%, 
+            #220000 75%, 
+            #1a0000 100%);
+        min-height: 100vh;
+    }
+    
+    .danger-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(20, 0, 0, 0.9) 0%, 
+            rgba(40, 0, 0, 0.7) 50%, 
+            rgba(20, 0, 0, 0.9) 100%);
+        border: 3px solid #ff0000;
+        border-radius: 15px;
+        box-shadow: 
+            0 0 30px rgba(255, 0, 0, 0.5),
+            inset 0 0 20px rgba(255, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .danger-container::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            #ff0000, #ff4444, #ff0000, #cc0000);
+        background-size: 400% 400%;
+        animation: dangerPulse 2s ease-in-out infinite;
+        z-index: -1;
+        border-radius: 15px;
+    }
+    
+    @keyframes dangerPulse {
+        0%, 100% { background-position: 0% 50%; opacity: 0.7; }
+        50% { background-position: 100% 50%; opacity: 1; }
+    }
+    
+    .warning-banner {
+        background: linear-gradient(90deg, 
+            #ff0000, #ffff00, #ff0000);
+        color: #000;
+        text-align: center;
+        padding: 1rem;
+        margin: -2rem -2rem 2rem -2rem;
+        font-weight: bold;
+        font-size: 1.2rem;
+        letter-spacing: 0.1em;
+        animation: warningFlash 1s ease-in-out infinite alternate;
+    }
+    
+    @keyframes warningFlash {
+        0% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
+    
+    .bomb-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 0, 0, 0.3);
+    }
+    
+    .timer-display {
+        font-size: 3rem;
+        font-family: 'Courier New', monospace;
+        color: #ff0000;
+        text-shadow: 
+            0 0 10px #ff0000,
+            0 0 20px #ff0000,
+            0 0 30px #ff0000;
+        text-align: center;
+        background: #000;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        border: 2px solid #ff0000;
+        min-width: 200px;
+    }
+    
+    .bomb-display {
+        position: relative;
+        width: 300px;
+        height: 200px;
+        background: linear-gradient(135deg, #333, #666, #333);
+        border-radius: 20px;
+        border: 3px solid #888;
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.7),
+            inset 0 5px 15px rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .bomb-display::before {
+        content: '⚠️ EXPLOSIVE ⚠️';
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ff0000;
+        color: white;
+        padding: 0.3rem 1rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .led-display {
+        background: #000;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        font-size: 1.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        border: 2px solid #00ff00;
+        text-shadow: 0 0 10px #00ff00;
+        min-width: 150px;
+        text-align: center;
+    }
+    
+    .wire-container {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .wire {
+        width: 60px;
+        height: 8px;
+        cursor: pointer;
+        border-radius: 4px;
+        position: relative;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 
+            0 2px 10px rgba(0, 0, 0, 0.5),
+            inset 0 1px 3px rgba(255, 255, 255, 0.3);
+    }
+    
+    .wire:hover {
+        transform: scale(1.1);
+        box-shadow: 
+            0 4px 20px rgba(255, 255, 255, 0.3),
+            inset 0 1px 3px rgba(255, 255, 255, 0.5);
+    }
+    
+    .wire.red { background: linear-gradient(90deg, #ff0000, #cc0000); }
+    .wire.blue { background: linear-gradient(90deg, #0066ff, #0044cc); }
+    .wire.green { background: linear-gradient(90deg, #00cc00, #008800); }
+    .wire.yellow { background: linear-gradient(90deg, #ffcc00, #cc9900); }
+    .wire.purple { background: linear-gradient(90deg, #cc00cc, #880088); }
+    .wire.orange { background: linear-gradient(90deg, #ff6600, #cc4400); }
+    
+    .wire::before {
+        content: attr(data-color);
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+    
+    .wire.cut {
+        background: #666 !important;
+        cursor: not-allowed;
+        opacity: 0.5;
+        transform: rotate(15deg);
+    }
+    
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .danger-btn {
+        background: linear-gradient(135deg, #ff0000, #cc0000);
+        color: white;
+        border: 2px solid #ff4444;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .danger-btn:hover {
+        background: linear-gradient(135deg, #ff3333, #ff0000);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+    }
+    
+    .danger-btn:active {
+        transform: translateY(0);
+    }
+    
+    .danger-btn.disabled {
+        background: #666;
+        border-color: #888;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
+    .stats-panel {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 0, 0, 0.3);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 0, 0, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 0, 0, 0.2);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff4444;
+        text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 0.5rem;
+    }
+    
+    .message-display {
+        text-align: center;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .message-display.success {
+        background: rgba(0, 255, 0, 0.2);
+        border: 2px solid #00ff00;
+        color: #00ff00;
+        text-shadow: 0 0 10px #00ff00;
+    }
+    
+    .message-display.failure {
+        background: rgba(255, 0, 0, 0.2);
+        border: 2px solid #ff0000;
+        color: #ff0000;
+        text-shadow: 0 0 10px #ff0000;
+    }
+    
+    .message-display.neutral {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .danger-container {
+            padding: 1rem;
+        }
+        
+        .bomb-display {
+            width: 250px;
+            height: 150px;
+        }
+        
+        .timer-display {
+            font-size: 2rem;
+            padding: 0.8rem 1.5rem;
+        }
+        
+        .wire-container {
+            gap: 0.5rem;
+        }
+        
+        .wire {
+            width: 45px;
+            height: 6px;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="danger-container">
+    <div class="warning-banner">
+        ⚠️ DANGER: EXPLOSIVE DEVICE DETECTED ⚠️
+    </div>
+    
+    <div class="bomb-container">
+        <div class="timer-display" id="timerDisplay">
+            00:30
+        </div>
+        
+        <div class="bomb-display">
+            <div class="led-display" id="ledDisplay">
+                ARMED
+            </div>
+            
+            <div class="wire-container" id="wireContainer">
+                <div class="wire red" data-color="red" onclick="cutWire('red')"></div>
+                <div class="wire blue" data-color="blue" onclick="cutWire('blue')"></div>
+                <div class="wire green" data-color="green" onclick="cutWire('green')"></div>
+                <div class="wire yellow" data-color="yellow" onclick="cutWire('yellow')"></div>
+                <div class="wire purple" data-color="purple" onclick="cutWire('purple')"></div>
+                <div class="wire orange" data-color="orange" onclick="cutWire('orange')"></div>
+            </div>
+        </div>
+        
+        <div class="message-display neutral" id="messageDisplay">
+            Choose a wire to cut. You have a 1% chance of success. Good luck! 💀
+        </div>
+        
+        <div class="game-controls">
+            <button class="danger-btn" onclick="newGame()" id="newGameBtn">
+                New Bomb
+            </button>
+            <button class="danger-btn" onclick="updateStats()">
+                Update Stats
+            </button>
+        </div>
+    </div>
+    
+    <div class="stats-panel">
+        <h3 style="text-align: center; color: #ff4444; margin-bottom: 1rem;">
+            💥 Demolition Statistics 💥
+        </h3>
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-item">
+                <div class="stat-value" id="attemptsValue">0</div>
+                <div class="stat-label">Total Attempts</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="winsValue">0</div>
+                <div class="stat-label">Successful Defuses</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="explosionsValue">0</div>
+                <div class="stat-label">Explosions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="successRateValue">0%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let gameActive = true;
+let timeRemaining = 30;
+let timerInterval;
+
+// Start timer
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+        
+        if (timeRemaining <= 0) {
+            explodeBomb();
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    document.getElementById('timerDisplay').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+async function cutWire(color) {
+    if (!gameActive) return;
+    
+    gameActive = false;
+    stopTimer();
+    
+    // Visual feedback - cut the wire
+    const wire = document.querySelector(`.wire[data-color="${color}"]`);
+    wire.classList.add('cut');
+    
+    // Disable all wires
+    document.querySelectorAll('.wire').forEach(w => {
+        w.style.pointerEvents = 'none';
+    });
+    
+    try {
+        const response = await fetch('/bomb_defuse/cut_wire', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ wire_color: color })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccess(result.message);
+            document.getElementById('ledDisplay').textContent = 'DEFUSED';
+            document.getElementById('ledDisplay').style.color = '#00ff00';
+        } else {
+            showFailure(result.message);
+            explodeBomb();
+        }
+        
+        updateStatsDisplay(result.stats);
+        
+    } catch (error) {
+        console.error('Error cutting wire:', error);
+        showFailure('Error occurred while cutting wire!');
+    }
+}
+
+function explodeBomb() {
+    gameActive = false;
+    stopTimer();
+    
+    document.getElementById('ledDisplay').textContent = 'BOOM!!!';
+    document.getElementById('ledDisplay').style.color = '#ff0000';
+    document.getElementById('timerDisplay').textContent = '00:00';
+    
+    // Visual explosion effect
+    const bombDisplay = document.querySelector('.bomb-display');
+    bombDisplay.style.animation = 'dangerPulse 0.1s ease-in-out 10';
+    
+    showFailure('💥 TIME\'S UP! The bomb exploded!');
+}
+
+async function newGame() {
+    try {
+        const response = await fetch('/bomb_defuse/new_game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        // Reset game state
+        gameActive = true;
+        timeRemaining = 30;
+        
+        // Reset visual elements
+        document.querySelectorAll('.wire').forEach(wire => {
+            wire.classList.remove('cut');
+            wire.style.pointerEvents = 'auto';
+        });
+        
+        document.getElementById('ledDisplay').textContent = 'ARMED';
+        document.getElementById('ledDisplay').style.color = '#00ff00';
+        
+        const bombDisplay = document.querySelector('.bomb-display');
+        bombDisplay.style.animation = '';
+        
+        updateTimerDisplay();
+        startTimer();
+        
+        showNeutral('New bomb armed! Choose wisely... 💀');
+        
+    } catch (error) {
+        console.error('Error starting new game:', error);
+    }
+}
+
+async function updateStats() {
+    try {
+        const response = await fetch('/bomb_defuse/stats');
+        const stats = await response.json();
+        updateStatsDisplay(stats);
+    } catch (error) {
+        console.error('Error updating stats:', error);
+    }
+}
+
+function updateStatsDisplay(stats) {
+    document.getElementById('attemptsValue').textContent = stats.attempts;
+    document.getElementById('winsValue').textContent = stats.wins;
+    document.getElementById('explosionsValue').textContent = stats.explosions;
+    document.getElementById('successRateValue').textContent = stats.success_rate + '%';
+}
+
+function showSuccess(message) {
+    const display = document.getElementById('messageDisplay');
+    display.textContent = message;
+    display.className = 'message-display success';
+}
+
+function showFailure(message) {
+    const display = document.getElementById('messageDisplay');
+    display.textContent = message;
+    display.className = 'message-display failure';
+}
+
+function showNeutral(message) {
+    const display = document.getElementById('messageDisplay');
+    display.textContent = message;
+    display.className = 'message-display neutral';
+}
+
+// Initialize game on page load
+document.addEventListener('DOMContentLoaded', () => {
+    startTimer();
+    updateStats();
+    console.log('💣 Bomb Defuser initialized - 1% chance to survive!');
+});
+</script>
+{% endblock %}

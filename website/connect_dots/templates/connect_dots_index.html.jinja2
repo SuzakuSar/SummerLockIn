@@ -1,0 +1,317 @@
+<!-- website/connect_dots/templates/connect_dots_index.html -->
+{% extends 'base.html' %}
+
+{% block title %}Connect the Dots{% endblock %}
+
+{% block header %}🔗 Connect the Dots 🔗{% endblock %}
+
+{% block head %}
+<style>
+    /* Connect Dots Theme - Circuit Board Aesthetic */
+    .dots-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(0, 20, 40, 0.9) 0%, 
+            rgba(0, 40, 80, 0.8) 50%, 
+            rgba(0, 60, 120, 0.7) 100%);
+        border-radius: 20px;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        box-shadow: 
+            0 0 30px rgba(0, 255, 255, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Circuit pattern background */
+    .dots-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+            radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+            radial-gradient(circle at 40% 40%, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px, 30px 30px, 20px 20px;
+        opacity: 0.5;
+        z-index: -1;
+    }
+    
+    .dots-title {
+        text-align: center;
+        color: rgba(0, 255, 255, 1);
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 
+            0 0 10px rgba(0, 255, 255, 0.8),
+            0 0 20px rgba(0, 255, 255, 0.6),
+            0 0 30px rgba(0, 255, 255, 0.4);
+        font-weight: 300;
+    }
+    
+    .dots-subtitle {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+    
+    .difficulty-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .difficulty-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(0, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .difficulty-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, 
+            transparent, 
+            rgba(0, 255, 255, 0.1), 
+            transparent);
+        transform: rotate(45deg);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .difficulty-card:hover {
+        border-color: rgba(0, 255, 255, 0.6);
+        transform: translateY(-5px);
+        box-shadow: 
+            0 10px 30px rgba(0, 255, 255, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .difficulty-card:hover::before {
+        opacity: 1;
+    }
+    
+    .difficulty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .difficulty-name {
+        font-size: 1.5rem;
+        color: rgba(0, 255, 255, 1);
+        margin-bottom: 0.5rem;
+        font-weight: 300;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    .difficulty-desc {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+    
+    .difficulty-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+        padding-top: 1rem;
+    }
+    
+    .player-stats {
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .stat-item {
+        padding: 1rem;
+        background: rgba(0, 255, 255, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        color: rgba(0, 255, 255, 1);
+        font-weight: 300;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 0.5rem;
+    }
+    
+    .instructions {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border-left: 4px solid rgba(0, 255, 255, 0.5);
+    }
+    
+    .instructions h3 {
+        color: rgba(0, 255, 255, 1);
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    .instructions ul {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+        padding-left: 1.5rem;
+    }
+    
+    .instructions li {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .dots-container {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+        
+        .difficulty-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dots-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="dots-container">
+    <h2 class="dots-title">Connect the Dots</h2>
+    <p class="dots-subtitle">
+        Click the numbered dots in sequence to reveal hidden patterns and shapes!
+    </p>
+    
+    <!-- Player Statistics -->
+    <div class="player-stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Total Score</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="gamesCompleted">0</div>
+                <div class="stat-label">Games Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="averageScore">0</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Difficulty Selection -->
+    <div class="difficulty-grid">
+        <div class="difficulty-card" onclick="startGame('easy')">
+            <span class="difficulty-icon">🔸</span>
+            <div class="difficulty-name">Easy</div>
+            <div class="difficulty-desc">Simple shapes with 3-4 dots. Perfect for beginners!</div>
+            <div class="difficulty-stats">
+                <span>3-4 Dots</span>
+                <span>10 pts/dot</span>
+            </div>
+        </div>
+        
+        <div class="difficulty-card" onclick="startGame('medium')">
+            <span class="difficulty-icon">🔹</span>
+            <div class="difficulty-name">Medium</div>
+            <div class="difficulty-desc">Complex patterns with 5-10 dots. Good challenge!</div>
+            <div class="difficulty-stats">
+                <span>5-10 Dots</span>
+                <span>20 pts/dot</span>
+            </div>
+        </div>
+        
+        <div class="difficulty-card" onclick="startGame('hard')">
+            <span class="difficulty-icon">🔷</span>
+            <div class="difficulty-name">Hard</div>
+            <div class="difficulty-desc">Intricate designs with 10+ dots. Expert level!</div>
+            <div class="difficulty-stats">
+                <span>10+ Dots</span>
+                <span>30 pts/dot</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="instructions">
+        <h3>How to Play</h3>
+        <ul>
+            <li>Choose your difficulty level above</li>
+            <li>Click the dots in numerical order (1, 2, 3, ...)</li>
+            <li>Watch as lines connect to reveal the hidden pattern</li>
+            <li>Complete the pattern to earn points and unlock new challenges</li>
+            <li>Higher difficulties give more points per dot connected</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+// Load and display player statistics
+async function loadStats() {
+    try {
+        const response = await fetch('/connect-dots/api/stats');
+        const data = await response.json();
+        
+        document.getElementById('totalScore').textContent = data.score || 0;
+        document.getElementById('gamesCompleted').textContent = data.completed || 0;
+        
+        const avgScore = data.completed > 0 ? Math.round(data.score / data.completed) : 0;
+        document.getElementById('averageScore').textContent = avgScore;
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Start a new game with selected difficulty
+function startGame(difficulty) {
+    window.location.href = `/connect-dots/game/${difficulty}`;
+}
+
+// Load stats when page loads
+document.addEventListener('DOMContentLoaded', loadStats);
+</script>
+{% endblock %}
+

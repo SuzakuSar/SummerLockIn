@@ -1,0 +1,518 @@
+{% extends 'base.html' %}
+
+{% block title %}Space Door Control{% endblock %}
+
+{% block header %}🚪 Space Door Control 🚪{% endblock %}
+
+{% block head %}
+<style>
+    .door-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        padding: 2rem;
+        position: relative;
+    }
+    
+    .door-frame {
+        position: relative;
+        width: 300px;
+        height: 400px;
+        background: linear-gradient(135deg, 
+            rgba(40, 40, 60, 0.9) 0%, 
+            rgba(60, 60, 80, 0.9) 100%);
+        border: 4px solid rgba(138, 43, 226, 0.6);
+        border-radius: 15px;
+        box-shadow: 
+            0 0 30px rgba(138, 43, 226, 0.3),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        margin: 2rem;
+    }
+    
+    .door-left, .door-right {
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(135deg, 
+            rgba(80, 80, 120, 0.95) 0%, 
+            rgba(60, 60, 100, 0.95) 50%,
+            rgba(40, 40, 80, 0.95) 100%);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: center;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .door-left {
+        left: 0;
+        border-right: 1px solid rgba(138, 43, 226, 0.4);
+        transform-origin: left center;
+    }
+    
+    .door-right {
+        right: 0;
+        border-left: 1px solid rgba(138, 43, 226, 0.4);
+        transform-origin: right center;
+    }
+    
+    .door-left.open {
+        transform: rotateY(-120deg);
+    }
+    
+    .door-right.open {
+        transform: rotateY(120deg);
+    }
+    
+    /* Door handles */
+    .door-handle {
+        position: absolute;
+        top: 50%;
+        width: 12px;
+        height: 30px;
+        background: linear-gradient(45deg, 
+            rgba(255, 215, 0, 0.9), 
+            rgba(255, 235, 50, 0.9));
+        border-radius: 6px;
+        transform: translateY(-50%);
+        box-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.4),
+            0 0 10px rgba(255, 215, 0, 0.5);
+        transition: all 0.3s ease;
+    }
+    
+    .door-left .door-handle {
+        right: 15px;
+    }
+    
+    .door-right .door-handle {
+        left: 15px;
+    }
+    
+    .door-handle:hover {
+        box-shadow: 
+            0 2px 12px rgba(0, 0, 0, 0.6),
+            0 0 15px rgba(255, 215, 0, 0.8);
+    }
+    
+    /* Light beam effect when door opens */
+    .light-beam {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent 0%,
+            rgba(255, 255, 255, 0.8) 50%,
+            transparent 100%);
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: all 0.5s ease;
+        pointer-events: none;
+    }
+    
+    .door-frame.open .light-beam {
+        width: 200%;
+        opacity: 1;
+    }
+    
+    /* Instructions */
+    .instructions {
+        text-align: center;
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        max-width: 500px;
+    }
+    
+    .instructions h3 {
+        color: rgba(138, 43, 226, 1);
+        margin-bottom: 1rem;
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .instructions p {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0.5rem 0;
+        line-height: 1.6;
+    }
+    
+    .control-indicator {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: rgba(138, 43, 226, 0.2);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        border-radius: 25px;
+        margin: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .control-indicator.active {
+        background: rgba(138, 43, 226, 0.5);
+        box-shadow: 0 0 15px rgba(138, 43, 226, 0.6);
+        transform: scale(1.05);
+    }
+    
+    /* Status display */
+    .door-status {
+        text-align: center;
+        margin: 1rem 0;
+        padding: 1rem;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .status-text {
+        font-size: 1.2rem;
+        font-weight: 300;
+        transition: all 0.3s ease;
+    }
+    
+    .door-closed .status-text {
+        color: rgba(255, 100, 100, 0.9);
+        text-shadow: 0 0 10px rgba(255, 100, 100, 0.5);
+    }
+    
+    .door-open .status-text {
+        color: rgba(100, 255, 100, 0.9);
+        text-shadow: 0 0 10px rgba(100, 255, 100, 0.5);
+    }
+    
+    /* Particle effects */
+    .door-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+    }
+    
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: rgba(138, 43, 226, 0.8);
+        border-radius: 50%;
+        opacity: 0;
+        animation: particleFloat 2s ease-out forwards;
+    }
+    
+    @keyframes particleFloat {
+        0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-100px) scale(0);
+        }
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .door-frame {
+            width: 250px;
+            height: 350px;
+        }
+        
+        .instructions {
+            margin: 1rem;
+            padding: 1rem;
+        }
+    }
+    
+    /* Touch feedback */
+    .touch-active {
+        transform: scale(0.98);
+    }
+    
+    /* Add some depth with perspective */
+    .door-container {
+        perspective: 1000px;
+    }
+    
+    .door-frame {
+        transform-style: preserve-3d;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="door-container">
+    <!-- Instructions -->
+    <div class="instructions">
+        <h3>🚀 Airlock Control System</h3>
+        <p>Hold down <span class="control-indicator" id="spacebarIndicator">SPACEBAR</span> or <span class="control-indicator" id="touchIndicator">TOUCH SCREEN</span> to open the space doors</p>
+        <p>Release to close the airlock</p>
+    </div>
+    
+    <!-- Door Status -->
+    <div class="door-status door-closed" id="doorStatus">
+        <div class="status-text" id="statusText">AIRLOCK SEALED</div>
+    </div>
+    
+    <!-- Door Frame -->
+    <div class="door-frame" id="doorFrame">
+        <!-- Light beam effect -->
+        <div class="light-beam"></div>
+        
+        <!-- Particle effects container -->
+        <div class="door-particles" id="doorParticles"></div>
+        
+        <!-- Left door -->
+        <div class="door-left" id="doorLeft">
+            <div class="door-handle"></div>
+        </div>
+        
+        <!-- Right door -->
+        <div class="door-right" id="doorRight">
+            <div class="door-handle"></div>
+        </div>
+    </div>
+    
+    <!-- Debug info (hidden in production) -->
+    <div style="text-align: center; margin-top: 1rem; opacity: 0.5; font-size: 0.8rem;" id="debugInfo">
+        Press F12 to see debug console for event logging
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get DOM elements
+    const doorFrame = document.getElementById('doorFrame');
+    const doorLeft = document.getElementById('doorLeft');
+    const doorRight = document.getElementById('doorRight');
+    const doorStatus = document.getElementById('doorStatus');
+    const statusText = document.getElementById('statusText');
+    const spacebarIndicator = document.getElementById('spacebarIndicator');
+    const touchIndicator = document.getElementById('touchIndicator');
+    const doorParticles = document.getElementById('doorParticles');
+    
+    // Door state
+    let isDoorOpen = false;
+    let isPressed = false;
+    let particleInterval = null;
+    
+    // Sound effects (optional - using Web Audio API)
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let doorOpenSound = null;
+    let doorCloseSound = null;
+    
+    // Create simple door sounds
+    function createDoorSound(frequency, duration, type = 'open') {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+            type === 'open' ? frequency * 0.5 : frequency * 2, 
+            audioContext.currentTime + duration
+        );
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+    }
+    
+    // Open door function
+    function openDoor() {
+        if (isDoorOpen) return;
+        
+        console.log('🚪 Opening door...');
+        isDoorOpen = true;
+        
+        // Update DOM
+        doorFrame.classList.add('open');
+        doorLeft.classList.add('open');
+        doorRight.classList.add('open');
+        doorStatus.classList.remove('door-closed');
+        doorStatus.classList.add('door-open');
+        statusText.textContent = 'AIRLOCK OPEN';
+        
+        // Play sound effect
+        try {
+            createDoorSound(200, 0.5, 'open');
+        } catch (e) {
+            console.log('Audio not available');
+        }
+        
+        // Start particle effects
+        startParticleEffect();
+    }
+    
+    // Close door function
+    function closeDoor() {
+        if (!isDoorOpen) return;
+        
+        console.log('🚪 Closing door...');
+        isDoorOpen = false;
+        
+        // Update DOM
+        doorFrame.classList.remove('open');
+        doorLeft.classList.remove('open');
+        doorRight.classList.remove('open');
+        doorStatus.classList.remove('door-open');
+        doorStatus.classList.add('door-closed');
+        statusText.textContent = 'AIRLOCK SEALED';
+        
+        // Play sound effect
+        try {
+            createDoorSound(150, 0.3, 'close');
+        } catch (e) {
+            console.log('Audio not available');
+        }
+        
+        // Stop particle effects
+        stopParticleEffect();
+    }
+    
+    // Particle effects
+    function createParticle() {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        // Random position
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = '100%';
+        
+        // Random animation delay
+        particle.style.animationDelay = Math.random() * 0.5 + 's';
+        
+        doorParticles.appendChild(particle);
+        
+        // Remove after animation
+        setTimeout(() => {
+            if (particle.parentNode) {
+                particle.parentNode.removeChild(particle);
+            }
+        }, 2500);
+    }
+    
+    function startParticleEffect() {
+        particleInterval = setInterval(createParticle, 100);
+    }
+    
+    function stopParticleEffect() {
+        if (particleInterval) {
+            clearInterval(particleInterval);
+            particleInterval = null;
+        }
+    }
+    
+    // Keyboard event handlers
+    document.addEventListener('keydown', function(event) {
+        // Check if spacebar is pressed (keyCode 32 or ' ')
+        if (event.code === 'Space' || event.key === ' ') {
+            event.preventDefault(); // Prevent page scroll
+            
+            if (!isPressed) {
+                console.log('⌨️ Spacebar pressed');
+                isPressed = true;
+                spacebarIndicator.classList.add('active');
+                openDoor();
+            }
+        }
+    });
+    
+    document.addEventListener('keyup', function(event) {
+        if (event.code === 'Space' || event.key === ' ') {
+            console.log('⌨️ Spacebar released');
+            isPressed = false;
+            spacebarIndicator.classList.remove('active');
+            closeDoor();
+        }
+    });
+    
+    // Touch event handlers for mobile
+    let touchActive = false;
+    
+    document.addEventListener('touchstart', function(event) {
+        console.log('👆 Touch started');
+        touchActive = true;
+        touchIndicator.classList.add('active');
+        doorFrame.classList.add('touch-active');
+        openDoor();
+        event.preventDefault(); // Prevent scrolling
+    }, { passive: false });
+    
+    document.addEventListener('touchend', function(event) {
+        console.log('👆 Touch ended');
+        touchActive = false;
+        touchIndicator.classList.remove('active');
+        doorFrame.classList.remove('touch-active');
+        closeDoor();
+        event.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('touchcancel', function(event) {
+        console.log('👆 Touch cancelled');
+        touchActive = false;
+        touchIndicator.classList.remove('active');
+        doorFrame.classList.remove('touch-active');
+        closeDoor();
+    });
+    
+    // Prevent context menu on long press
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+    });
+    
+    // Mouse events for desktop alternative
+    let mouseDown = false;
+    
+    doorFrame.addEventListener('mousedown', function(event) {
+        console.log('🖱️ Mouse down on door');
+        mouseDown = true;
+        openDoor();
+        event.preventDefault();
+    });
+    
+    document.addEventListener('mouseup', function(event) {
+        if (mouseDown) {
+            console.log('🖱️ Mouse up');
+            mouseDown = false;
+            closeDoor();
+        }
+    });
+    
+    // Handle window focus/blur to prevent stuck states
+    window.addEventListener('blur', function() {
+        console.log('🔄 Window lost focus - closing door');
+        isPressed = false;
+        touchActive = false;
+        mouseDown = false;
+        spacebarIndicator.classList.remove('active');
+        touchIndicator.classList.remove('active');
+        doorFrame.classList.remove('touch-active');
+        closeDoor();
+    });
+    
+    // Initialize audio context on first user interaction
+    document.addEventListener('click', function() {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }, { once: true });
+    
+    console.log('🚀 Space Door Control System initialized');
+    console.log('📱 Touch support:', 'ontouchstart' in window);
+    console.log('🔊 Audio support:', !!audioContext);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,408 @@
+<!-- website/speed_sort/templates/speed_sort_index.html -->
+{% extends 'base.html' %}
+
+{% block title %}Speed Sort Challenge{% endblock %}
+
+{% block header %}⚡ SPEED SORT CHALLENGE ⚡{% endblock %}
+
+{% block head %}
+<style>
+    /* Speed-themed color scheme */
+    :root {
+        --speed-primary: #ff6b00;
+        --speed-secondary: #ff9500;
+        --speed-accent: #ffb800;
+        --speed-success: #00ff88;
+        --speed-danger: #ff0066;
+        --speed-bg: rgba(255, 107, 0, 0.1);
+        --speed-border: rgba(255, 149, 0, 0.3);
+    }
+    
+    .speed-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(255, 107, 0, 0.1) 0%, 
+            rgba(255, 149, 0, 0.05) 50%,
+            rgba(255, 184, 0, 0.1) 100%);
+        border: 2px solid var(--speed-border);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 
+            0 8px 32px rgba(255, 107, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .speed-intro {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .speed-intro h2 {
+        color: var(--speed-primary);
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(255, 107, 0, 0.5);
+        animation: speedPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes speedPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .speed-description {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+    
+    .game-modes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .game-mode-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 149, 0, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-mode-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255, 149, 0, 0.1), transparent);
+        transform: rotate(45deg);
+        transition: all 0.6s ease;
+        opacity: 0;
+    }
+    
+    .game-mode-card:hover::before {
+        opacity: 1;
+        transform: rotate(45deg) translate(50%, 50%);
+    }
+    
+    .game-mode-card:hover {
+        border-color: var(--speed-primary);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(255, 107, 0, 0.3);
+    }
+    
+    .game-mode-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .game-mode-title {
+        color: var(--speed-secondary);
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .game-mode-description {
+        opacity: 0.8;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+    
+    .difficulty-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .difficulty-btn {
+        background: linear-gradient(135deg, var(--speed-primary), var(--speed-secondary));
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .difficulty-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .difficulty-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 107, 0, 0.4);
+    }
+    
+    .difficulty-btn:hover::after {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .difficulty-btn.easy {
+        background: linear-gradient(135deg, #00ff88, #00cc6a);
+    }
+    
+    .difficulty-btn.medium {
+        background: linear-gradient(135deg, #ffb800, #ff9500);
+    }
+    
+    .difficulty-btn.hard {
+        background: linear-gradient(135deg, #ff0066, #cc0052);
+    }
+    
+    .leaderboard-section {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .leaderboard-title {
+        color: var(--speed-accent);
+        font-size: 1.8rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 0 10px rgba(255, 184, 0, 0.5);
+    }
+    
+    .leaderboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .leaderboard-item {
+        background: rgba(255, 149, 0, 0.1);
+        border: 1px solid rgba(255, 149, 0, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .leaderboard-game {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+    }
+    
+    .leaderboard-time {
+        font-size: 1.5rem;
+        color: var(--speed-success);
+        font-weight: 600;
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+    
+    .speed-instructions {
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 4px solid var(--speed-primary);
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border-radius: 0 10px 10px 0;
+    }
+    
+    .speed-instructions h3 {
+        color: var(--speed-secondary);
+        margin-bottom: 1rem;
+    }
+    
+    .speed-instructions ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .speed-instructions li {
+        margin-bottom: 0.5rem;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    
+    .speed-instructions li::before {
+        content: '⚡';
+        position: absolute;
+        left: 0;
+        color: var(--speed-accent);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .speed-container {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .game-modes {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .difficulty-buttons {
+            flex-direction: column;
+        }
+        
+        .difficulty-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="speed-container">
+    <div class="speed-intro">
+        <h2>⚡ LIGHTNING FAST SORTING ⚡</h2>
+        <p class="speed-description">
+            Test your speed and accuracy! Sort items as quickly as possible and beat your best times.
+            Choose your challenge and see how fast your brain can process and organize information.
+        </p>
+    </div>
+    
+    <div class="speed-instructions">
+        <h3>How to Play:</h3>
+        <ul>
+            <li>Items will appear in random order</li>
+            <li>Click and drag to rearrange them in the correct order</li>
+            <li>Timer starts immediately when the game loads</li>
+            <li>Complete the sort as quickly as possible</li>
+            <li>Beat your personal best times!</li>
+        </ul>
+    </div>
+    
+    <div class="game-modes">
+        <div class="game-mode-card">
+            <span class="game-mode-icon">🔢</span>
+            <h3 class="game-mode-title">Number Sort</h3>
+            <p class="game-mode-description">
+                Sort numbers from smallest to largest. Perfect for warming up your sorting skills!
+            </p>
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn easy" onclick="startGame('numbers', 'easy')">
+                    Easy (5 numbers)
+                </button>
+                <button class="difficulty-btn medium" onclick="startGame('numbers', 'medium')">
+                    Medium (8 numbers)
+                </button>
+                <button class="difficulty-btn hard" onclick="startGame('numbers', 'hard')">
+                    Hard (12 numbers)
+                </button>
+            </div>
+        </div>
+        
+        <div class="game-mode-card">
+            <span class="game-mode-icon">🌈</span>
+            <h3 class="game-mode-title">Color Sort</h3>
+            <p class="game-mode-description">
+                Arrange colors in alphabetical order. A colorful challenge for your brain!
+            </p>
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn easy" onclick="startGame('colors', 'easy')">
+                    Easy (5 colors)
+                </button>
+                <button class="difficulty-btn medium" onclick="startGame('colors', 'medium')">
+                    Medium (6 colors)
+                </button>
+                <button class="difficulty-btn hard" onclick="startGame('colors', 'hard')">
+                    Hard (8 colors)
+                </button>
+            </div>
+        </div>
+        
+        <div class="game-mode-card">
+            <span class="game-mode-icon">📝</span>
+            <h3 class="game-mode-title">Word Sort</h3>
+            <p class="game-mode-description">
+                Sort words alphabetically. The ultimate test of speed and vocabulary skills!
+            </p>
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn easy" onclick="startGame('words', 'easy')">
+                    Easy (4 words)
+                </button>
+                <button class="difficulty-btn medium" onclick="startGame('words', 'medium')">
+                    Medium (6 words)
+                </button>
+                <button class="difficulty-btn hard" onclick="startGame('words', 'hard')">
+                    Hard (7 words)
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="leaderboard-section">
+        <h3 class="leaderboard-title">🏆 Your Best Times 🏆</h3>
+        <div class="leaderboard-grid" id="leaderboard">
+            <div style="text-align: center; opacity: 0.6; grid-column: 1 / -1;">
+                No times recorded yet. Start playing to see your records!
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function startGame(gameType, difficulty) {
+    window.location.href = `/speedsort/game/${gameType}/${difficulty}`;
+}
+
+// Load and display leaderboard
+async function loadLeaderboard() {
+    try {
+        const response = await fetch('/speedsort/api/leaderboard');
+        const bestTimes = await response.json();
+        
+        const leaderboardEl = document.getElementById('leaderboard');
+        
+        if (Object.keys(bestTimes).length === 0) {
+            return; // Keep the default message
+        }
+        
+        leaderboardEl.innerHTML = '';
+        
+        // Convert to array and sort by time
+        const timeEntries = Object.entries(bestTimes).map(([key, time]) => {
+            const [gameType, difficulty] = key.split('_');
+            return { gameType, difficulty, time };
+        }).sort((a, b) => a.time - b.time);
+        
+        timeEntries.forEach(({ gameType, difficulty, time }) => {
+            const item = document.createElement('div');
+            item.className = 'leaderboard-item';
+            item.innerHTML = `
+                <div class="leaderboard-game">${gameType} - ${difficulty}</div>
+                <div class="leaderboard-time">${time}s</div>
+            `;
+            leaderboardEl.appendChild(item);
+        });
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+    }
+}
+
+// Load leaderboard on page load
+document.addEventListener('DOMContentLoaded', loadLeaderboard);
+</script>
+{% endblock %}

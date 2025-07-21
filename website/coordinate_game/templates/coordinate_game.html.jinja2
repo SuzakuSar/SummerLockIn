@@ -1,0 +1,575 @@
+{% extends 'base.html' %}
+
+{% block title %}Coordinate Hunter{% endblock %}
+
+{% block header %}🎯 Coordinate Hunter{% endblock %}
+
+{% block head %}
+<style>
+    /* Coordinate Game Specific Styles */
+    .coord-game-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(0, 20, 40, 0.9), 
+            rgba(20, 0, 40, 0.8));
+        border-radius: 20px;
+        border: 2px solid rgba(138, 43, 226, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    
+    .game-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .stat-box {
+        background: rgba(138, 43, 226, 0.2);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        border-radius: 10px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    /* Coordinate Grid */
+    .coordinate-plane {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        height: 500px;
+        margin: 2rem auto;
+        background: 
+            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+            radial-gradient(circle at center, rgba(0,30,60,0.8), rgba(0,10,30,0.9));
+        background-size: 25px 25px, 25px 25px, 100% 100%;
+        border: 2px solid rgba(138, 43, 226, 0.5);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    /* Axis lines */
+    .axis-x, .axis-y {
+        position: absolute;
+        background: rgba(138, 43, 226, 0.8);
+        box-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+    }
+    
+    .axis-x {
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 2px;
+        transform: translateY(-1px);
+    }
+    
+    .axis-y {
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 2px;
+        transform: translateX(-1px);
+    }
+    
+    /* Grid labels */
+    .grid-label {
+        position: absolute;
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: bold;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+    }
+    
+    /* Target point */
+    .target-point {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: radial-gradient(circle, 
+            rgba(255, 50, 50, 1) 0%, 
+            rgba(255, 100, 100, 0.8) 50%, 
+            rgba(255, 50, 50, 0.4) 100%);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 
+            0 0 15px rgba(255, 50, 50, 0.8),
+            0 0 30px rgba(255, 50, 50, 0.4);
+        animation: targetPulse 2s ease-in-out infinite;
+        z-index: 10;
+    }
+    
+    @keyframes targetPulse {
+        0%, 100% { 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        50% { 
+            transform: translate(-50%, -50%) scale(1.3);
+            opacity: 0.7;
+        }
+    }
+    
+    /* Input Section */
+    .input-section {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .coordinate-inputs {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+    
+    .coord-input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .coord-input-group label {
+        font-weight: bold;
+        color: rgba(138, 43, 226, 1);
+        font-size: 1.1rem;
+    }
+    
+    .coord-input {
+        width: 80px;
+        padding: 0.8rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(138, 43, 226, 0.3);
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .coord-input:focus {
+        outline: none;
+        border-color: rgba(138, 43, 226, 0.8);
+        box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    /* Buttons */
+    .game-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 1.5rem 0;
+    }
+    
+    .game-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+        min-width: 140px;
+    }
+    
+    .game-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(138, 43, 226, 0.5);
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 1), 
+            rgba(75, 0, 130, 1));
+    }
+    
+    .game-btn:active {
+        transform: translateY(0);
+    }
+    
+    .game-btn.secondary {
+        background: linear-gradient(135deg, 
+            rgba(60, 60, 60, 0.8), 
+            rgba(40, 40, 40, 0.8));
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .game-btn.secondary:hover {
+        background: linear-gradient(135deg, 
+            rgba(80, 80, 80, 1), 
+            rgba(60, 60, 60, 1));
+    }
+    
+    /* Feedback Section */
+    .feedback-section {
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1.5rem 0;
+    }
+    
+    .feedback-message {
+        font-size: 1.1rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        max-width: 400px;
+    }
+    
+    .feedback-message.success {
+        background: rgba(50, 205, 50, 0.2);
+        border: 2px solid rgba(50, 205, 50, 0.5);
+        color: rgba(144, 238, 144, 1);
+    }
+    
+    .feedback-message.error {
+        background: rgba(220, 20, 60, 0.2);
+        border: 2px solid rgba(220, 20, 60, 0.5);
+        color: rgba(255, 182, 193, 1);
+    }
+    
+    .feedback-message.info {
+        background: rgba(30, 144, 255, 0.2);
+        border: 2px solid rgba(30, 144, 255, 0.5);
+        color: rgba(173, 216, 230, 1);
+    }
+    
+    /* Instructions */
+    .instructions {
+        background: rgba(138, 43, 226, 0.1);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .instructions h3 {
+        color: rgba(138, 43, 226, 1);
+        margin-bottom: 1rem;
+    }
+    
+    .instructions p {
+        opacity: 0.9;
+        line-height: 1.6;
+    }
+    
+    /* Loading state */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .coord-game-container {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .coordinate-plane {
+            width: 90%;
+            height: 400px;
+        }
+        
+        .coordinate-inputs {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .game-buttons {
+            flex-direction: column;
+        }
+        
+        .game-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="coord-game-container">
+    <!-- Instructions -->
+    <div class="instructions">
+        <h3>🎯 How to Play</h3>
+        <p>Look at the coordinate plane below and identify the highlighted red point. Enter the X and Y coordinates and click "Guess Coordinates" to submit your answer!</p>
+    </div>
+    
+    <!-- Game Statistics -->
+    <div class="game-stats">
+        <div class="stat-box">
+            <div class="stat-value" id="scoreValue">{{ session.get('coord_score', 0) }}</div>
+            <div class="stat-label">Correct</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="attemptsValue">{{ session.get('coord_attempts', 0) }}</div>
+            <div class="stat-label">Attempts</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="accuracyValue">
+                {% if session.get('coord_attempts', 0) > 0 %}
+                    {{ "%.1f"|format((session.get('coord_score', 0) / session.get('coord_attempts', 0)) * 100) }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+            <div class="stat-label">Accuracy</div>
+        </div>
+    </div>
+    
+    <!-- Coordinate Plane -->
+    <div class="coordinate-plane" id="coordinatePlane">
+        <!-- Axis lines -->
+        <div class="axis-x"></div>
+        <div class="axis-y"></div>
+        
+        <!-- Grid labels -->
+        <div class="grid-label" style="bottom: 5px; left: 50%; transform: translateX(-50%);">0</div>
+        <div class="grid-label" style="top: 50%; left: 5px; transform: translateY(-50%);">0</div>
+        
+        <!-- Target point (positioned by JavaScript) -->
+        <div class="target-point" id="targetPoint"></div>
+    </div>
+    
+    <!-- Input Section -->
+    <div class="input-section">
+        <form id="guessForm">
+            <div class="coordinate-inputs">
+                <div class="coord-input-group">
+                    <label for="xCoord">X:</label>
+                    <input type="number" id="xCoord" name="x_coord" class="coord-input" 
+                           min="-10" max="10" step="1" required>
+                </div>
+                <div class="coord-input-group">
+                    <label for="yCoord">Y:</label>
+                    <input type="number" id="yCoord" name="y_coord" class="coord-input" 
+                           min="-10" max="10" step="1" required>
+                </div>
+            </div>
+            
+            <div class="game-buttons">
+                <button type="submit" class="game-btn" id="guessBtn">
+                    🎯 Guess Coordinates
+                </button>
+                <button type="button" class="game-btn secondary" onclick="newTarget()">
+                    🔄 New Target
+                </button>
+                <button type="button" class="game-btn secondary" onclick="resetGame()">
+                    🔄 Reset Game
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Feedback Section -->
+    <div class="feedback-section">
+        <div class="feedback-message info" id="feedbackMessage">
+            🌟 Find the highlighted point and enter its coordinates!
+        </div>
+    </div>
+</div>
+
+<script>
+// Game state
+let currentTarget = {
+    x: {{ session.get('coord_target_x', 0) }},
+    y: {{ session.get('coord_target_y', 0) }}
+};
+
+// Initialize the game
+document.addEventListener('DOMContentLoaded', function() {
+    updateTargetPosition();
+    addGridLabels();
+    
+    // Form submission
+    document.getElementById('guessForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        makeGuess();
+    });
+});
+
+// Update target point position on the grid
+function updateTargetPosition() {
+    const targetPoint = document.getElementById('targetPoint');
+    const plane = document.getElementById('coordinatePlane');
+    
+    // Convert coordinates to pixel position
+    // Grid is 500x500, center is at 250,250
+    // Each unit is 25px (500/20 = 25)
+    const pixelX = 250 + (currentTarget.x * 25);
+    const pixelY = 250 - (currentTarget.y * 25); // Subtract because Y increases upward
+    
+    targetPoint.style.left = pixelX + 'px';
+    targetPoint.style.top = pixelY + 'px';
+}
+
+// Add coordinate labels to the grid
+function addGridLabels() {
+    const plane = document.getElementById('coordinatePlane');
+    
+    // Add labels for X axis
+    for (let x = -10; x <= 10; x += 5) {
+        if (x !== 0) {
+            const label = document.createElement('div');
+            label.className = 'grid-label';
+            label.textContent = x;
+            label.style.left = (250 + x * 25) + 'px';
+            label.style.bottom = '5px';
+            label.style.transform = 'translateX(-50%)';
+            plane.appendChild(label);
+        }
+    }
+    
+    // Add labels for Y axis
+    for (let y = -10; y <= 10; y += 5) {
+        if (y !== 0) {
+            const label = document.createElement('div');
+            label.className = 'grid-label';
+            label.textContent = y;
+            label.style.top = (250 - y * 25) + 'px';
+            label.style.left = '5px';
+            label.style.transform = 'translateY(-50%)';
+            plane.appendChild(label);
+        }
+    }
+}
+
+// Make a guess
+async function makeGuess() {
+    const form = document.getElementById('guessForm');
+    const formData = new FormData(form);
+    const feedbackEl = document.getElementById('feedbackMessage');
+    const guessBtn = document.getElementById('guessBtn');
+    
+    // Show loading state
+    guessBtn.textContent = '🔄 Checking...';
+    guessBtn.disabled = true;
+    
+    try {
+        const response = await fetch('{{ url_for("coordinate_game.make_guess") }}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        // Update feedback
+        feedbackEl.textContent = result.message;
+        feedbackEl.className = `feedback-message ${result.correct ? 'success' : 'error'}`;
+        
+        // Update stats
+        document.getElementById('scoreValue').textContent = result.score;
+        document.getElementById('attemptsValue').textContent = result.attempts;
+        document.getElementById('accuracyValue').textContent = result.accuracy + '%';
+        
+        // If correct and new target provided, update position
+        if (result.correct && result.new_target) {
+            currentTarget = result.new_target;
+            setTimeout(() => {
+                updateTargetPosition();
+                form.reset();
+                feedbackEl.textContent = '🌟 New target generated! Find the highlighted point.';
+                feedbackEl.className = 'feedback-message info';
+            }, 2000);
+        }
+        
+    } catch (error) {
+        feedbackEl.textContent = '❌ Error submitting guess. Please try again.';
+        feedbackEl.className = 'feedback-message error';
+    }
+    
+    // Reset button
+    guessBtn.textContent = '🎯 Guess Coordinates';
+    guessBtn.disabled = false;
+}
+
+// Generate new target
+async function newTarget() {
+    try {
+        const response = await fetch('{{ url_for("coordinate_game.new_target") }}');
+        const result = await response.json();
+        
+        currentTarget = {
+            x: result.target_x,
+            y: result.target_y
+        };
+        
+        updateTargetPosition();
+        document.getElementById('guessForm').reset();
+        
+        const feedbackEl = document.getElementById('feedbackMessage');
+        feedbackEl.textContent = '🎯 New target generated! Find the highlighted point.';
+        feedbackEl.className = 'feedback-message info';
+        
+    } catch (error) {
+        console.error('Error generating new target:', error);
+    }
+}
+
+// Reset game
+async function resetGame() {
+    if (confirm('Are you sure you want to reset your score and statistics?')) {
+        try {
+            const response = await fetch('{{ url_for("coordinate_game.reset_game") }}');
+            const result = await response.json();
+            
+            currentTarget = {
+                x: result.target_x,
+                y: result.target_y
+            };
+            
+            updateTargetPosition();
+            document.getElementById('guessForm').reset();
+            
+            // Update stats
+            document.getElementById('scoreValue').textContent = '0';
+            document.getElementById('attemptsValue').textContent = '0';
+            document.getElementById('accuracyValue').textContent = '0%';
+            
+            const feedbackEl = document.getElementById('feedbackMessage');
+            feedbackEl.textContent = '🔄 Game reset! Find the highlighted point.';
+            feedbackEl.className = 'feedback-message info';
+            
+        } catch (error) {
+            console.error('Error resetting game:', error);
+        }
+    }
+}
+</script>
+{% endblock %}

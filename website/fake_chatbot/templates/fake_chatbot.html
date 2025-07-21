@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+
+{% block header %}Fake Chatbot{% endblock %}
+
+{% block head %}
+<style>
+    .chatbot-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        font-family: 'Arial', sans-serif;
+    }
+    
+    .chat-window {
+        background: linear-gradient(135deg, 
+            rgba(20, 20, 40, 0.9) 0%, 
+            rgba(40, 20, 60, 0.8) 100%);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+        min-height: 400px;
+        max-height: 500px;
+        overflow-y: auto;
+        backdrop-filter: blur(10px);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        min-height: 300px;
+    }
+    
+    .message {
+        display: flex;
+        margin: 0.5rem 0;
+        animation: messageSlide 0.3s ease-out;
+    }
+    
+    @keyframes messageSlide {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .message.user {
+        justify-content: flex-end;
+    }
+    
+    .message.bot {
+        justify-content: flex-start;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        padding: 0.8rem 1.2rem;
+        border-radius: 20px;
+        word-wrap: break-word;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        position: relative;
+    }
+    
+    .message.user .message-bubble {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border-bottom-right-radius: 5px;
+        margin-left: auto;
+        text-align: right;
+    }
+    
+    .message.bot .message-bubble {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.15), 
+            rgba(255, 255, 255, 0.05));
+        color: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom-left-radius: 5px;
+        margin-right: auto;
+    }
+    
+    .chat-input-area {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .chat-input {
+        flex: 1;
+        padding: 0.8rem 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 0.95rem;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    
+    .chat-input:focus {
+        border-color: rgba(138, 43, 226, 0.6);
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+    }
+    
+    .chat-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .chat-btn {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 25px;
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .chat-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 1), 
+            rgba(75, 0, 130, 1));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+    }
+    
+    .chat-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .reset-btn {
+        background: linear-gradient(135deg, 
+            rgba(220, 20, 60, 0.8), 
+            rgba(139, 0, 0, 0.8));
+        margin-left: 0.5rem;
+    }
+    
+    .reset-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(220, 20, 60, 1), 
+            rgba(139, 0, 0, 1));
+        box-shadow: 0 5px 15px rgba(220, 20, 60, 0.4);
+    }
+    
+    .bot-thinking {
+        display: none;
+        color: rgba(255, 255, 255, 0.6);
+        font-style: italic;
+        padding: 0.5rem 1rem;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+    
+    .chat-info {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .welcome-message {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        font-style: italic;
+        margin: 2rem 0;
+        padding: 1rem;
+        border: 1px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .chatbot-container {
+            padding: 0 0.5rem;
+        }
+        
+        .chat-window {
+            padding: 1rem;
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            font-size: 0.9rem;
+        }
+        
+        .chat-input-area {
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .chat-btn {
+            padding: 0.8rem;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="chatbot-container">
+    <div class="chat-info">
+        🤖 This is a fake chatbot that will say "who" first, then respond with "asked" to everything you say.
+    </div>
+    
+    <div class="chat-window">
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                Start a conversation by typing anything below...
+            </div>
+        </div>
+        
+        <div class="bot-thinking" id="botThinking">
+            Bot is typing...
+        </div>
+        
+        <div class="chat-input-area">
+            <input 
+                type="text" 
+                class="chat-input" 
+                id="chatInput"
+                placeholder="Type your message..."
+                maxlength="500"
+                autocomplete="off"
+            >
+            <button class="chat-btn" id="sendBtn" onclick="sendMessage()">
+                Send
+            </button>
+            <button class="chat-btn reset-btn" onclick="resetChat()">
+                Reset
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let isWaitingForResponse = false;
+
+// Send message function
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message || isWaitingForResponse) return;
+    
+    // Add user message to chat
+    addMessageToChat('user', message);
+    
+    // Clear input and disable send button
+    input.value = '';
+    input.disabled = true;
+    document.getElementById('sendBtn').disabled = true;
+    isWaitingForResponse = true;
+    
+    // Show bot thinking indicator
+    document.getElementById('botThinking').style.display = 'block';
+    
+    try {
+        // Send message to server
+        const response = await fetch('/fakechatbot/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Add bot response after a short delay
+        setTimeout(() => {
+            addMessageToChat('bot', data.response);
+            
+            // Re-enable input
+            input.disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('botThinking').style.display = 'none';
+            isWaitingForResponse = false;
+            
+            // Focus back on input
+            input.focus();
+        }, 800); // Simulate thinking time
+        
+    } catch (error) {
+        console.error('Chat error:', error);
+        addMessageToChat('bot', 'Error: Could not send message');
+        
+        // Re-enable input on error
+        input.disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('botThinking').style.display = 'none';
+        isWaitingForResponse = false;
+    }
+}
+
+// Add message to chat display
+function addMessageToChat(type, message) {
+    const chatMessages = document.getElementById('chatMessages');
+    const welcomeMsg = chatMessages.querySelector('.welcome-message');
+    
+    // Remove welcome message if it exists
+    if (welcomeMsg) {
+        welcomeMsg.remove();
+    }
+    
+    // Create message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'message-bubble';
+    bubbleDiv.textContent = message;
+    
+    messageDiv.appendChild(bubbleDiv);
+    chatMessages.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Reset chat function
+async function resetChat() {
+    if (isWaitingForResponse) return;
+    
+    try {
+        const response = await fetch('/fakechatbot/api/chat/reset', {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            // Clear chat display
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="welcome-message">
+                    Chat reset! Start a new conversation by typing anything below...
+                </div>
+            `;
+            
+            // Clear input
+            document.getElementById('chatInput').value = '';
+            document.getElementById('chatInput').focus();
+        }
+    } catch (error) {
+        console.error('Reset error:', error);
+        addMessageToChat('bot', 'Error: Could not reset chat');
+    }
+}
+
+// Handle Enter key press
+document.getElementById('chatInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Auto-focus on input when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('chatInput').focus();
+    
+    // Send initial "who" message automatically
+    setTimeout(() => {
+        addMessageToChat('bot', 'who');
+    }, 1000);
+});
+</script>
+{% endblock %}

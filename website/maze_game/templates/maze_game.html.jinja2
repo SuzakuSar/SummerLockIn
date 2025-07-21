@@ -1,0 +1,500 @@
+{% extends 'base.html' %}
+
+{% block header %}🚀 Space Maze - {{ difficulty.title() }} Level 🚀{% endblock %}
+
+{% block head %}
+<style>
+    .maze-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .game-stats {
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 30, 0.9) 0%, 
+            rgba(30, 0, 60, 0.8) 100%);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+    
+    .stat-item {
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 300;
+        color: rgba(0, 255, 255, 1);
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .maze-grid {
+        display: grid;
+        grid-template-columns: repeat({{ maze[0]|length }}, 1fr);
+        gap: 2px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 1rem;
+        border-radius: 15px;
+        border: 3px solid rgba(0, 255, 255, 0.4);
+        box-shadow: 
+            0 0 30px rgba(0, 255, 255, 0.3),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+        position: relative;
+    }
+    
+    .maze-cell {
+        width: 25px;
+        height: 25px;
+        border-radius: 3px;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+    
+    /* Path cells */
+    .maze-cell.path {
+        background: linear-gradient(135deg, 
+            rgba(20, 20, 40, 0.8), 
+            rgba(40, 40, 80, 0.6));
+        border: 1px solid rgba(100, 100, 200, 0.3);
+    }
+    
+    /* Wall cells */
+    .maze-cell.wall {
+        background: linear-gradient(135deg, 
+            rgba(60, 60, 60, 1), 
+            rgba(40, 40, 40, 1));
+        border: 1px solid rgba(80, 80, 80, 0.8);
+        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Start position */
+    .maze-cell.start {
+        background: linear-gradient(135deg, 
+            rgba(0, 255, 0, 0.8), 
+            rgba(0, 200, 0, 0.6));
+        border: 2px solid rgba(0, 255, 0, 1);
+        box-shadow: 
+            0 0 15px rgba(0, 255, 0, 0.6),
+            inset 0 0 10px rgba(255, 255, 255, 0.2);
+        animation: startPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes startPulse {
+        0%, 100% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.6); }
+        50% { box-shadow: 0 0 25px rgba(0, 255, 0, 0.8); }
+    }
+    
+    /* Finish position */
+    .maze-cell.finish {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.9), 
+            rgba(255, 165, 0, 0.7));
+        border: 2px solid rgba(255, 215, 0, 1);
+        box-shadow: 
+            0 0 20px rgba(255, 215, 0, 0.7),
+            inset 0 0 10px rgba(255, 255, 255, 0.3);
+        animation: finishGlow 1.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes finishGlow {
+        0% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+        100% { box-shadow: 0 0 30px rgba(255, 215, 0, 1); }
+    }
+    
+    /* Player */
+    .player {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, 
+            rgba(255, 0, 255, 0.9), 
+            rgba(200, 0, 255, 0.7));
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        box-shadow: 
+            0 0 15px rgba(255, 0, 255, 0.8),
+            inset 0 0 5px rgba(255, 255, 255, 0.4);
+        animation: playerPulse 1s ease-in-out infinite alternate;
+        transition: all 0.3s ease;
+    }
+    
+    @keyframes playerPulse {
+        0% { transform: translate(-50%, -50%) scale(1); }
+        100% { transform: translate(-50%, -50%) scale(1.1); }
+    }
+    
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .control-btn {
+        background: linear-gradient(135deg, 
+            rgba(0, 150, 255, 0.8), 
+            rgba(0, 100, 200, 0.8));
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Times New Roman', Times, serif;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.9rem;
+    }
+    
+    .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 8px 20px rgba(0, 150, 255, 0.4),
+            inset 0 0 15px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+    
+    .win-message {
+        background: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.9), 
+            rgba(255, 165, 0, 0.8));
+        color: rgba(0, 0, 0, 0.9);
+        border: 3px solid rgba(255, 215, 0, 1);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        font-size: 1.3rem;
+        font-weight: 300;
+        box-shadow: 
+            0 0 40px rgba(255, 215, 0, 0.6),
+            inset 0 0 20px rgba(255, 255, 255, 0.3);
+        animation: winCelebration 0.5s ease-out;
+        display: none;
+    }
+    
+    @keyframes winCelebration {
+        0% { transform: scale(0.5); opacity: 0; }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .status-message {
+        background: rgba(255, 0, 0, 0.8);
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        text-align: center;
+        margin: 1rem 0;
+        display: none;
+        animation: messageSlide 0.3s ease-out;
+    }
+    
+    @keyframes messageSlide {
+        0% { transform: translateY(-20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    .keyboard-hint {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    @media (max-width: 768px) {
+        .maze-grid {
+            padding: 0.5rem;
+            gap: 1px;
+        }
+        
+        .maze-cell {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .game-stats {
+            padding: 1rem;
+            gap: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 1.4rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .maze-cell {
+            width: 15px;
+            height: 15px;
+        }
+        
+        .player {
+            width: 12px;
+            height: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="maze-container">
+    <!-- Game Statistics -->
+    <div class="game-stats">
+        <div class="stat-item">
+            <div class="stat-value" id="moveCount">{{ moves }}</div>
+            <div class="stat-label">Moves</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ difficulty.title() }}</div>
+            <div class="stat-label">Difficulty</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ maze|length }}x{{ maze[0]|length }}</div>
+            <div class="stat-label">Grid Size</div>
+        </div>
+    </div>
+    
+    <!-- Status Messages -->
+    <div class="status-message" id="statusMessage"></div>
+    
+    <!-- Win Message -->
+    <div class="win-message" id="winMessage">
+        🎉 Congratulations! You escaped the cosmic maze! 🎉
+        <br><br>
+        <div style="font-size: 1rem; margin-top: 1rem;">
+            Completed in <span id="finalMoves">{{ moves }}</span> moves
+        </div>
+    </div>
+    
+    <!-- Maze Grid -->
+    <div class="maze-grid" id="mazeGrid">
+        {% for row_idx, row in maze %}
+            {% for col_idx, cell in row %}
+                <div class="maze-cell 
+                    {% if cell == 0 %}path
+                    {% elif cell == 1 %}wall
+                    {% elif cell == 2 %}start path
+                    {% elif cell == 3 %}finish path
+                    {% endif %}"
+                    data-row="{{ row_idx }}" 
+                    data-col="{{ col_idx }}">
+                    {% if row_idx == player_row and col_idx == player_col %}
+                        <div class="player" id="player"></div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    
+    <!-- Game Controls -->
+    <div class="game-controls">
+        <button class="control-btn" onclick="location.href='{{ url_for('maze_game.reset') }}'">
+            🔄 Reset Maze
+        </button>
+        <button class="control-btn" onclick="location.href='{{ url_for('maze_game.new_maze') }}'">
+            🎲 New Random Maze
+        </button>
+        <button class="control-btn" onclick="location.href='{{ url_for('maze_game.index') }}'">
+            🏠 Back to Menu
+        </button>
+    </div>
+    
+    <!-- Keyboard Instructions -->
+    <div class="keyboard-hint">
+        Use arrow keys to navigate, R to reset, N for new maze
+    </div>
+</div>
+
+<script>
+let gameCompleted = {{ 'true' if completed else 'false' }};
+let currentMoves = {{ moves }};
+
+// Get player element
+const player = document.getElementById('player');
+const moveCountDisplay = document.getElementById('moveCount');
+const statusMessage = document.getElementById('statusMessage');
+const winMessage = document.getElementById('winMessage');
+
+// Show win message if already completed
+if (gameCompleted) {
+    showWinMessage();
+}
+
+// Keyboard controls
+document.addEventListener('keydown', function(event) {
+    if (gameCompleted) return;
+    
+    let direction = null;
+    
+    switch(event.key) {
+        case 'ArrowUp':
+            direction = 'up';
+            event.preventDefault();
+            break;
+        case 'ArrowDown':
+            direction = 'down';
+            event.preventDefault();
+            break;
+        case 'ArrowLeft':
+            direction = 'left';
+            event.preventDefault();
+            break;
+        case 'ArrowRight':
+            direction = 'right';
+            event.preventDefault();
+            break;
+        case 'r':
+        case 'R':
+            location.href = '{{ url_for("maze_game.reset") }}';
+            return;
+        case 'n':
+        case 'N':
+            location.href = '{{ url_for("maze_game.new_maze") }}';
+            return;
+    }
+    
+    if (direction) {
+        makeMove(direction);
+    }
+});
+
+// Make a move via AJAX
+function makeMove(direction) {
+    fetch('{{ url_for("maze_game.move") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({direction: direction})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update player position
+            updatePlayerPosition(data.player_row, data.player_col);
+            
+            // Update move count
+            currentMoves = data.moves;
+            moveCountDisplay.textContent = currentMoves;
+            
+            // Check if completed
+            if (data.completed) {
+                gameCompleted = true;
+                showWinMessage();
+            }
+        } else {
+            // Show error message
+            showStatusMessage(data.message || 'Invalid move!', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showStatusMessage('Connection error!', 'error');
+    });
+}
+
+// Update player visual position
+function updatePlayerPosition(row, col) {
+    // Remove player from current position
+    const currentPlayer = document.getElementById('player');
+    if (currentPlayer) {
+        currentPlayer.remove();
+    }
+    
+    // Add player to new position
+    const targetCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    if (targetCell) {
+        const newPlayer = document.createElement('div');
+        newPlayer.className = 'player';
+        newPlayer.id = 'player';
+        targetCell.appendChild(newPlayer);
+    }
+}
+
+// Show status message
+function showStatusMessage(message, type = 'info') {
+    statusMessage.textContent = message;
+    statusMessage.className = `status-message ${type}`;
+    statusMessage.style.display = 'block';
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        statusMessage.style.display = 'none';
+    }, 3000);
+}
+
+// Show win message
+function showWinMessage() {
+    document.getElementById('finalMoves').textContent = currentMoves;
+    winMessage.style.display = 'block';
+    
+    // Add celebration effect
+    createConfetti();
+}
+
+// Simple confetti effect
+function createConfetti() {
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.style.position = 'fixed';
+            confetti.style.width = '6px';
+            confetti.style.height = '6px';
+            confetti.style.backgroundColor = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1'][Math.floor(Math.random() * 4)];
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.top = '-10px';
+            confetti.style.zIndex = '9999';
+            confetti.style.borderRadius = '50%';
+            confetti.style.pointerEvents = 'none';
+            
+            document.body.appendChild(confetti);
+            
+            // Animate falling
+            const fallDuration = Math.random() * 3000 + 2000;
+            confetti.animate([
+                { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                { transform: `translateY(${window.innerHeight + 50}px) rotate(720deg)`, opacity: 0 }
+            ], {
+                duration: fallDuration,
+                easing: 'ease-in'
+            }).onfinish = () => confetti.remove();
+            
+        }, i * 100);
+    }
+}
+
+// Focus on the game for keyboard controls
+window.addEventListener('load', () => {
+    document.body.focus();
+    console.log('🚀 Space Maze loaded! Use arrow keys to navigate.');
+});
+</script>
+{% endblock %}

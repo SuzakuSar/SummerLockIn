@@ -1,0 +1,841 @@
+{% extends 'base.html' %}
+
+{% block title %}Lockpick Challenge{% endblock %}
+
+{% block header %}🔓 Lockpick Master 🔓{% endblock %}
+
+{% block head %}
+<style>
+    /* Dark Industrial Theme */
+    body {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+    }
+    
+    .lockpick-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
+        border-radius: 15px;
+        border: 2px solid #444;
+        box-shadow: 
+            0 10px 30px rgba(0,0,0,0.5),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    
+    /* Game Status Bar */
+    .status-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: linear-gradient(135deg, #333, #222);
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        border: 1px solid #555;
+    }
+    
+    .status-item {
+        text-align: center;
+        flex: 1;
+    }
+    
+    .status-label {
+        font-size: 0.9rem;
+        color: #aaa;
+        margin-bottom: 0.25rem;
+    }
+    
+    .status-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #ff6b35;
+        text-shadow: 0 0 10px rgba(255,107,53,0.5);
+    }
+    
+    /* Lock Visual */
+    .lock-container {
+        background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+        border: 3px solid #555;
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 2rem 0;
+        position: relative;
+        box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);
+    }
+    
+    .lock-body {
+        background: linear-gradient(145deg, #4a4a4a, #3a3a3a);
+        height: 300px;
+        border-radius: 15px;
+        position: relative;
+        border: 2px solid #666;
+        overflow: hidden;
+    }
+    
+    /* Pin Display */
+    .pins-container {
+        display: flex;
+        justify-content: space-around;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .pin {
+        width: 40px;
+        height: 60px;
+        background: linear-gradient(135deg, #666, #444);
+        border: 2px solid #888;
+        border-radius: 8px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .pin.current {
+        border-color: #ff6b35;
+        box-shadow: 0 0 15px rgba(255,107,53,0.7);
+        transform: scale(1.1);
+    }
+    
+    .pin.set {
+        background: linear-gradient(135deg, #4a9, #3a8);
+        border-color: #5ba;
+        box-shadow: 0 0 10px rgba(85,187,170,0.5);
+    }
+    
+    .pin-label {
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+    
+    /* Lockpick Interface */
+    .lockpick-interface {
+        background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+        border: 2px solid #444;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .pick-position-container {
+        position: relative;
+        height: 80px;
+        background: linear-gradient(135deg, #333, #222);
+        border: 2px solid #555;
+        border-radius: 10px;
+        margin: 1rem 0;
+        overflow: hidden;
+    }
+    
+    .pick-track {
+        position: absolute;
+        top: 50%;
+        left: 10px;
+        right: 10px;
+        height: 4px;
+        background: linear-gradient(90deg, #666, #888, #666);
+        border-radius: 2px;
+        transform: translateY(-50%);
+    }
+    
+    .lockpick {
+        position: absolute;
+        top: 20px;
+        width: 4px;
+        height: 40px;
+        background: linear-gradient(135deg, #ccc, #999);
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all 0.1s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    
+    .lockpick.vibrating {
+        animation: vibrate 0.1s infinite;
+    }
+    
+    @keyframes vibrate {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-1px); }
+        75% { transform: translateX(1px); }
+    }
+    
+    .feedback-zone {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        height: 20px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .feedback-zone.cold { background: linear-gradient(90deg, #444, #333); }
+    .feedback-zone.warm { background: linear-gradient(90deg, #664, #554); }
+    .feedback-zone.close { background: linear-gradient(90deg, #884, #663); }
+    .feedback-zone.very_close { background: linear-gradient(90deg, #aa4, #883); }
+    .feedback-zone.perfect { 
+        background: linear-gradient(90deg, #4a9, #3a8);
+        box-shadow: 0 0 15px rgba(68,170,153,0.7);
+    }
+    
+    /* Controls */
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+    }
+    
+    .control-btn {
+        background: linear-gradient(135deg, #ff6b35, #e55a2b);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        border: 2px solid #ff6b35;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .control-btn:hover {
+        background: linear-gradient(135deg, #e55a2b, #cc4a1f);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255,107,53,0.4);
+    }
+    
+    .control-btn:disabled {
+        background: linear-gradient(135deg, #666, #555);
+        border-color: #666;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .pressure-btn {
+        background: linear-gradient(135deg, #4a9, #3a8);
+        border-color: #4a9;
+        font-size: 1.2rem;
+        min-width: 200px;
+    }
+    
+    .pressure-btn:hover {
+        background: linear-gradient(135deg, #3a8, #297);
+    }
+    
+    .pressure-btn.applying {
+        animation: pressurePulse 0.2s ease-in-out;
+    }
+    
+    @keyframes pressurePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(0.95); }
+    }
+    
+    /* Difficulty Selection */
+    .difficulty-selection {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    .difficulty-btn {
+        background: linear-gradient(135deg, #444, #333);
+        color: #ccc;
+        border: 2px solid #666;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .difficulty-btn.selected {
+        background: linear-gradient(135deg, #ff6b35, #e55a2b);
+        border-color: #ff6b35;
+        color: white;
+    }
+    
+    /* Game State Messages */
+    .game-message {
+        text-align: center;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .game-message.success {
+        background: linear-gradient(135deg, rgba(68,170,153,0.2), rgba(51,136,119,0.2));
+        border: 2px solid #4a9;
+        color: #5ba;
+    }
+    
+    .game-message.failure {
+        background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(229,90,43,0.2));
+        border: 2px solid #ff6b35;
+        color: #ff6b35;
+    }
+    
+    .game-message.info {
+        background: linear-gradient(135deg, rgba(153,153,153,0.2), rgba(119,119,119,0.2));
+        border: 2px solid #999;
+        color: #ccc;
+    }
+    
+    /* Instructions */
+    .instructions {
+        background: linear-gradient(135deg, #333, #222);
+        border: 1px solid #555;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .instructions h3 {
+        color: #ff6b35;
+        margin-bottom: 1rem;
+    }
+    
+    .instructions ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .instructions li {
+        padding: 0.5rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    
+    .instructions li:before {
+        content: "🔧";
+        position: absolute;
+        left: 0;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .lockpick-container {
+            padding: 1rem;
+        }
+        
+        .status-bar {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .pins-container {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .game-controls {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .control-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+    
+    /* Loading States */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+    
+    .loading::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #ff6b35;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="lockpick-container">
+    <!-- Game Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-label">Picks Left</div>
+            <div class="status-value" id="picks-count">3</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Current Pin</div>
+            <div class="status-value" id="current-pin">1</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Total Pins</div>
+            <div class="status-value" id="total-pins">5</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Difficulty</div>
+            <div class="status-value" id="difficulty-display">Normal</div>
+        </div>
+    </div>
+
+    <!-- Game Messages -->
+    <div id="game-message" class="game-message info" style="display: none;">
+        Ready to start lockpicking!
+    </div>
+
+    <!-- Lock Visual -->
+    <div class="lock-container">
+        <div class="pins-container" id="pins-display">
+            <!-- Pins will be generated by JavaScript -->
+        </div>
+        
+        <div class="lock-body">
+            <!-- Lockpick Interface -->
+            <div class="lockpick-interface">
+                <div class="pick-position-container" id="pick-container">
+                    <div class="pick-track"></div>
+                    <div class="lockpick" id="lockpick" style="left: 50%;"></div>
+                    <div class="feedback-zone cold" id="feedback-zone"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div class="game-controls">
+        <div style="width: 100%; text-align: center;">
+            <h4 style="color: #ff6b35; margin-bottom: 1rem;">Select Difficulty</h4>
+            <div class="difficulty-selection">
+                <button class="difficulty-btn" data-difficulty="easy">Easy</button>
+                <button class="difficulty-btn selected" data-difficulty="normal">Normal</button>
+                <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+            </div>
+        </div>
+        
+        <button class="control-btn" id="start-btn" onclick="startNewGame()">
+            🔓 Start New Lock
+        </button>
+        
+        <button class="control-btn pressure-btn" id="pressure-btn" onclick="applyPressure()" disabled>
+            🔨 Apply Pressure
+        </button>
+        
+        <button class="control-btn" id="reset-btn" onclick="resetGame()">
+            🔄 Reset Game
+        </button>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+        <h3>🔧 How to Pick Locks</h3>
+        <ul>
+            <li>Click and drag the lockpick left and right to find the sweet spot</li>
+            <li>Watch the feedback zone color: Cold (gray) → Warm (yellow) → Close (orange) → Perfect (green)</li>
+            <li>When you find the perfect spot, click "Apply Pressure" to set the pin</li>
+            <li>Each pick has limited uses - if you apply pressure in the wrong spot, your pick breaks!</li>
+            <li>Set all pins before running out of picks to win</li>
+            <li>Different difficulties have different sweet spot sizes and pick counts</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+// Game state management
+let gameState = {
+    isGameActive: false,
+    currentPosition: 50,
+    isDragging: false,
+    currentFeedback: 'cold',
+    selectedDifficulty: 'normal'
+};
+
+// DOM elements
+const lockpick = document.getElementById('lockpick');
+const pickContainer = document.getElementById('pick-container');
+const feedbackZone = document.getElementById('feedback-zone');
+const gameMessage = document.getElementById('game-message');
+const startBtn = document.getElementById('start-btn');
+const pressureBtn = document.getElementById('pressure-btn');
+const resetBtn = document.getElementById('reset-btn');
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    initializeLockpick();
+    initializeDifficultySelection();
+    updateUI();
+});
+
+function initializeDifficultySelection() {
+    const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+    
+    difficultyBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove selected class from all buttons
+            difficultyBtns.forEach(b => b.classList.remove('selected'));
+            
+            // Add selected class to clicked button
+            this.classList.add('selected');
+            
+            // Update selected difficulty
+            gameState.selectedDifficulty = this.dataset.difficulty;
+            
+            console.log('Difficulty changed to:', gameState.selectedDifficulty);
+        });
+    });
+}
+
+function initializeLockpick() {
+    // Mouse events for desktop
+    lockpick.addEventListener('mousedown', startDragging);
+    document.addEventListener('mousemove', dragLockpick);
+    document.addEventListener('mouseup', stopDragging);
+    
+    // Touch events for mobile
+    lockpick.addEventListener('touchstart', startDragging);
+    document.addEventListener('touchmove', dragLockpick);
+    document.addEventListener('touchend', stopDragging);
+    
+    // Click on track to move lockpick
+    pickContainer.addEventListener('click', function(e) {
+        if (gameState.isGameActive && !gameState.isDragging) {
+            const rect = pickContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+            
+            gameState.currentPosition = percentage;
+            updateLockpickPosition();
+            checkPosition();
+        }
+    });
+}
+
+function startDragging(e) {
+    if (!gameState.isGameActive) return;
+    
+    gameState.isDragging = true;
+    lockpick.style.cursor = 'grabbing';
+    
+    // Prevent default for touch events
+    if (e.type === 'touchstart') {
+        e.preventDefault();
+    }
+}
+
+function dragLockpick(e) {
+    if (!gameState.isDragging || !gameState.isGameActive) return;
+    
+    const rect = pickContainer.getBoundingClientRect();
+    let clientX;
+    
+    if (e.type === 'touchmove') {
+        clientX = e.touches[0].clientX;
+        e.preventDefault();
+    } else {
+        clientX = e.clientX;
+    }
+    
+    const x = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    
+    gameState.currentPosition = percentage;
+    updateLockpickPosition();
+    checkPosition();
+}
+
+function stopDragging() {
+    gameState.isDragging = false;
+    lockpick.style.cursor = 'pointer';
+}
+
+function updateLockpickPosition() {
+    lockpick.style.left = gameState.currentPosition + '%';
+}
+
+async function checkPosition() {
+    if (!gameState.isGameActive) return;
+    
+    try {
+        const response = await fetch('/lockpick/check_position', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                position: gameState.currentPosition,
+                pressure: 0
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.feedback) {
+            updateFeedback(data.feedback);
+            
+            // Vibrate lockpick if not in sweet spot
+            if (data.feedback !== 'perfect') {
+                lockpick.classList.add('vibrating');
+                setTimeout(() => {
+                    lockpick.classList.remove('vibrating');
+                }, 100);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error checking position:', error);
+    }
+}
+
+function updateFeedback(feedback) {
+    gameState.currentFeedback = feedback;
+    
+    // Remove all feedback classes
+    const feedbackClasses = ['cold', 'warm', 'close', 'very_close', 'perfect'];
+    feedbackClasses.forEach(cls => feedbackZone.classList.remove(cls));
+    
+    // Add current feedback class
+    feedbackZone.classList.add(feedback);
+    
+    // Update pressure button state
+    pressureBtn.disabled = feedback !== 'perfect';
+    
+    if (feedback === 'perfect') {
+        pressureBtn.textContent = '🔨 Apply Pressure (Ready!)';
+    } else {
+        pressureBtn.textContent = '🔨 Apply Pressure';
+    }
+}
+
+async function startNewGame() {
+    startBtn.disabled = true;
+    startBtn.textContent = 'Starting...';
+    
+    try {
+        const response = await fetch('/lockpick/start_game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                difficulty: gameState.selectedDifficulty
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            gameState.isGameActive = true;
+            gameState.currentPosition = 50;
+            
+            updateUI();
+            updatePinsDisplay(data.num_pins);
+            updateLockpickPosition();
+            
+            showMessage('🔓 New lock ready! Find the sweet spots and set all pins!', 'info');
+            
+            // Update status display
+            document.getElementById('picks-count').textContent = data.picks_remaining;
+            document.getElementById('current-pin').textContent = data.current_pin + 1;
+            document.getElementById('total-pins').textContent = data.num_pins;
+            document.getElementById('difficulty-display').textContent = 
+                gameState.selectedDifficulty.charAt(0).toUpperCase() + gameState.selectedDifficulty.slice(1);
+            
+        } else {
+            showMessage('Failed to start new game. Please try again.', 'failure');
+        }
+        
+    } catch (error) {
+        console.error('Error starting game:', error);
+        showMessage('Error starting game. Please try again.', 'failure');
+    }
+    
+    startBtn.disabled = false;
+    startBtn.textContent = '🔓 Start New Lock';
+}
+
+async function applyPressure() {
+    if (!gameState.isGameActive || gameState.currentFeedback !== 'perfect') return;
+    
+    pressureBtn.disabled = true;
+    pressureBtn.classList.add('applying');
+    
+    try {
+        const response = await fetch('/lockpick/apply_pressure', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                position: gameState.currentPosition,
+                pressure: 100
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.game_won) {
+                gameState.isGameActive = false;
+                showMessage(`🎉 Lock picked successfully! Time: ${data.completion_time}s, Score: ${data.final_score}`, 'success');
+                pressureBtn.disabled = true;
+            } else if (data.pin_set) {
+                showMessage(`✅ Pin ${document.getElementById('current-pin').textContent} set! Move to next pin.`, 'success');
+                
+                // Update UI for next pin
+                document.getElementById('current-pin').textContent = data.current_pin + 1;
+                updatePinsDisplay();
+                
+                // Reset feedback
+                gameState.currentFeedback = 'cold';
+                updateFeedback('cold');
+            }
+        } else {
+            // Pick broke
+            document.getElementById('picks-count').textContent = data.picks_remaining;
+            
+            if (data.game_over) {
+                gameState.isGameActive = false;
+                showMessage('💥 Out of picks! Lock picking failed. Try again!', 'failure');
+                pressureBtn.disabled = true;
+            } else {
+                showMessage(`💥 Pick broke! ${data.picks_remaining} picks remaining.`, 'failure');
+                
+                // Reset position and feedback
+                gameState.currentPosition = 50;
+                gameState.currentFeedback = 'cold';
+                updateLockpickPosition();
+                updateFeedback('cold');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error applying pressure:', error);
+        showMessage('Error applying pressure. Please try again.', 'failure');
+    }
+    
+    pressureBtn.classList.remove('applying');
+    
+    if (gameState.isGameActive) {
+        pressureBtn.disabled = false;
+    }
+}
+
+function updatePinsDisplay(numPins = null) {
+    const pinsContainer = document.getElementById('pins-display');
+    
+    if (numPins) {
+        // Create new pins display
+        pinsContainer.innerHTML = '';
+        
+        for (let i = 0; i < numPins; i++) {
+            const pin = document.createElement('div');
+            pin.className = 'pin';
+            pin.id = `pin-${i}`;
+            
+            const label = document.createElement('div');
+            label.className = 'pin-label';
+            label.textContent = `Pin ${i + 1}`;
+            pin.appendChild(label);
+            
+            pinsContainer.appendChild(pin);
+        }
+    }
+    
+    // Update pin states based on current game state
+    const currentPinIndex = parseInt(document.getElementById('current-pin').textContent) - 1;
+    const pins = pinsContainer.querySelectorAll('.pin');
+    
+    pins.forEach((pin, index) => {
+        pin.classList.remove('current', 'set');
+        
+        if (index < currentPinIndex) {
+            pin.classList.add('set');
+        } else if (index === currentPinIndex && gameState.isGameActive) {
+            pin.classList.add('current');
+        }
+    });
+}
+
+async function resetGame() {
+    try {
+        await fetch('/lockpick/reset_game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        gameState.isGameActive = false;
+        gameState.currentPosition = 50;
+        gameState.currentFeedback = 'cold';
+        
+        updateUI();
+        updateLockpickPosition();
+        updateFeedback('cold');
+        
+        // Reset status display
+        document.getElementById('picks-count').textContent = '3';
+        document.getElementById('current-pin').textContent = '1';
+        document.getElementById('total-pins').textContent = '5';
+        
+        // Clear pins display
+        document.getElementById('pins-display').innerHTML = '';
+        
+        showMessage('🔄 Game reset. Select difficulty and start a new lock!', 'info');
+        
+    } catch (error) {
+        console.error('Error resetting game:', error);
+    }
+}
+
+function updateUI() {
+    startBtn.disabled = gameState.isGameActive;
+    pressureBtn.disabled = !gameState.isGameActive || gameState.currentFeedback !== 'perfect';
+    
+    if (gameState.isGameActive) {
+        startBtn.textContent = '🔓 Game in Progress';
+    } else {
+        startBtn.textContent = '🔓 Start New Lock';
+    }
+}
+
+function showMessage(text, type) {
+    gameMessage.textContent = text;
+    gameMessage.className = `game-message ${type}`;
+    gameMessage.style.display = 'block';
+    
+    // Auto-hide info messages after 5 seconds
+    if (type === 'info') {
+        setTimeout(() => {
+            gameMessage.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Initialize default state
+updateFeedback('cold');
+showMessage('🔓 Select your difficulty and start picking locks!', 'info');
+</script>
+{% endblock %}

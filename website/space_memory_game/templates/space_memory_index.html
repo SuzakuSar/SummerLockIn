@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block title %}Space Memory Challenge{% endblock %}
+
+{% block header %}🎴 SPACE MEMORY CHALLENGE 🎴{% endblock %}
+
+{% block head %}
+<style>
+    .memory-welcome {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .memory-card {
+        background: linear-gradient(135deg, 
+            rgba(0, 20, 40, 0.9) 0%, 
+            rgba(20, 0, 60, 0.8) 50%, 
+            rgba(40, 0, 80, 0.7) 100%);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(255, 100, 255, 0.4);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .memory-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            45deg,
+            transparent 30%,
+            rgba(255, 100, 255, 0.1) 50%,
+            transparent 70%
+        );
+        transform: rotate(45deg);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+        0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    .memory-title {
+        font-size: 2.5rem;
+        color: rgba(255, 100, 255, 1);
+        text-shadow: 
+            0 0 20px rgba(255, 100, 255, 0.8),
+            0 0 40px rgba(255, 100, 255, 0.6);
+        margin-bottom: 1rem;
+        font-weight: 300;
+        letter-spacing: 0.1em;
+    }
+    
+    .memory-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2rem;
+        font-style: italic;
+    }
+    
+    .memory-description {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+    
+    .memory-rules {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 100, 255, 0.3);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        text-align: left;
+    }
+    
+    .memory-rules h3 {
+        color: rgba(255, 100, 255, 1);
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    .memory-rules ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .memory-rules li {
+        padding: 0.5rem 0;
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .memory-rules li::before {
+        content: '✦';
+        position: absolute;
+        left: 0;
+        color: rgba(255, 100, 255, 0.8);
+        font-size: 1.2rem;
+    }
+    
+    .start-button {
+        background: linear-gradient(135deg, 
+            rgba(255, 0, 128, 0.8), 
+            rgba(128, 0, 255, 0.8));
+        color: white;
+        border: 2px solid rgba(255, 100, 255, 0.6);
+        padding: 1rem 3rem;
+        border-radius: 50px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 1rem;
+    }
+    
+    .start-button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .start-button:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 
+            0 15px 35px rgba(255, 0, 128, 0.4),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.8);
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    }
+    
+    .start-button:hover::after {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .difficulty-preview {
+        display: grid;
+        grid-template-columns: repeat(3, 40px);
+        gap: 5px;
+        justify-content: center;
+        margin: 1.5rem 0;
+    }
+    
+    .preview-square {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 100, 255, 0.2);
+        border: 1px solid rgba(255, 100, 255, 0.4);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        animation: previewPulse 2s ease-in-out infinite;
+    }
+    
+    .preview-square:nth-child(1) { animation-delay: 0s; }
+    .preview-square:nth-child(2) { animation-delay: 0.2s; }
+    .preview-square:nth-child(3) { animation-delay: 0.4s; }
+    .preview-square:nth-child(4) { animation-delay: 0.6s; }
+    .preview-square:nth-child(5) { animation-delay: 0.8s; }
+    .preview-square:nth-child(6) { animation-delay: 1s; }
+    .preview-square:nth-child(7) { animation-delay: 1.2s; }
+    .preview-square:nth-child(8) { animation-delay: 1.4s; }
+    .preview-square:nth-child(9) { animation-delay: 1.6s; }
+    
+    @keyframes previewPulse {
+        0%, 100% { 
+            background: rgba(255, 100, 255, 0.2);
+            transform: scale(1);
+        }
+        50% { 
+            background: rgba(255, 100, 255, 0.6);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 100, 255, 0.8);
+        }
+    }
+    
+    .stats-preview {
+        display: flex;
+        justify-content: space-around;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 100, 255, 0.1);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 100, 255, 0.2);
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: rgba(255, 100, 255, 1);
+        text-shadow: 0 0 10px rgba(255, 100, 255, 0.6);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .memory-welcome {
+            padding: 1rem;
+        }
+        
+        .memory-card {
+            padding: 2rem 1rem;
+        }
+        
+        .memory-title {
+            font-size: 2rem;
+        }
+        
+        .stats-preview {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="memory-welcome">
+    <div class="memory-card">
+        <h2 class="memory-title">COSMIC MEMORY</h2>
+        <p class="memory-subtitle">Test your neural pathways in deep space</p>
+        
+        <div class="memory-description">
+            <p>
+                Welcome, space cadet! Your mission: memorize and replicate increasingly complex 
+                sequences of cosmic coordinates. Each round adds a new star to your constellation 
+                - can you map the entire galaxy?
+            </p>
+        </div>
+        
+        <div class="difficulty-preview">
+            <div class="preview-square">✦</div>
+            <div class="preview-square">⭐</div>
+            <div class="preview-square">🌟</div>
+            <div class="preview-square">💫</div>
+            <div class="preview-square">⚡</div>
+            <div class="preview-square">🔮</div>
+            <div class="preview-square">💎</div>
+            <div class="preview-square">🌌</div>
+            <div class="preview-square">🚀</div>
+        </div>
+        
+        <div class="memory-rules">
+            <h3>🎯 Mission Briefing</h3>
+            <ul>
+                <li>Watch the sequence of squares that light up in the 3×3 grid</li>
+                <li>Repeat the sequence by clicking squares in the same order</li>
+                <li>Each round adds one more square to memorize</li>
+                <li>Complete all 9 rounds to achieve cosmic mastery</li>
+                <li>One wrong move ends the mission - stay focused!</li>
+            </ul>
+        </div>
+        
+        <div class="stats-preview">
+            <div class="stat-item">
+                <div class="stat-value">3×3</div>
+                <div class="stat-label">Grid Size</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">9</div>
+                <div class="stat-label">Max Rounds</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">∞</div>
+                <div class="stat-label">Challenge</div>
+            </div>
+        </div>
+        
+        <a href="{{ url_for('space_memory.new_game') }}" class="start-button">
+            🚀 Launch Mission
+        </a>
+    </div>
+</div>
+{% endblock %}

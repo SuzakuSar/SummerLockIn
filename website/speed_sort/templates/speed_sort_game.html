@@ -1,0 +1,556 @@
+<!-- website/speed_sort/templates/speed_sort_game.html -->
+{% extends 'base.html' %}
+
+{% block title %}Speed Sort - {{ game_type.title() }} {{ difficulty.title() }}{% endblock %}
+
+{% block header %}⚡ {{ sort_instruction }} ⚡{% endblock %}
+
+{% block head %}
+<style>
+    .game-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .game-header {
+        background: linear-gradient(135deg, 
+            rgba(255, 107, 0, 0.1) 0%, 
+            rgba(255, 149, 0, 0.05) 100%);
+        border: 2px solid rgba(255, 149, 0, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .game-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .timer {
+        font-size: 2rem;
+        color: #ff6b00;
+        font-weight: 600;
+        text-shadow: 0 0 15px rgba(255, 107, 0, 0.5);
+        animation: timerPulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes timerPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    .game-type-badge {
+        background: linear-gradient(135deg, #ff6b00, #ff9500);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .difficulty-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .difficulty-badge.easy { background: linear-gradient(135deg, #00ff88, #00cc6a); }
+    .difficulty-badge.medium { background: linear-gradient(135deg, #ffb800, #ff9500); }
+    .difficulty-badge.hard { background: linear-gradient(135deg, #ff0066, #cc0052); }
+    
+    .sorting-area {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px dashed rgba(255, 149, 0, 0.3);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        min-height: 200px;
+        transition: all 0.3s ease;
+    }
+    
+    .sorting-area.drag-over {
+        border-color: #ff6b00;
+        background: rgba(255, 107, 0, 0.1);
+        box-shadow: 0 0 20px rgba(255, 107, 0, 0.3);
+    }
+    
+    .sortable-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        min-height: 120px;
+        align-items: center;
+    }
+    
+    .sortable-item {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        border: 2px solid rgba(255, 149, 0, 0.4);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        cursor: move;
+        user-select: none;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: white;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+        position: relative;
+        backdrop-filter: blur(5px);
+    }
+    
+    .sortable-item:hover {
+        transform: scale(1.1) rotate(2deg);
+        border-color: #ff6b00;
+        box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+        z-index: 10;
+    }
+    
+    .sortable-item.dragging {
+        opacity: 0.5;
+        transform: scale(1.1) rotate(5deg);
+        z-index: 1000;
+    }
+    
+    .sortable-item.drag-over {
+        border-color: #00ff88;
+        background: rgba(0, 255, 136, 0.2);
+    }
+    
+    /* Color-specific styling for color game */
+    .sortable-item[data-value="Red"] { background: linear-gradient(135deg, #ff4444, #cc3333); }
+    .sortable-item[data-value="Blue"] { background: linear-gradient(135deg, #4444ff, #3333cc); }
+    .sortable-item[data-value="Green"] { background: linear-gradient(135deg, #44ff44, #33cc33); }
+    .sortable-item[data-value="Yellow"] { background: linear-gradient(135deg, #ffff44, #cccc33); color: #333; }
+    .sortable-item[data-value="Purple"] { background: linear-gradient(135deg, #ff44ff, #cc33cc); }
+    .sortable-item[data-value="Orange"] { background: linear-gradient(135deg, #ff8844, #cc6633); }
+    .sortable-item[data-value="Pink"] { background: linear-gradient(135deg, #ff88cc, #cc6699); }
+    .sortable-item[data-value="Brown"] { background: linear-gradient(135deg, #8b4513, #654321); }
+    .sortable-item[data-value="Black"] { background: linear-gradient(135deg, #333333, #111111); }
+    .sortable-item[data-value="White"] { background: linear-gradient(135deg, #ffffff, #eeeeee); color: #333; }
+    .sortable-item[data-value="Gray"] { background: linear-gradient(135deg, #888888, #666666); }
+    .sortable-item[data-value="Cyan"] { background: linear-gradient(135deg, #44ffff, #33cccc); color: #333; }
+    
+    .game-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 2rem 0;
+    }
+    
+    .control-btn {
+        background: linear-gradient(135deg, #ff6b00, #ff9500);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 107, 0, 0.4);
+    }
+    
+    .control-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .submit-btn {
+        background: linear-gradient(135deg, #00ff88, #00cc6a);
+    }
+    
+    .new-game-btn {
+        background: linear-gradient(135deg, #0088ff, #0066cc);
+    }
+    
+    .result-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    .result-content {
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 20, 0.95) 0%, 
+            rgba(20, 20, 40, 0.95) 100%);
+        border: 2px solid rgba(255, 149, 0, 0.5);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        max-width: 500px;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    }
+    
+    .result-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px currentColor;
+    }
+    
+    .result-title.success {
+        color: #00ff88;
+    }
+    
+    .result-title.failure {
+        color: #ff0066;
+    }
+    
+    .result-time {
+        font-size: 3rem;
+        color: #ff6b00;
+        font-weight: 600;
+        margin: 1rem 0;
+        text-shadow: 0 0 25px rgba(255, 107, 0, 0.5);
+    }
+    
+    .new-record {
+        color: #ffb800;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 1rem 0;
+        animation: celebration 2s ease-in-out infinite;
+    }
+    
+    @keyframes celebration {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .game-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .game-info {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .timer {
+            font-size: 1.5rem;
+        }
+        
+        .sortable-item {
+            font-size: 1rem;
+            padding: 0.8rem 1rem;
+        }
+        
+        .sortable-list {
+            gap: 0.5rem;
+        }
+        
+        .result-content {
+            margin: 1rem;
+            padding: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="game-container">
+    <div class="game-header">
+        <div class="game-info">
+            <div class="timer" id="timer">0.00s</div>
+            <div class="game-type-badge">{{ game_type }}</div>
+            <div class="difficulty-badge {{ difficulty }}">{{ difficulty }}</div>
+        </div>
+    </div>
+    
+    <div class="sorting-area" id="sortingArea">
+        <div class="sortable-list" id="sortableList">
+            {% for item in items %}
+            <div class="sortable-item" draggable="true" data-value="{{ item }}">
+                {{ item }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="game-controls">
+        <button class="control-btn submit-btn" id="submitBtn" onclick="checkOrder()">
+            Submit Answer
+        </button>
+        <button class="control-btn new-game-btn" onclick="newGame()">
+            New Game
+        </button>
+        <button class="control-btn" onclick="window.location.href='/speedsort'">
+            Back to Menu
+        </button>
+    </div>
+</div>
+
+<!-- Result Modal -->
+<div class="result-modal" id="resultModal">
+    <div class="result-content">
+        <h2 class="result-title" id="resultTitle"></h2>
+        <div class="result-time" id="resultTime"></div>
+        <div class="new-record" id="newRecord" style="display: none;">
+            🏆 NEW PERSONAL RECORD! 🏆
+        </div>
+        <p id="resultMessage"></p>
+        <div style="margin-top: 2rem;">
+            <button class="control-btn new-game-btn" onclick="closeModal(); newGame();">
+                Play Again
+            </button>
+            <button class="control-btn" onclick="window.location.href='/speedsort'">
+                Back to Menu
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let startTime = Date.now();
+let timerInterval;
+let draggedElement = null;
+
+// Game configuration
+const gameConfig = {
+    type: '{{ game_type }}',
+    difficulty: '{{ difficulty }}'
+};
+
+// Initialize timer
+function startTimer() {
+    timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        document.getElementById('timer').textContent = elapsed.toFixed(2) + 's';
+    }, 10);
+}
+
+// Drag and drop functionality
+function initializeDragAndDrop() {
+    const sortableList = document.getElementById('sortableList');
+    const items = sortableList.querySelectorAll('.sortable-item');
+    
+    items.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragenter', handleDragEnter);
+        item.addEventListener('dragleave', handleDragLeave);
+        item.addEventListener('dragend', handleDragEnd);
+    });
+}
+
+function handleDragStart(e) {
+    draggedElement = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.outerHTML);
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    
+    if (draggedElement !== this) {
+        const sortableList = document.getElementById('sortableList');
+        const draggedIndex = Array.from(sortableList.children).indexOf(draggedElement);
+        const targetIndex = Array.from(sortableList.children).indexOf(this);
+        
+        if (draggedIndex < targetIndex) {
+            this.parentNode.insertBefore(draggedElement, this.nextSibling);
+        } else {
+            this.parentNode.insertBefore(draggedElement, this);
+        }
+    }
+    
+    this.classList.remove('drag-over');
+    return false;
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    
+    // Clean up
+    const items = document.querySelectorAll('.sortable-item');
+    items.forEach(item => {
+        item.classList.remove('drag-over');
+    });
+}
+
+// Check the current order
+async function checkOrder() {
+    const sortableList = document.getElementById('sortableList');
+    const items = sortableList.querySelectorAll('.sortable-item');
+    const currentOrder = Array.from(items).map(item => item.dataset.value);
+    
+    // Convert numbers to integers for proper comparison
+    const submittedOrder = gameConfig.type === 'numbers' 
+        ? currentOrder.map(Number) 
+        : currentOrder;
+    
+    try {
+        const response = await fetch('/speedsort/api/check-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                game_type: gameConfig.type,
+                difficulty: gameConfig.difficulty,
+                order: submittedOrder
+            })
+        });
+        
+        const result = await response.json();
+        showResult(result);
+        
+    } catch (error) {
+        console.error('Error checking order:', error);
+        alert('Error checking your answer. Please try again.');
+    }
+}
+
+function showResult(result) {
+    clearInterval(timerInterval);
+    
+    const modal = document.getElementById('resultModal');
+    const title = document.getElementById('resultTitle');
+    const time = document.getElementById('resultTime');
+    const message = document.getElementById('resultMessage');
+    const newRecord = document.getElementById('newRecord');
+    
+    if (result.correct) {
+        title.textContent = '🎉 CORRECT! 🎉';
+        title.className = 'result-title success';
+        message.textContent = 'Excellent work! You sorted everything perfectly.';
+        
+        if (result.new_record) {
+            newRecord.style.display = 'block';
+        }
+    } else {
+        title.textContent = '❌ INCORRECT';
+        title.className = 'result-title failure';
+        message.textContent = `Not quite right. The correct order was: ${result.correct_order.join(', ')}`;
+        newRecord.style.display = 'none';
+    }
+    
+    time.textContent = result.time + 's';
+    modal.style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('resultModal').style.display = 'none';
+}
+
+async function newGame() {
+    try {
+        const response = await fetch('/speedsort/api/new-game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                game_type: gameConfig.type,
+                difficulty: gameConfig.difficulty
+            })
+        });
+        
+        const data = await response.json();
+        
+        // Update the sortable list with new items
+        const sortableList = document.getElementById('sortableList');
+        sortableList.innerHTML = '';
+        
+        data.items.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'sortable-item';
+            itemEl.draggable = true;
+            itemEl.dataset.value = item;
+            itemEl.textContent = item;
+            sortableList.appendChild(itemEl);
+        });
+        
+        // Reinitialize drag and drop
+        initializeDragAndDrop();
+        
+        // Reset timer
+        startTime = Date.now();
+        clearInterval(timerInterval);
+        startTimer();
+        
+        // Close modal if open
+        closeModal();
+        
+    } catch (error) {
+        console.error('Error generating new game:', error);
+        alert('Error generating new game. Please try again.');
+    }
+}
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initializeDragAndDrop();
+    startTimer();
+    
+    // Close modal when clicking outside
+    document.getElementById('resultModal').addEventListener('click', (e) => {
+        if (e.target.id === 'resultModal') {
+            closeModal();
+        }
+    });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        checkOrder();
+    } else if (e.key === 'r' || e.key === 'R') {
+        newGame();
+    } else if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+</script>
+{% endblock %}

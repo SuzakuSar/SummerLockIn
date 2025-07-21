@@ -1,0 +1,309 @@
+<!-- website/prank_helper/templates/prank_helper.html -->
+{% extends 'base.html' %}
+
+{% block title %}Helpful Assistant{% endblock %}
+
+{% block header %}🤖 Helpful Assistant{% endblock %}
+
+{% block head %}
+<style>
+    /* Prank Helper Specific Styles */
+    .prank-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 200px);
+        padding: 2rem;
+    }
+
+    .prank-panel {
+        background: linear-gradient(135deg, 
+            rgba(102, 126, 234, 0.8) 0%, 
+            rgba(118, 75, 162, 0.8) 100%);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        max-width: 500px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .prank-panel::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            #ff0080, #ff8000, #00ff00, #00ffff, 
+            #0080ff, #8000ff, #ff0080);
+        background-size: 400% 400%;
+        border-radius: 20px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+        animation: holographicBorder 3s ease infinite;
+    }
+
+    .prank-panel:hover::before {
+        opacity: 0.2;
+    }
+
+    @keyframes holographicBorder {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+
+    .prank-question {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .prank-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .prank-btn {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Times New Roman', Times, serif;
+    }
+
+    .prank-btn-yes {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+
+    .prank-btn-no {
+        background: linear-gradient(135deg, #f44336, #da190b);
+        color: white;
+        box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+    }
+
+    .prank-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .prank-btn:active {
+        transform: translateY(0);
+    }
+
+    .prank-response {
+        display: none;
+        margin-top: 2rem;
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        border: 2px solid #ff6b6b;
+        animation: bounceIn 0.6s ease;
+    }
+
+    .prank-response.show {
+        display: block;
+    }
+
+    .prank-response h2 {
+        color: #ff6b6b;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+    }
+
+    .prank-response p {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .prank-emojis {
+        font-size: 2rem;
+        animation: shake 0.5s ease-in-out infinite;
+    }
+
+    @keyframes bounceIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.3);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        70% {
+            transform: scale(0.9);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+        20%, 40%, 60%, 80% { transform: translateX(2px); }
+    }
+
+    @keyframes fadeOut {
+        from { opacity: 1; transform: scale(1); }
+        to { opacity: 0; transform: scale(0.8); }
+    }
+
+    .prank-btn.removing {
+        animation: fadeOut 0.3s ease forwards;
+    }
+
+    .prank-reset-btn {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .prank-reset-btn.show {
+        display: inline-block;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .prank-panel {
+            padding: 2rem 1.5rem;
+        }
+        
+        .prank-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .prank-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="prank-container">
+    <div class="prank-panel">
+        <div id="prankQuestionSection">
+            <p class="prank-question">
+                Hey there! I'm a super helpful AI assistant. 
+                Can I help you with something today?
+            </p>
+            
+            <div class="prank-buttons">
+                <button class="prank-btn prank-btn-yes" id="prankYesBtn">✅ Yes</button>
+                <button class="prank-btn prank-btn-no" id="prankNoBtn">❌ No</button>
+            </div>
+        </div>
+
+        <div class="prank-response" id="prankResponseSection">
+            <h2>😂 GOTCHA!</h2>
+            <p><strong>Good boy!</strong> 🐕</p>
+            <p>You fell right into that one!</p>
+            <div class="prank-emojis">😂😂😂😂😂😂😂😂😂</div>
+            <p style="font-size: 1rem; margin-top: 1rem; opacity: 0.8;">
+                You've been pranked! Thanks for being a good sport 😄
+            </p>
+            <button class="prank-btn prank-reset-btn" id="prankResetBtn">🔄 Reset Prank</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const yesBtn = document.getElementById('prankYesBtn');
+    const noBtn = document.getElementById('prankNoBtn');
+    const questionSection = document.getElementById('prankQuestionSection');
+    const responseSection = document.getElementById('prankResponseSection');
+    const resetBtn = document.getElementById('prankResetBtn');
+    const questionText = document.querySelector('.prank-question');
+
+    // Track if we've removed the "No" button
+    let noButtonRemoved = false;
+
+    yesBtn.addEventListener('click', function() {
+        // Show the prank response
+        questionSection.style.display = 'none';
+        responseSection.classList.add('show');
+        resetBtn.classList.add('show');
+        
+        // Add some extra dramatic effect
+        setTimeout(() => {
+            responseSection.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                responseSection.style.transform = 'scale(1)';
+            }, 200);
+        }, 300);
+    });
+
+    noBtn.addEventListener('click', function() {
+        if (!noButtonRemoved) {
+            // Add removing animation
+            noBtn.classList.add('removing');
+            
+            // Remove the button after animation
+            setTimeout(() => {
+                noBtn.style.display = 'none';
+                noButtonRemoved = true;
+            }, 300);
+            
+            // Update the question to be more persuasive
+            setTimeout(() => {
+                questionText.innerHTML = 
+                    'Aw come on! Surely there\'s <em>something</em> I can help you with? 🥺<br>' +
+                    '<small style="opacity: 0.8;">(The "No" option is no longer available 😈)</small>';
+            }, 400);
+        }
+    });
+
+    resetBtn.addEventListener('click', function() {
+        // Reset everything
+        questionSection.style.display = 'block';
+        responseSection.classList.remove('show');
+        resetBtn.classList.remove('show');
+        
+        // Reset the question text
+        questionText.innerHTML = 
+            'Hey there! I\'m a super helpful AI assistant. Can I help you with something today?';
+        
+        // Show the "No" button again
+        noBtn.style.display = 'inline-block';
+        noBtn.classList.remove('removing');
+        noButtonRemoved = false;
+    });
+
+    // Add hover effects
+    yesBtn.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-3px) scale(1.05)';
+    });
+
+    yesBtn.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+</script>
+{% endblock %}

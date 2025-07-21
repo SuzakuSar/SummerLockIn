@@ -1,0 +1,435 @@
+<!-- website/connect_dots/templates/connect_dots_game.html -->
+{% extends 'base.html' %}
+
+{% block title %}Connect the Dots - {{ difficulty.title() }}{% endblock %}
+
+{% block header %}🔗 {{ pattern.name }} - {{ difficulty.title() }} 🔗{% endblock %}
+
+{% block head %}
+<style>
+    /* Game-specific styling */
+    .game-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .game-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+    }
+    
+    .game-stats {
+        display: flex;
+        gap: 2rem;
+    }
+    
+    .stat {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        color: rgba(0, 255, 255, 1);
+        font-weight: 300;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .game-board {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        height: 600px;
+        margin: 0 auto;
+        background: 
+            radial-gradient(circle at 30% 70%, rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+            radial-gradient(circle at 70% 30%, rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(135deg, 
+                rgba(0, 20, 40, 0.9) 0%, 
+                rgba(0, 40, 80, 0.8) 100%);
+        background-size: 40px 40px, 60px 60px, 100% 100%;
+        border: 3px solid rgba(0, 255, 255, 0.4);
+        border-radius: 20px;
+        box-shadow: 
+            0 0 40px rgba(0, 255, 255, 0.3),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .dot {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: radial-gradient(circle, 
+            rgba(0, 255, 255, 1) 0%, 
+            rgba(0, 200, 200, 0.8) 50%, 
+            rgba(0, 150, 150, 0.6) 100%);
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: rgba(0, 0, 0, 0.9);
+        font-size: 1rem;
+        box-shadow: 
+            0 0 20px rgba(0, 255, 255, 0.6),
+            0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .dot:hover {
+        transform: translate(-50%, -50%) scale(1.2);
+        box-shadow: 
+            0 0 30px rgba(0, 255, 255, 0.8),
+            0 6px 15px rgba(0, 0, 0, 0.4);
+    }
+    
+    .dot.connected {
+        background: radial-gradient(circle, 
+            rgba(0, 255, 0, 1) 0%, 
+            rgba(0, 200, 0, 0.8) 50%, 
+            rgba(0, 150, 0, 0.6) 100%);
+        border-color: rgba(255, 255, 255, 1);
+        box-shadow: 
+            0 0 20px rgba(0, 255, 0, 0.6),
+            0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .dot.current {
+        background: radial-gradient(circle, 
+            rgba(255, 255, 0, 1) 0%, 
+            rgba(255, 200, 0, 0.8) 50%, 
+            rgba(255, 150, 0, 0.6) 100%);
+        animation: currentDotPulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes currentDotPulse {
+        0%, 100% { 
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.6);
+        }
+        50% { 
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 255, 0, 0.8);
+        }
+    }
+    
+    .connection-line {
+        position: absolute;
+        height: 3px;
+        background: linear-gradient(90deg, 
+            rgba(0, 255, 255, 0.8) 0%, 
+            rgba(0, 255, 255, 1) 50%, 
+            rgba(0, 255, 255, 0.8) 100%);
+        border-radius: 2px;
+        transform-origin: left center;
+        box-shadow: 
+            0 0 10px rgba(0, 255, 255, 0.6),
+            0 0 20px rgba(0, 255, 255, 0.4);
+        animation: lineGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes lineGlow {
+        0%, 100% { 
+            box-shadow: 
+                0 0 10px rgba(0, 255, 255, 0.6),
+                0 0 20px rgba(0, 255, 255, 0.4);
+        }
+        50% { 
+            box-shadow: 
+                0 0 15px rgba(0, 255, 255, 0.8),
+                0 0 30px rgba(0, 255, 255, 0.6);
+        }
+    }
+    
+    .game-controls {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .control-btn {
+        background: linear-gradient(135deg, 
+            rgba(0, 255, 255, 0.8), 
+            rgba(0, 200, 200, 0.8));
+        color: rgba(0, 0, 0, 0.9);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        margin: 0 0.5rem;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    
+    .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
+    }
+    
+    .completion-message {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, 
+            rgba(0, 0, 0, 0.95) 0%, 
+            rgba(0, 40, 80, 0.95) 100%);
+        border: 3px solid rgba(0, 255, 255, 0.8);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        z-index: 1000;
+        box-shadow: 
+            0 0 50px rgba(0, 255, 255, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        display: none;
+    }
+    
+    .completion-title {
+        font-size: 2.5rem;
+        color: rgba(0, 255, 255, 1);
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+    }
+    
+    .completion-score {
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .game-container {
+            padding: 1rem;
+        }
+        
+        .game-info {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .game-board {
+            height: 400px;
+        }
+        
+        .dot {
+            width: 25px;
+            height: 25px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="game-container">
+    <!-- Game Information -->
+    <div class="game-info">
+        <div>
+            <h3 style="margin: 0; color: rgba(0, 255, 255, 1);">{{ pattern.name }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: rgba(255, 255, 255, 0.7);">{{ difficulty.title() }} Level</p>
+        </div>
+        <div class="game-stats">
+            <div class="stat">
+                <div class="stat-value" id="currentDot">1</div>
+                <div class="stat-label">Next Dot</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="totalDots">{{ pattern.dots|length }}</div>
+                <div class="stat-label">Total Dots</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="gameScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Board -->
+    <div class="game-board" id="gameBoard">
+        {% for dot in pattern.dots %}
+        <div class="dot" 
+             data-number="{{ dot.number }}"
+             style="left: {{ dot.x }}%; top: {{ dot.y }}%;"
+             onclick="connectDot({{ dot.number }})">
+            {{ dot.number }}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Game Controls -->
+    <div class="game-controls">
+        <button class="control-btn" onclick="newGame()">New Pattern</button>
+        <button class="control-btn" onclick="goHome()">Back to Menu</button>
+    </div>
+</div>
+
+<!-- Completion Message -->
+<div class="completion-message" id="completionMessage">
+    <div class="completion-title">🎉 Pattern Completed! 🎉</div>
+    <div class="completion-score" id="completionScore">You earned 0 points!</div>
+    <button class="control-btn" onclick="newGame()">Try Another Pattern</button>
+    <button class="control-btn" onclick="goHome()">Back to Menu</button>
+</div>
+
+<script>
+let currentPattern = {{ pattern|tojson }};
+let currentDifficulty = '{{ difficulty }}';
+let gameState = {
+    currentDot: 1,
+    connections: [],
+    completed: false
+};
+
+// Connect a dot
+async function connectDot(dotNumber) {
+    if (gameState.completed) return;
+    
+    try {
+        const response = await fetch(`/connect-dots/api/connect/${dotNumber}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Mark dot as connected
+            const dotEl = document.querySelector(`[data-number="${dotNumber}"]`);
+            dotEl.classList.add('connected');
+            
+            // Update game state
+            gameState.connections = data.connections;
+            gameState.currentDot = data.next_dot || gameState.currentDot;
+            
+            // Draw connections
+            drawConnections(data.connections);
+            
+            // Update UI
+            document.getElementById('currentDot').textContent = 
+                data.completed ? '✓' : gameState.currentDot;
+            
+            if (data.completed) {
+                gameState.completed = true;
+                showCompletion(data.points_earned, data.score);
+            } else {
+                // Highlight next dot
+                highlightCurrentDot();
+            }
+        } else {
+            // Wrong dot - show feedback
+            showWrongDotFeedback(dotNumber, data.expected);
+        }
+    } catch (error) {
+        console.error('Error connecting dot:', error);
+    }
+}
+
+// Draw connection lines
+function drawConnections(connections) {
+    // Remove existing lines
+    document.querySelectorAll('.connection-line').forEach(line => line.remove());
+    
+    // Draw new lines
+    connections.forEach(connection => {
+        const line = document.createElement('div');
+        line.className = 'connection-line';
+        
+        const fromX = (connection.from.x / 100) * document.getElementById('gameBoard').offsetWidth;
+        const fromY = (connection.from.y / 100) * document.getElementById('gameBoard').offsetHeight;
+        const toX = (connection.to.x / 100) * document.getElementById('gameBoard').offsetWidth;
+        const toY = (connection.to.y / 100) * document.getElementById('gameBoard').offsetHeight;
+        
+        const length = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+        const angle = Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI;
+        
+        line.style.left = fromX + 'px';
+        line.style.top = fromY + 'px';
+        line.style.width = length + 'px';
+        line.style.transform = `rotate(${angle}deg)`;
+        
+        document.getElementById('gameBoard').appendChild(line);
+    });
+}
+
+// Highlight the current dot to click
+function highlightCurrentDot() {
+    // Remove existing current class
+    document.querySelectorAll('.dot.current').forEach(dot => {
+        dot.classList.remove('current');
+    });
+    
+    // Add current class to next dot
+    if (!gameState.completed) {
+        const currentDotEl = document.querySelector(`[data-number="${gameState.currentDot}"]`);
+        if (currentDotEl && !currentDotEl.classList.contains('connected')) {
+            currentDotEl.classList.add('current');
+        }
+    }
+}
+
+// Show wrong dot feedback
+function showWrongDotFeedback(clicked, expected) {
+    const clickedDot = document.querySelector(`[data-number="${clicked}"]`);
+    const expectedDot = document.querySelector(`[data-number="${expected}"]`);
+    
+    // Flash wrong dot red
+    clickedDot.style.background = 'radial-gradient(circle, rgba(255, 0, 0, 1), rgba(150, 0, 0, 0.8))';
+    setTimeout(() => {
+        clickedDot.style.background = '';
+    }, 500);
+    
+    // Pulse expected dot
+    expectedDot.style.animation = 'currentDotPulse 0.3s ease-in-out 3';
+    setTimeout(() => {
+        expectedDot.style.animation = '';
+        highlightCurrentDot();
+    }, 900);
+}
+
+// Show completion message
+function showCompletion(pointsEarned, totalScore) {
+    document.getElementById('completionScore').textContent = 
+        `You earned ${pointsEarned} points! Total Score: ${totalScore}`;
+    document.getElementById('completionMessage').style.display = 'block';
+    document.getElementById('gameScore').textContent = totalScore;
+}
+
+// Start a new game
+async function newGame() {
+    try {
+        const response = await fetch(`/connect-dots/api/new-game/${currentDifficulty}`);
+        const data = await response.json();
+        
+        // Reload the page with new pattern
+        location.reload();
+    } catch (error) {
+        console.error('Error starting new game:', error);
+    }
+}
+
+// Go back to main menu
+function goHome() {
+    window.location.href = '/connect-dots/';
+}
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', () => {
+    highlightCurrentDot();
+    console.log('Connect Dots game initialized');
+});
+</script>
+{% endblock %}

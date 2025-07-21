@@ -1,0 +1,457 @@
+{% extends 'base.html' %}
+
+{% block title %}Useless Fortune Cards{% endblock %}
+
+{% block header %}🔮 Cosmic Fortune Cards of Questionable Value 🔮{% endblock %}
+
+{% block head %}
+<style>
+    /* Fortune telling cosmic theme */
+    .fortune-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        min-height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .fortune-intro {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .fortune-intro h3 {
+        color: rgba(255, 100, 100, 0.9);
+        margin-bottom: 1rem;
+        font-size: 1.4rem;
+    }
+    
+    .fortune-intro p {
+        opacity: 0.8;
+        line-height: 1.6;
+        font-style: italic;
+    }
+    
+    /* Card deck area */
+    .card-deck {
+        position: relative;
+        width: 200px;
+        height: 300px;
+        margin: 2rem 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .card-deck:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Stack of cards effect */
+    .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, 
+            rgba(75, 0, 130, 0.9) 0%, 
+            rgba(25, 25, 112, 0.9) 50%, 
+            rgba(72, 61, 139, 0.9) 100%);
+        border: 2px solid rgba(138, 43, 226, 0.6);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .card-back:nth-child(1) {
+        transform: rotate(-2deg) translateY(0px);
+        z-index: 3;
+    }
+    
+    .card-back:nth-child(2) {
+        transform: rotate(1deg) translateY(-5px);
+        z-index: 2;
+        opacity: 0.8;
+    }
+    
+    .card-back:nth-child(3) {
+        transform: rotate(-1deg) translateY(-10px);
+        z-index: 1;
+        opacity: 0.6;
+    }
+    
+    .card-deck:hover .card-back {
+        box-shadow: 
+            0 15px 40px rgba(138, 43, 226, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Drawn card display */
+    .drawn-card {
+        width: 350px;
+        min-height: 450px;
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.95) 0%, 
+            rgba(240, 240, 255, 0.95) 100%);
+        border: 3px solid rgba(138, 43, 226, 0.8);
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 2rem 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.7),
+            0 0 30px rgba(138, 43, 226, 0.3);
+        animation: cardReveal 0.8s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .drawn-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            transparent, rgba(255, 255, 255, 0.1), transparent);
+        border-radius: 20px;
+        animation: cardShimmer 2s ease-in-out infinite;
+    }
+    
+    @keyframes cardReveal {
+        0% {
+            opacity: 0;
+            transform: rotateY(90deg) scale(0.5);
+        }
+        50% {
+            opacity: 0.5;
+            transform: rotateY(45deg) scale(0.8);
+        }
+        100% {
+            opacity: 1;
+            transform: rotateY(0deg) scale(1);
+        }
+    }
+    
+    @keyframes cardShimmer {
+        0%, 100% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+    }
+    
+    .card-symbol {
+        font-size: 4rem;
+        margin: 1rem 0;
+        text-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 1rem 0;
+        text-shadow: none;
+    }
+    
+    .card-fortune {
+        font-size: 1.1rem;
+        color: #34495e;
+        line-height: 1.6;
+        margin: 1.5rem 0;
+        font-style: italic;
+        text-shadow: none;
+    }
+    
+    /* Control buttons */
+    .fortune-controls {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .cosmic-btn {
+        background: linear-gradient(135deg, 
+            rgba(138, 43, 226, 0.8), 
+            rgba(75, 0, 130, 0.8));
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: inherit;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .cosmic-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 10px 30px rgba(138, 43, 226, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .cosmic-btn:active {
+        transform: translateY(-1px);
+    }
+    
+    .cosmic-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Stats display */
+    .fortune-stats {
+        margin-top: 2rem;
+        padding: 1rem 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: rgba(138, 43, 226, 1);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    }
+    
+    .stat-label {
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    /* Loading state */
+    .loading {
+        opacity: 0.7;
+    }
+    
+    .loading .card-deck {
+        animation: cardShuffle 0.5s ease-in-out;
+    }
+    
+    @keyframes cardShuffle {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        25% { transform: scale(1.1) rotate(-5deg); }
+        75% { transform: scale(1.1) rotate(5deg); }
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .fortune-container {
+            padding: 1rem;
+        }
+        
+        .drawn-card {
+            width: 90%;
+            min-width: 280px;
+            padding: 1.5rem;
+        }
+        
+        .fortune-controls {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .cosmic-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="fortune-container">
+    <!-- Introduction -->
+    <div class="fortune-intro">
+        <h3>⚠️ Warning: Results May Vary (And By Vary, We Mean Be Completely Unhelpful) ⚠️</h3>
+        <p>
+            Welcome to the cosmic fortune telling experience where the universe conspires 
+            to give you predictions that are technically accurate but spectacularly useless. 
+            Click the deck below to draw your card of questionable destiny!
+        </p>
+    </div>
+    
+    <!-- Card deck -->
+    <div class="card-deck" id="cardDeck" onclick="drawCard()">
+        <div class="card-back">🌌</div>
+        <div class="card-back">✨</div>
+        <div class="card-back">🔮</div>
+    </div>
+    
+    <!-- Drawn card display -->
+    <div class="drawn-card" id="drawnCard">
+        <div class="card-symbol" id="cardSymbol"></div>
+        <div class="card-name" id="cardName"></div>
+        <div class="card-fortune" id="cardFortune"></div>
+    </div>
+    
+    <!-- Controls -->
+    <div class="fortune-controls">
+        <button class="cosmic-btn" onclick="drawCard()">
+            <span id="drawBtnText">🎴 Draw Another Card</span>
+        </button>
+        <button class="cosmic-btn" onclick="resetFortune()">
+            🔄 Reset Deck
+        </button>
+        <a href="{{ url_for('home.index') }}" class="cosmic-btn">
+            🌌 Back to Space Hub
+        </a>
+    </div>
+    
+    <!-- Stats -->
+    <div class="fortune-stats">
+        <div class="stat-number" id="cardsDrawn">0</div>
+        <div class="stat-label">Cards of Questionable Wisdom Drawn</div>
+    </div>
+</div>
+
+<script>
+let isDrawing = false;
+let totalCardsDrawn = {{ session.get('useless_fortune_cards_drawn', 0) }};
+
+// Update stats display
+function updateStats() {
+    document.getElementById('cardsDrawn').textContent = totalCardsDrawn;
+}
+
+// Draw a random card
+async function drawCard() {
+    if (isDrawing) return;
+    
+    isDrawing = true;
+    const container = document.querySelector('.fortune-container');
+    const drawnCardEl = document.getElementById('drawnCard');
+    const drawBtn = document.getElementById('drawBtnText');
+    
+    // Show loading state
+    container.classList.add('loading');
+    drawBtn.textContent = '🔮 Consulting the Cosmic Forces...';
+    
+    // Hide previous card
+    drawnCardEl.style.display = 'none';
+    
+    try {
+        const response = await fetch('{{ url_for("useless_fortune.draw_card") }}');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Wait for shuffle animation
+            setTimeout(() => {
+                displayCard(data.card);
+                totalCardsDrawn = data.total_drawn;
+                updateStats();
+                
+                // Reset button text
+                drawBtn.textContent = '🎴 Draw Another Card';
+                container.classList.remove('loading');
+                isDrawing = false;
+            }, 800);
+        }
+    } catch (error) {
+        console.error('Error drawing card:', error);
+        drawBtn.textContent = '❌ Cosmic Connection Failed';
+        container.classList.remove('loading');
+        isDrawing = false;
+    }
+}
+
+// Display the drawn card
+function displayCard(card) {
+    const drawnCardEl = document.getElementById('drawnCard');
+    const symbolEl = document.getElementById('cardSymbol');
+    const nameEl = document.getElementById('cardName');
+    const fortuneEl = document.getElementById('cardFortune');
+    
+    // Set card content
+    symbolEl.textContent = card.symbol;
+    nameEl.textContent = card.card;
+    fortuneEl.textContent = card.fortune;
+    
+    // Set card color theme
+    symbolEl.style.color = card.color;
+    nameEl.style.color = card.color;
+    
+    // Show card with animation
+    drawnCardEl.style.display = 'flex';
+}
+
+// Reset fortune session
+async function resetFortune() {
+    try {
+        const response = await fetch('{{ url_for("useless_fortune.reset_session") }}');
+        const data = await response.json();
+        
+        if (data.success) {
+            totalCardsDrawn = 0;
+            updateStats();
+            document.getElementById('drawnCard').style.display = 'none';
+            
+            // Show success feedback
+            const drawBtn = document.getElementById('drawBtnText');
+            const originalText = drawBtn.textContent;
+            drawBtn.textContent = '✨ Deck Reset!';
+            setTimeout(() => {
+                drawBtn.textContent = '🎴 Draw Your First Card';
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('Error resetting fortune:', error);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    updateStats();
+    
+    // Show current card if one exists
+    {% if session.get('useless_fortune_current_card') %}
+    const currentCard = {{ session.get('useless_fortune_current_card')|tojson }};
+    if (currentCard) {
+        displayCard(currentCard);
+    }
+    {% endif %}
+    
+    console.log('🔮 Useless Fortune Cards initialized');
+    console.log('📊 Cards drawn this session:', totalCardsDrawn);
+});
+
+// Add some cosmic ambiance
+setInterval(() => {
+    const cards = document.querySelectorAll('.card-back');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.transform += ' scale(1.02)';
+            setTimeout(() => {
+                card.style.transform = card.style.transform.replace(' scale(1.02)', '');
+            }, 100);
+        }, index * 100);
+    });
+}, 5000);
+</script>
+{% endblock %}

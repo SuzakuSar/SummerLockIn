@@ -1,0 +1,721 @@
+{% extends 'base.html' %}
+
+{% block title %}Rage Slots - SUMMERLOCKIN{% endblock %}
+
+{% block header %}🎰 RAGE SLOTS 🎰{% endblock %}
+
+{% block head %}
+<style>
+    /* Sinister Casino Theme */
+    :root {
+        --casino-red: #dc143c;
+        --casino-gold: #ffd700;
+        --casino-dark: #1a0000;
+        --casino-blood: #8b0000;
+        --neon-glow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--casino-dark) 0%, #000 100%);
+        font-family: 'Courier New', monospace;
+        color: var(--casino-gold);
+    }
+    
+    .slots-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: linear-gradient(145deg, #2c0000, #1a0000);
+        border: 3px solid var(--casino-gold);
+        border-radius: 20px;
+        box-shadow: 
+            0 0 30px rgba(220, 20, 60, 0.5),
+            inset 0 0 20px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .slots-container::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            var(--casino-red), var(--casino-gold), 
+            var(--casino-red), var(--casino-gold));
+        background-size: 400% 400%;
+        border-radius: 20px;
+        z-index: -1;
+        animation: borderGlow 3s ease infinite;
+    }
+    
+    @keyframes borderGlow {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    
+    .machine-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        text-shadow: var(--neon-glow);
+    }
+    
+    .machine-header h2 {
+        font-size: 2.5rem;
+        color: var(--casino-red);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin: 0;
+        animation: ominousGlow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes ominousGlow {
+        from { text-shadow: 0 0 10px var(--casino-red); }
+        to { text-shadow: 0 0 20px var(--casino-red), 0 0 30px var(--casino-red); }
+    }
+    
+    .tagline {
+        font-size: 1.2rem;
+        color: var(--casino-gold);
+        font-style: italic;
+        margin-top: 0.5rem;
+        opacity: 0.9;
+    }
+    
+    /* Slot Machine Display */
+    .slot-machine {
+        background: linear-gradient(145deg, #000, #1a1a1a);
+        border: 4px solid var(--casino-gold);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+    }
+    
+    .reels-container {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 2rem 0;
+        perspective: 1000px;
+    }
+    
+    .reel {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(145deg, #333, #111);
+        border: 3px solid var(--casino-gold);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        box-shadow: 
+            inset 0 0 10px rgba(0, 0, 0, 0.8),
+            0 0 15px rgba(255, 215, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.5s ease;
+    }
+    
+    .reel.spinning {
+        animation: reelSpin 2s linear;
+        transform: rotateX(720deg);
+    }
+    
+    @keyframes reelSpin {
+        0% { transform: rotateX(0deg); }
+        100% { transform: rotateX(720deg); }
+    }
+    
+    .reel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(180deg, 
+            rgba(255,255,255,0.1) 0%, 
+            transparent 50%, 
+            rgba(0,0,0,0.2) 100%);
+        pointer-events: none;
+    }
+    
+    /* Game Controls */
+    .game-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        margin: 2rem 0;
+    }
+    
+    .bet-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(220, 20, 60, 0.2);
+        padding: 1rem;
+        border-radius: 10px;
+        border: 2px solid var(--casino-red);
+    }
+    
+    .bet-input {
+        width: 80px;
+        padding: 0.5rem;
+        background: #000;
+        border: 2px solid var(--casino-gold);
+        border-radius: 5px;
+        color: var(--casino-gold);
+        text-align: center;
+        font-family: inherit;
+        font-size: 1.1rem;
+    }
+    
+    .spin-btn {
+        background: linear-gradient(145deg, var(--casino-red), var(--casino-blood));
+        color: white;
+        border: 3px solid var(--casino-gold);
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        box-shadow: 0 5px 15px rgba(220, 20, 60, 0.4);
+        font-family: inherit;
+    }
+    
+    .spin-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 20, 60, 0.6);
+        text-shadow: var(--neon-glow);
+    }
+    
+    .spin-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .spin-btn.spinning {
+        animation: btnPulse 0.5s ease infinite alternate;
+    }
+    
+    @keyframes btnPulse {
+        from { transform: scale(1); }
+        to { transform: scale(1.05); }
+    }
+    
+    /* Stats and Info */
+    .game-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .info-panel {
+        background: linear-gradient(145deg, rgba(220, 20, 60, 0.1), rgba(139, 0, 0, 0.1));
+        border: 2px solid var(--casino-red);
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .credits-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--casino-gold);
+        text-shadow: var(--neon-glow);
+    }
+    
+    .credits-label {
+        font-size: 1rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--casino-red);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    /* Message Display */
+    .message-display {
+        background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(26, 0, 0, 0.8));
+        border: 2px solid var(--casino-gold);
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        margin: 1rem 0;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .game-message {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--casino-gold);
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        animation: messageGlow 1s ease-in-out;
+    }
+    
+    @keyframes messageGlow {
+        0% { opacity: 0; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.1); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    .message-win {
+        color: var(--casino-gold);
+        text-shadow: var(--neon-glow);
+    }
+    
+    .message-lose {
+        color: var(--casino-red);
+        animation: messageShake 0.5s ease-in-out;
+    }
+    
+    @keyframes messageShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .action-btn {
+        background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+        color: var(--casino-gold);
+        border: 2px solid var(--casino-gold);
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+    
+    .action-btn:hover {
+        background: linear-gradient(145deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.2));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+    }
+    
+    /* Rage Inducing Elements */
+    .rage-stats {
+        background: linear-gradient(145deg, rgba(139, 0, 0, 0.3), rgba(26, 0, 0, 0.3));
+        border: 2px solid var(--casino-blood);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .rage-title {
+        font-size: 1.3rem;
+        color: var(--casino-red);
+        text-align: center;
+        margin-bottom: 1rem;
+        text-shadow: var(--neon-glow);
+    }
+    
+    .loss-counter {
+        font-size: 2rem;
+        color: var(--casino-red);
+        text-align: center;
+        font-weight: bold;
+        text-shadow: 0 0 10px var(--casino-red);
+        animation: lossCounterPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes lossCounterPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .slots-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .machine-header h2 {
+            font-size: 2rem;
+        }
+        
+        .reels-container {
+            gap: 0.5rem;
+        }
+        
+        .reel {
+            width: 80px;
+            height: 80px;
+            font-size: 2.5rem;
+        }
+        
+        .game-controls {
+            flex-direction: column;
+        }
+        
+        .spin-btn {
+            width: 100%;
+            padding: 1.5rem;
+        }
+        
+        .game-info {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Loading animation */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    
+    /* Winning animation */
+    .winner {
+        animation: winnerCelebration 1s ease-in-out;
+    }
+    
+    @keyframes winnerCelebration {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        25% { transform: scale(1.1) rotate(-2deg); }
+        75% { transform: scale(1.1) rotate(2deg); }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="slots-container">
+    <div class="machine-header">
+        <h2>RAGE SLOTS</h2>
+        <div class="tagline">"Where Hope Goes to Die" 💀</div>
+    </div>
+    
+    <div class="slot-machine">
+        <div class="reels-container">
+            <div class="reel" id="reel1">🍒</div>
+            <div class="reel" id="reel2">🍒</div>
+            <div class="reel" id="reel3">🍒</div>
+        </div>
+        
+        <div class="game-controls">
+            <div class="bet-controls">
+                <label for="betAmount">Bet:</label>
+                <input type="number" id="betAmount" class="bet-input" value="5" min="1" max="50">
+                <span>credits</span>
+            </div>
+            
+            <button class="spin-btn" id="spinBtn" onclick="spin()">
+                💸 LOSE MONEY 💸
+            </button>
+        </div>
+    </div>
+    
+    <div class="message-display">
+        <div class="game-message" id="gameMessage">
+            Welcome to your financial doom! 😈
+        </div>
+    </div>
+    
+    <div class="game-info">
+        <div class="info-panel">
+            <div class="credits-display" id="creditsDisplay">100</div>
+            <div class="credits-label">Credits Remaining</div>
+            
+            <div class="action-buttons">
+                <button class="action-btn" onclick="addCredits(50)">
+                    Buy 50 Credits ($5)
+                </button>
+                <button class="action-btn" onclick="addCredits(100)">
+                    Buy 100 Credits ($10)
+                </button>
+            </div>
+        </div>
+        
+        <div class="info-panel rage-stats">
+            <div class="rage-title">💸 YOUR SUFFERING 💸</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalSpent">$0</div>
+                    <div class="stat-label">Money Lost</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalSpins">0</div>
+                    <div class="stat-label">Spins</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="winRate">0%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="lossRate">0%</div>
+                    <div class="stat-label">Loss Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="rage-stats">
+        <div class="rage-title">🔥 RAGE METER 🔥</div>
+        <div class="loss-counter" id="lossCounter">
+            You've lost 0 times in a row!
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="action-btn" onclick="resetGame()">
+            🔄 Reset (Give Up)
+        </button>
+        <button class="action-btn" onclick="showPayout()">
+            📊 Rigged Payout Table
+        </button>
+    </div>
+</div>
+
+<!-- Hidden payout table -->
+<div id="payoutModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--casino-dark); border: 3px solid var(--casino-gold); border-radius: 15px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="color: var(--casino-red); text-align: center; margin-bottom: 1rem;">
+            "Fair" Payout Table 😏
+        </h3>
+        <div style="color: var(--casino-gold); line-height: 1.6;">
+            <div>🍒🍒🍒 - 2x bet (25% chance each reel)</div>
+            <div>🍋🍋🍋 - 3x bet (20% chance each reel)</div>
+            <div>🍊🍊🍊 - 5x bet (15% chance each reel)</div>
+            <div>🍇🍇🍇 - 8x bet (12% chance each reel)</div>
+            <div>⭐⭐⭐ - 15x bet (8% chance each reel)</div>
+            <div>💎💎💎 - 25x bet (5% chance each reel)</div>
+            <div>👑👑👑 - 50x bet (3% chance each reel)</div>
+            <div>💰💰💰 - 100x bet (2% chance each reel)</div>
+            <br>
+            <div style="color: var(--casino-red); font-style: italic; text-align: center;">
+                Actual win rate: ~1% 😈<br>
+                The house edge: 99% 🏠<br>
+                Your chance of happiness: 0% 💔
+            </div>
+        </div>
+        <button onclick="hidePayout()" style="width: 100%; margin-top: 1rem; padding: 1rem; background: var(--casino-red); color: white; border: none; border-radius: 8px; cursor: pointer;">
+            Close (And Keep Losing)
+        </button>
+    </div>
+</div>
+
+<script>
+let isSpinning = false;
+let consecutiveLosses = 0;
+
+// Spinning symbols for animation
+const spinSymbols = ['🍒', '🍋', '🍊', '🍇', '⭐', '💎', '👑', '💰'];
+
+function updateDisplay(data) {
+    document.getElementById('creditsDisplay').textContent = data.credits;
+    document.getElementById('totalSpent').textContent = '$' + (data.stats.total_spent * 0.1).toFixed(2);
+    document.getElementById('totalSpins').textContent = data.stats.total_spins;
+    document.getElementById('winRate').textContent = data.stats.win_rate + '%';
+    document.getElementById('lossRate').textContent = data.stats.loss_rate + '%';
+    
+    if (data.winnings > 0) {
+        consecutiveLosses = 0;
+    } else {
+        consecutiveLosses++;
+    }
+    
+    document.getElementById('lossCounter').textContent = 
+        `You've lost ${consecutiveLosses} times in a row! 🔥`;
+}
+
+function animateReels(finalSymbols) {
+    const reels = ['reel1', 'reel2', 'reel3'];
+    
+    reels.forEach((reelId, index) => {
+        const reel = document.getElementById(reelId);
+        reel.classList.add('spinning');
+        
+        // Animate spinning symbols
+        let spinCount = 0;
+        const spinInterval = setInterval(() => {
+            reel.textContent = spinSymbols[Math.floor(Math.random() * spinSymbols.length)];
+            spinCount++;
+            
+            if (spinCount > 20 + (index * 5)) {
+                clearInterval(spinInterval);
+                reel.textContent = finalSymbols[index];
+                reel.classList.remove('spinning');
+                
+                // Add winner animation if all reels match
+                if (index === 2 && finalSymbols[0] === finalSymbols[1] && finalSymbols[1] === finalSymbols[2]) {
+                    reel.parentElement.classList.add('winner');
+                    setTimeout(() => {
+                        reel.parentElement.classList.remove('winner');
+                    }, 1000);
+                }
+            }
+        }, 100);
+    });
+}
+
+async function spin() {
+    if (isSpinning) return;
+    
+    const betAmount = parseInt(document.getElementById('betAmount').value);
+    if (betAmount < 1) {
+        showMessage('Invalid bet amount!', 'lose');
+        return;
+    }
+    
+    isSpinning = true;
+    const spinBtn = document.getElementById('spinBtn');
+    spinBtn.disabled = true;
+    spinBtn.classList.add('spinning');
+    spinBtn.textContent = '💫 SPINNING 💫';
+    
+    // Start reel animation immediately
+    animateReels(['?', '?', '?']);
+    
+    try {
+        const response = await fetch('/slots_machine/spin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ bet: betAmount })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            showMessage(data.error, 'lose');
+        } else {
+            // Wait for animation to finish, then show results
+            setTimeout(() => {
+                animateReels(data.reels);
+                updateDisplay(data);
+                
+                const messageClass = data.winnings > 0 ? 'win' : 'lose';
+                showMessage(data.message, messageClass);
+            }, 1000);
+        }
+    } catch (error) {
+        showMessage('Error spinning! The machine is broken (like your dreams)!', 'lose');
+    }
+    
+    setTimeout(() => {
+        isSpinning = false;
+        spinBtn.disabled = false;
+        spinBtn.classList.remove('spinning');
+        spinBtn.textContent = '💸 LOSE MONEY 💸';
+    }, 2500);
+}
+
+function showMessage(message, type) {
+    const messageEl = document.getElementById('gameMessage');
+    messageEl.textContent = message;
+    messageEl.className = `game-message message-${type}`;
+}
+
+async function addCredits(amount) {
+    try {
+        const response = await fetch('/slots_machine/add-credits', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ amount: amount })
+        });
+        
+        const data = await response.json();
+        document.getElementById('creditsDisplay').textContent = data.credits;
+        showMessage(data.message, 'lose');
+    } catch (error) {
+        showMessage('Error adding credits! Even buying more money failed!', 'lose');
+    }
+}
+
+async function resetGame() {
+    if (confirm('Are you sure you want to reset? (You\'ll just lose again anyway!)')) {
+        try {
+            const response = await fetch('/slots_machine/reset');
+            const data = await response.json();
+            
+            // Reset display
+            document.getElementById('creditsDisplay').textContent = '100';
+            document.getElementById('totalSpent').textContent = '$0';
+            document.getElementById('totalSpins').textContent = '0';
+            document.getElementById('winRate').textContent = '0%';
+            document.getElementById('lossRate').textContent = '0%';
+            document.getElementById('lossCounter').textContent = 'You\'ve lost 0 times in a row!';
+            consecutiveLosses = 0;
+            
+            showMessage(data.message, 'lose');
+        } catch (error) {
+            showMessage('Reset failed! You\'re stuck in this nightmare!', 'lose');
+        }
+    }
+}
+
+function showPayout() {
+    document.getElementById('payoutModal').style.display = 'block';
+}
+
+function hidePayout() {
+    document.getElementById('payoutModal').style.display = 'none';
+}
+
+// Add keyboard support
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !isSpinning) {
+        e.preventDefault();
+        spin();
+    }
+});
+
+// Taunt messages on page focus
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && consecutiveLosses > 5) {
+        setTimeout(() => {
+            showMessage('Back for more punishment? I respect the dedication! 😈', 'lose');
+        }, 1000);
+    }
+});
+
+// Initialize
+showMessage('Ready to lose all your money? 😈', 'lose');
+</script>
+{% endblock %}
