@@ -1,0 +1,145 @@
+<!-- ===== FILE: website/templates/quick_stats.html ===== -->
+{% extends 'base.html' %}
+
+{% block title %}Quick Stats - SUMMERLOCKIN{% endblock %}
+{% block header %}🎮 Top Games{% endblock %}
+
+{% block head %}
+<style>
+    .quick-stats-container {
+        max-width: 700px;
+        margin: 50px auto;
+        padding: 40px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 25px;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .overview-card {
+        text-align: center;
+        margin-bottom: 40px;
+        background: rgba(255,255,255,0.15);
+        padding: 25px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .overview-number {
+        margin: 0;
+        color: #FFD700;
+        font-size: 2.2rem;
+        font-weight: bold;
+        text-shadow: 0 0 15px rgba(255,215,0,0.5);
+    }
+    
+    .overview-text {
+        margin: 10px 0 0 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .games-list {
+        font-size: 18px;
+        line-height: 2;
+        padding-left: 25px;
+    }
+    
+    .game-item {
+        margin: 15px 0;
+        padding: 18px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .game-item:hover {
+        background: rgba(255,255,255,0.15);
+        transform: translateY(-2px);
+    }
+    
+    .game-name {
+        font-weight: 600;
+    }
+    
+    .game-stats {
+        color: #FFD700;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .action-buttons {
+        text-align: center;
+        margin-top: 40px;
+    }
+    
+    .btn {
+        color: white;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 25px;
+        margin: 10px;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="quick-stats-container">
+    <!-- Overview -->
+    <div class="overview-card">
+        <h2 class="overview-number">{{ total_sessions | comma }}</h2>
+        <p class="overview-text">Total Unique Sessions Across {{ total_games }} Games</p>
+    </div>
+    
+    <!-- Top Games List -->
+    <h3 style="margin-bottom: 25px; font-size: 1.5rem;">🏆 Top {{ games | length }} Most Popular:</h3>
+    <ol class="games-list">
+        {% for game in games %}
+        <li class="game-item">
+            <span class="game-name">
+                {% if loop.index == 1 %}🥇 {% elif loop.index == 2 %}🥈 {% elif loop.index == 3 %}🥉 {% endif %}
+                <strong>{{ game.name }}</strong>
+            </span>
+            <span class="game-stats">
+                {{ game.sessions | comma }} sessions ({{ game.percentage }}%)
+            </span>
+        </li>
+        {% endfor %}
+    </ol>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{{ url_for('analytics') }}" class="btn btn-primary">
+            📊 Full Analytics Dashboard
+        </a>
+        <br>
+        <a href="{{ url_for('home.index') }}" class="btn btn-secondary">
+            🎮 Back to Games
+        </a>
+    </div>
+</div>
+{% endblock %}
+

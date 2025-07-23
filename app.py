@@ -1,6 +1,6 @@
 from website import create_app
+from website.analytics.analytics import auto_track_from_request
 import time
-
 from flask import Flask, render_template, url_for, request, jsonify, session, redirect, g
 
 
@@ -19,6 +19,8 @@ def log_request_info():
     print(f"Endpoint: {request.endpoint}")
     print(f"Blueprint: {request.blueprint}")
     print("===================\n")
+
+    auto_track_from_request(request)
 
 if __name__ == "__main__":
     app.run(debug=True)

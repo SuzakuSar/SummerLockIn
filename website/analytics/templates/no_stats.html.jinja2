@@ -1,0 +1,57 @@
+<!-- ===== FILE: website/templates/no_stats.html ===== -->
+{% extends 'base.html' %}
+
+{% block title %}No Stats Yet - SUMMERLOCKIN{% endblock %}
+{% block header %}📊 No Game Stats Yet{% endblock %}
+
+{% block head %}
+<style>
+    .no-stats-container {
+        max-width: 600px;
+        margin: 100px auto;
+        padding: 40px;
+        text-align: center;
+        background: rgba(255,255,255,0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .no-stats-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+    
+    .no-stats-message {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        opacity: 0.9;
+    }
+    
+    .btn {
+        background: linear-gradient(135deg, #007cba, #0056b3);
+        color: white;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 25px;
+        font-weight: bold;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="no-stats-container">
+    <div class="no-stats-icon">📊</div>
+    <h2>No Game Stats Yet</h2>
+    <p class="no-stats-message">Play some games first, then come back to see the analytics!</p>
+    <a href="{{ url_for('home.index') }}" class="btn">🎮 Back to Games</a>
+</div>
+{% endblock %}
