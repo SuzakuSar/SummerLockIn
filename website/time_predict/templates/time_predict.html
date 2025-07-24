@@ -1,11 +1,13 @@
-<!-- ===== FILE: website/time_predict/templates/time_predict_index.html ===== -->
+# ===== MODIFIED TEMPLATE: website/time_predict/templates/time_predict_index.html =====
+
+time_predict_template = '''
 {% extends 'base.html' %}
 
 {% block header %}⏱️ TIME PREDICT CHALLENGE ⏱️{% endblock %}
 
 {% block head %}
 <style>
-    /* Cyberpunk/neon theme for the time prediction game */
+    /* All your existing CSS styles remain the same */
     body {
         background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
         color: #00ff88;
@@ -267,7 +269,7 @@
         padding: 0.5rem 1rem;
         border-radius: 5px;
         cursor: pointer;
-        margin-top: 1rem;
+        margin: 0.5rem;
         font-size: 0.9rem;
     }
 
@@ -282,6 +284,34 @@
         padding: 0.5rem;
         background: rgba(0, 255, 136, 0.1);
         border-radius: 5px;
+    }
+
+    /* NEW: Leaderboard buttons */
+    .leaderboard-section {
+        margin: 2rem 0;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        border: 1px solid #00ff88;
+    }
+
+    .leaderboard-button {
+        background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+        color: white;
+        text-decoration: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        margin: 0.5rem;
+        display: inline-block;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .leaderboard-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
     }
 
     @media (max-width: 600px) {
@@ -381,7 +411,20 @@
         </div>
     </div>
 
-    <button class="reset-button" onclick="resetStats()">Reset Current Mode Statistics</button>
+    <!-- Leaderboard Section -->
+    <div class="leaderboard-section">
+        <h3>🏆 LEADERBOARDS</h3>
+        <a href="{{ url_for('time_predict.view_mode_leaderboard', mode='predict') }}" class="leaderboard-button">
+            🧠 Predict Mode Leaderboard
+        </a>
+        <a href="{{ url_for('time_predict.view_mode_leaderboard', mode='react') }}" class="leaderboard-button">
+            ⚡ React Mode Leaderboard
+        </a>
+    </div>
+
+    <div style="margin-top: 1rem;">
+        <button class="reset-button" onclick="resetStats()">Reset Current Mode Stats</button>
+    </div>
 </div>
 
 <script>
@@ -562,6 +605,16 @@
             if (data.success) {
                 displayResults(data);
                 updateStatsDisplay(data.stats);
+                
+                // STEP 4: Handle leaderboard redirect
+                if (data.leaderboard_success && data.redirect_url) {
+                    // Show results briefly then redirect to leaderboard
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 3000); // Wait 3 seconds to show results
+                } else if (!data.leaderboard_success) {
+                    console.error('Leaderboard submission failed:', data.leaderboard_error);
+                }
             } else {
                 alert('Error stopping game: ' + data.error);
             }
@@ -585,6 +638,13 @@
             message = `<div class="winner">🎉 PERFECT TIMING! 🎉<br>You nailed it!</div>`;
         } else {
             message = `<div class="loser">So close! Try again!</div>`;
+        }
+        
+        // Add leaderboard status
+        if (data.leaderboard_success) {
+            message += '<div style="color: #00ff88; margin-top: 1rem;">✅ Score submitted to leaderboard! Redirecting in 3 seconds...</div>';
+        } else {
+            message += '<div style="color: #ff6b6b; margin-top: 1rem;">⚠️ Error submitting to leaderboard</div>';
         }
         
         resultMessage.innerHTML = message;
@@ -649,3 +709,4 @@
     });
 </script>
 {% endblock %}
+'''

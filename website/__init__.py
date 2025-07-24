@@ -19,6 +19,7 @@ def create_app():
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching during development
     
     # Import blueprints
+    from .leaderboard.leaderboard import leaderboard
     from .analytics import analytics
     from .home import home
     from .helloWorld import helloWorld
@@ -72,6 +73,7 @@ def create_app():
     from .slots_machine.slots_machine import slots_machine
 
     # Register blueprints with URL prefixes
+    app.register_blueprint(leaderboard, url_prefix='/leaderboard')
     app.register_blueprint(analytics, url_prefix='/analytics')
     app.register_blueprint(home, url_prefix='/')
     app.register_blueprint(helloWorld, url_prefix='/')
@@ -123,6 +125,7 @@ def create_app():
     app.register_blueprint(lockpick_game, url_prefix='/lockpick')
     app.register_blueprint(one_pixel_hunt, url_prefix='/pixelhunt') # doesn't even appear
     app.register_blueprint(slots_machine, url_prefix='/slots') #buggy
+
 
 
     # Add any new blueprints here following the same pattern:

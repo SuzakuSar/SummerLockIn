@@ -1,6 +1,16 @@
-from flask import Blueprint, render_template, request, session, jsonify
+# ===== FIXED FILE: website/time_predict/time_predict.py =====
+
+from flask import Blueprint, render_template, request, session, jsonify, redirect, url_for, flash
 import time
 import json
+
+# STEP 1: Import leaderboard submission functions with error handling
+try:
+    from website.leaderboard.leaderboard import submit_score_closest_to_target
+    LEADERBOARD_AVAILABLE = True
+except ImportError:
+    LEADERBOARD_AVAILABLE = False
+    print("⚠️ Leaderboard system not available")
 
 # Create blueprint with template folder
 time_predict = Blueprint('time_predict', __name__, template_folder='templates')
@@ -39,6 +49,22 @@ def get_win_threshold(mode):
         'react': 0.05    # 0.05 seconds tolerance for react mode
     }
     return thresholds.get(mode, 0.05)
+
+def get_game_name(mode):
+    """
+    Get the leaderboard game name for a specific mode.
+    
+    Args:
+        mode (str): Either 'predict' or 'react'
+    
+    Returns:
+        str: Game name for leaderboard
+    """
+    names = {
+        'predict': 'Time Predict - Predict Mode',
+        'react': 'Time Predict - React Mode'
+    }
+    return names.get(mode, 'Time Predict')
 
 @time_predict.route('/')
 def index():
@@ -131,6 +157,7 @@ def start_game():
             'error': str(e)
         }), 500
 
+# STEP 2: Modified stop_game endpoint with leaderboard submission
 @time_predict.route('/stop_game', methods=['POST'])
 def stop_game():
     """
@@ -155,7 +182,7 @@ def stop_game():
                 'error': f'No active {mode} game found'
             }), 400
         
-        # Get the current time and calculate elapsed time
+        # Get the score calculated by game logic (server-side)
         end_time = time.time()
         start_time = session.get(keys['start_time'])
         
@@ -165,6 +192,7 @@ def stop_game():
                 'error': 'Start time not found'
             }), 400
         
+        # SERVER calculates the elapsed time (can't be faked!)
         elapsed_time = end_time - start_time
         target_time = 10.0  # Target is exactly 10 seconds
         difference = elapsed_time - target_time
@@ -173,7 +201,7 @@ def stop_game():
         win_threshold = get_win_threshold(mode)
         is_winner = abs(difference) <= win_threshold
         
-        # Update statistics for this mode
+        # Update local session statistics for this mode
         session[keys['games_played']] = session.get(keys['games_played'], 0) + 1
         
         if is_winner:
@@ -185,8 +213,34 @@ def stop_game():
         if current_best is None or abs(difference) < abs(current_best):
             session[keys['best_score']] = difference
         
-        # Deactivate the game
+        # Clear game session data
         session[keys['game_active']] = False
+        session.pop(keys['start_time'], None)
+        
+        # STEP 3: Submit to leaderboard (with error handling)
+        leaderboard_success = False
+        redirect_url = None
+        leaderboard_error = None
+        
+        if LEADERBOARD_AVAILABLE:
+            try:
+                game_name = get_game_name(mode)
+                result = submit_score_closest_to_target(
+                    game_name=game_name,
+                    score=elapsed_time,           # Player's actual timing
+                    target=target_time,           # Target (10.0 seconds)
+                    score_type="guess_seconds"    # Custom score type name
+                )
+                
+                leaderboard_success = result['success']
+                redirect_url = result.get('redirect_url')
+                leaderboard_error = result.get('error')
+                
+            except Exception as e:
+                leaderboard_error = f"Leaderboard submission failed: {str(e)}"
+                print(f"⚠️ Leaderboard error: {e}")
+        else:
+            leaderboard_error = "Leaderboard system not available"
         
         # Create result message
         if difference > 0:
@@ -203,6 +257,7 @@ def stop_game():
             'wins': session.get(keys['wins'], 0)
         }
         
+        # Handle the redirect response
         return jsonify({
             'success': True,
             'elapsed_time': round(elapsed_time, 3),
@@ -212,7 +267,11 @@ def stop_game():
             'timing_message': timing_message,
             'win_threshold': win_threshold,
             'mode': mode,
-            'stats': stats
+            'stats': stats,
+            # Add leaderboard response data
+            'leaderboard_success': leaderboard_success,
+            'redirect_url': redirect_url,
+            'leaderboard_error': leaderboard_error
         })
         
     except Exception as e:
@@ -285,3 +344,22 @@ def get_all_stats():
             'success': False,
             'error': str(e)
         }), 500
+
+# Add leaderboard view routes (with error handling)
+@time_predict.route('/leaderboard/<mode>')
+def view_mode_leaderboard(mode):
+    """View leaderboard for specific mode"""
+    if mode not in ['predict', 'react']:
+        flash('Invalid mode', 'error')
+        return redirect(url_for('time_predict.index'))
+    
+    if not LEADERBOARD_AVAILABLE:
+        flash('Leaderboard system not available', 'error')
+        return redirect(url_for('time_predict.index'))
+    
+    try:
+        game_name = get_game_name(mode)
+        return redirect(url_for('leaderboard.view_game_leaderboard', game_name=game_name))
+    except Exception as e:
+        flash(f'Error accessing leaderboard: {str(e)}', 'error')
+        return redirect(url_for('time_predict.index'))
