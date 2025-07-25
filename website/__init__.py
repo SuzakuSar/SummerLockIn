@@ -19,6 +19,7 @@ def create_app():
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching during development
     
     # Import blueprints
+    from .test_home import test_home
     from .leaderboard.leaderboard import leaderboard
     from .analytics import analytics
     from .home import home
@@ -73,6 +74,7 @@ def create_app():
     from .slots_machine.slots_machine import slots_machine
 
     # Register blueprints with URL prefixes
+    app.register_blueprint(test_home, url_prefix='/testhome')
     app.register_blueprint(leaderboard, url_prefix='/leaderboard')
     app.register_blueprint(analytics, url_prefix='/analytics')
     app.register_blueprint(home, url_prefix='/')

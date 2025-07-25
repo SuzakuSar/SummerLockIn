@@ -527,6 +527,9 @@
                     <a href="{{ url_for('space_memory.index') }}" class="nav-link {{ 'active' if request.endpoint == 'space_memory.index' else '' }}">
                         <span>🎴</span>Card Match
                     </a>
+                    <a href="{{ url_for('test_home.index') }}" class="nav-link {{ 'active' if request.endpoint == 'test_home.index' else '' }}">
+                        <span>🎮</span>Game Collection
+                    </a>
                 </div>
                 <div class="scroll-fade scroll-fade-right" id="fadeRight"></div>
             </div>
@@ -700,6 +703,9 @@
                         </a>
                         <a href="{{ url_for('leaderboard.index') }}" class="nav-dropdown-link {{ 'active' if request.endpoint == 'leaderboard.index' else '' }}" data-search="leaderboard scores rankings">
                             <span>🏆</span>Leaderboards
+                        </a>
+                        <a href="{{ url_for('test_home.index') }}" class="nav-dropdown-link {{ 'active' if request.endpoint == 'test_home.index' else '' }}" data-search="game collection test homepage games list search browse">
+                            <span>🎮</span>Game Collection
                         </a>
                     </div>
                 </div>
