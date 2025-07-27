@@ -1,11 +1,12 @@
 """
-Test Homepage Blueprint for SUMMERLOCKIN Project
-Features a scrollable game collection with search functionality
-Designed for easy maintenance and game additions
+Enhanced Test Homepage Blueprint for SUMMERLOCKIN Project
+Features a scrollable game collection with viral engagement features
+Designed for easy maintenance and game additions with user progress tracking
 """
 
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, session
 import json
+from collections import defaultdict
 
 # Create blueprint with template folder
 test_home = Blueprint('test_home', __name__, template_folder='templates')
@@ -20,7 +21,8 @@ GAMES_DATA = [
         'endpoint': 'helloWorld.hello_World',
         'icon': '🌟',
         'category': 'mood',
-        'tags': ['mood', 'excited', 'energy', 'happy']
+        'tags': ['mood', 'excited', 'energy', 'happy'],
+        'difficulty': 1
     },
     {
         'name': 'Nonchalant Page', 
@@ -28,7 +30,8 @@ GAMES_DATA = [
         'endpoint': 'helloWorld.sup_World',
         'icon': '🌙',
         'category': 'mood',
-        'tags': ['mood', 'nonchalant', 'cool', 'chill']
+        'tags': ['mood', 'nonchalant', 'cool', 'chill'],
+        'difficulty': 1
     },
     
     # Clicker/Incremental
@@ -38,7 +41,8 @@ GAMES_DATA = [
         'endpoint': 'clicker_game.index',
         'icon': '🛸',
         'category': 'clicker',
-        'tags': ['clicker', 'incremental', 'empire', 'cosmic']
+        'tags': ['clicker', 'incremental', 'empire', 'cosmic'],
+        'difficulty': 2
     },
     
     # Entertainment/Fun
@@ -48,7 +52,8 @@ GAMES_DATA = [
         'endpoint': 'random_jokes.index',
         'icon': '⭐',
         'category': 'entertainment',
-        'tags': ['jokes', 'humor', 'funny', 'entertainment', 'comedy']
+        'tags': ['jokes', 'humor', 'funny', 'entertainment', 'comedy'],
+        'difficulty': 1
     },
     {
         'name': 'Do Not Click',
@@ -56,7 +61,8 @@ GAMES_DATA = [
         'endpoint': 'do_not_click.index',
         'icon': '⚠️',
         'category': 'entertainment',
-        'tags': ['forbidden', 'button', 'temptation', 'warning']
+        'tags': ['forbidden', 'button', 'temptation', 'warning'],
+        'difficulty': 2
     },
     {
         'name': 'Fake Download',
@@ -64,7 +70,8 @@ GAMES_DATA = [
         'endpoint': 'fake_download.index',
         'icon': '📁',
         'category': 'entertainment',
-        'tags': ['fake', 'download', 'files', 'simulation']
+        'tags': ['fake', 'download', 'files', 'simulation'],
+        'difficulty': 1
     },
     {
         'name': 'Fake Chatbot',
@@ -72,7 +79,8 @@ GAMES_DATA = [
         'endpoint': 'fake_chatbot.index',
         'icon': '🤖',
         'category': 'entertainment',
-        'tags': ['chatbot', 'ai', 'conversation', 'artificial']
+        'tags': ['chatbot', 'ai', 'conversation', 'artificial'],
+        'difficulty': 2
     },
     {
         'name': 'Lucky Lever',
@@ -80,7 +88,8 @@ GAMES_DATA = [
         'endpoint': 'lucky_lever.index',
         'icon': '🎰',
         'category': 'entertainment',
-        'tags': ['luck', 'chance', 'lever', 'fortune', 'random']
+        'tags': ['luck', 'chance', 'lever', 'fortune', 'random'],
+        'difficulty': 1
     },
     {
         'name': 'Useless Fortune',
@@ -88,7 +97,8 @@ GAMES_DATA = [
         'endpoint': 'useless_fortune.index',
         'icon': '🔮',
         'category': 'entertainment',
-        'tags': ['fortune', 'tarot', 'prediction', 'mysticism']
+        'tags': ['fortune', 'tarot', 'prediction', 'mysticism'],
+        'difficulty': 1
     },
     {
         'name': 'Coin Flip',
@@ -96,7 +106,8 @@ GAMES_DATA = [
         'endpoint': 'coin_flip.index',
         'icon': '🪙',
         'category': 'entertainment',
-        'tags': ['coin', 'flip', 'random', 'chance']
+        'tags': ['coin', 'flip', 'random', 'chance'],
+        'difficulty': 1
     },
     {
         'name': 'Prank Helper',
@@ -104,7 +115,8 @@ GAMES_DATA = [
         'endpoint': 'prank_helper.index',
         'icon': '😈',
         'category': 'entertainment',
-        'tags': ['prank', 'mischief', 'jokes', 'tricks']
+        'tags': ['prank', 'mischief', 'jokes', 'tricks'],
+        'difficulty': 2
     },
     
     # Puzzles/Brain Games
@@ -114,7 +126,8 @@ GAMES_DATA = [
         'endpoint': 'guessing_game.index',
         'icon': '🎯',
         'category': 'puzzle',
-        'tags': ['guessing', 'numbers', 'prediction', 'logic']
+        'tags': ['guessing', 'numbers', 'prediction', 'logic'],
+        'difficulty': 3
     },
     {
         'name': 'Block Blast',
@@ -122,7 +135,8 @@ GAMES_DATA = [
         'endpoint': 'block_blast.index',
         'icon': '🔳',
         'category': 'puzzle',
-        'tags': ['tetris', 'blocks', 'puzzle', 'strategy']
+        'tags': ['tetris', 'blocks', 'puzzle', 'strategy'],
+        'difficulty': 4
     },
     {
         'name': 'Space Cargo Manager',
@@ -130,7 +144,8 @@ GAMES_DATA = [
         'endpoint': 'drag_drop.index',
         'icon': '📦',
         'category': 'puzzle',
-        'tags': ['drag', 'drop', 'cargo', 'organization']
+        'tags': ['drag', 'drop', 'cargo', 'organization'],
+        'difficulty': 3
     },
     {
         'name': 'Wire Matching',
@@ -138,7 +153,8 @@ GAMES_DATA = [
         'endpoint': 'wire_matching.index',
         'icon': '🔌',
         'category': 'puzzle',
-        'tags': ['wires', 'circuits', 'electrical', 'matching']
+        'tags': ['wires', 'circuits', 'electrical', 'matching'],
+        'difficulty': 4
     },
     {
         'name': 'Number Sequence',
@@ -146,7 +162,8 @@ GAMES_DATA = [
         'endpoint': 'number_sequence.index',
         'icon': '🔢',
         'category': 'puzzle',
-        'tags': ['numbers', 'sequence', 'math', 'pattern']
+        'tags': ['numbers', 'sequence', 'math', 'pattern'],
+        'difficulty': 3
     },
     {
         'name': 'Space Door Control',
@@ -154,7 +171,8 @@ GAMES_DATA = [
         'endpoint': 'door_game.index',
         'icon': '🚪',
         'category': 'puzzle',
-        'tags': ['doors', 'airlock', 'security', 'control']
+        'tags': ['doors', 'airlock', 'security', 'control'],
+        'difficulty': 3
     },
     {
         'name': 'I Spy Game',
@@ -162,7 +180,8 @@ GAMES_DATA = [
         'endpoint': 'i_spy.index',
         'icon': '🔍',
         'category': 'puzzle',
-        'tags': ['spy', 'find', 'hidden', 'search']
+        'tags': ['spy', 'find', 'hidden', 'search'],
+        'difficulty': 2
     },
     {
         'name': 'Connect Dots',
@@ -170,7 +189,8 @@ GAMES_DATA = [
         'endpoint': 'connect_dots.index',
         'icon': '🔗',
         'category': 'puzzle',
-        'tags': ['connect', 'dots', 'lines', 'pattern']
+        'tags': ['connect', 'dots', 'lines', 'pattern'],
+        'difficulty': 3
     },
     {
         'name': 'Balance Scale Game',
@@ -178,7 +198,8 @@ GAMES_DATA = [
         'endpoint': 'balance_scale.index',
         'icon': '⚖️',
         'category': 'puzzle',
-        'tags': ['balance', 'scale', 'physics', 'weight']
+        'tags': ['balance', 'scale', 'physics', 'weight'],
+        'difficulty': 4
     },
     {
         'name': 'Lockpick Game',
@@ -186,7 +207,8 @@ GAMES_DATA = [
         'endpoint': 'lockpick_game.index',
         'icon': '🔓',
         'category': 'puzzle',
-        'tags': ['lockpick', 'locks', 'security', 'skill']
+        'tags': ['lockpick', 'locks', 'security', 'skill'],
+        'difficulty': 5
     },
     {
         'name': '2048 - Space Edition',
@@ -194,7 +216,8 @@ GAMES_DATA = [
         'endpoint': 'game_2048.index',
         'icon': '🎲',
         'category': 'puzzle',
-        'tags': ['2048', 'numbers', 'combination', 'strategy']
+        'tags': ['2048', 'numbers', 'combination', 'strategy'],
+        'difficulty': 4
     },
     {
         'name': 'Space Maze Navigator',
@@ -202,7 +225,8 @@ GAMES_DATA = [
         'endpoint': 'maze_game.index',
         'icon': '🚀',
         'category': 'puzzle',
-        'tags': ['maze', 'navigation', 'labyrinth', 'space']
+        'tags': ['maze', 'navigation', 'labyrinth', 'space'],
+        'difficulty': 3
     },
     
     # Word Games
@@ -212,7 +236,8 @@ GAMES_DATA = [
         'endpoint': 'hangman.index',
         'icon': '🔮',
         'category': 'word',
-        'tags': ['hangman', 'words', 'guessing', 'vocabulary']
+        'tags': ['hangman', 'words', 'guessing', 'vocabulary'],
+        'difficulty': 3
     },
     {
         'name': 'Space Wordle',
@@ -220,7 +245,8 @@ GAMES_DATA = [
         'endpoint': 'wordle.index',
         'icon': '🔤',
         'category': 'word',
-        'tags': ['wordle', 'words', 'puzzle', 'letters']
+        'tags': ['wordle', 'words', 'puzzle', 'letters'],
+        'difficulty': 4
     },
     {
         'name': 'Story Generator',
@@ -228,7 +254,8 @@ GAMES_DATA = [
         'endpoint': 'story_generator.index',
         'icon': '📖',
         'category': 'creative',
-        'tags': ['story', 'creative', 'writing', 'adventure']
+        'tags': ['story', 'creative', 'writing', 'adventure'],
+        'difficulty': 2
     },
     
     # Skill/Timing Games
@@ -238,7 +265,8 @@ GAMES_DATA = [
         'endpoint': 'time_predict.index',
         'icon': '🕒',
         'category': 'skill',
-        'tags': ['time', 'timing', 'predict', 'precision', '10 seconds', 'challenge']
+        'tags': ['time', 'timing', 'predict', 'precision', '10 seconds', 'challenge'],
+        'difficulty': 4
     },
     {
         'name': 'Typing Test',
@@ -246,7 +274,8 @@ GAMES_DATA = [
         'endpoint': 'typing_test.index',
         'icon': '⌨️',
         'category': 'skill',
-        'tags': ['typing', 'speed', 'keyboard', 'wpm']
+        'tags': ['typing', 'speed', 'keyboard', 'wpm'],
+        'difficulty': 3
     },
     {
         'name': 'Click Speed Calculator',
@@ -254,7 +283,8 @@ GAMES_DATA = [
         'endpoint': 'click_speed.index',
         'icon': '⚡',
         'category': 'skill',
-        'tags': ['click', 'speed', 'fast', 'reaction']
+        'tags': ['click', 'speed', 'fast', 'reaction'],
+        'difficulty': 2
     },
     {
         'name': 'Shell Game',
@@ -262,7 +292,8 @@ GAMES_DATA = [
         'endpoint': 'shell_game.index',
         'icon': '🎪',
         'category': 'skill',
-        'tags': ['shell', 'follow', 'tracking', 'attention']
+        'tags': ['shell', 'follow', 'tracking', 'attention'],
+        'difficulty': 4
     },
     {
         'name': 'OSU! Clone',
@@ -270,7 +301,8 @@ GAMES_DATA = [
         'endpoint': 'osu_game.index',
         'icon': '🎯',
         'category': 'skill',
-        'tags': ['osu', 'rhythm', 'clicking', 'music']
+        'tags': ['osu', 'rhythm', 'clicking', 'music'],
+        'difficulty': 5
     },
     {
         'name': 'Bomb Defuser',
@@ -278,7 +310,8 @@ GAMES_DATA = [
         'endpoint': 'bomb_defuse.index',
         'icon': '💣',
         'category': 'skill',
-        'tags': ['bomb', 'defuse', 'pressure', 'danger']
+        'tags': ['bomb', 'defuse', 'pressure', 'danger'],
+        'difficulty': 5
     },
     {
         'name': 'Slider Challenge',
@@ -286,7 +319,8 @@ GAMES_DATA = [
         'endpoint': 'slider_challenge.index',
         'icon': '🎚️',
         'category': 'skill',
-        'tags': ['slider', 'precision', 'control', 'accuracy']
+        'tags': ['slider', 'precision', 'control', 'accuracy'],
+        'difficulty': 4
     },
     {
         'name': 'Speed Sort Challenge',
@@ -294,7 +328,8 @@ GAMES_DATA = [
         'endpoint': 'speed_sort.index',
         'icon': '⚡',
         'category': 'skill',
-        'tags': ['sort', 'speed', 'organize', 'fast']
+        'tags': ['sort', 'speed', 'organize', 'fast'],
+        'difficulty': 4
     },
     {
         'name': 'One-Pixel Hunt',
@@ -302,7 +337,8 @@ GAMES_DATA = [
         'endpoint': 'one_pixel_hunt.index',
         'icon': '🔍',
         'category': 'skill',
-        'tags': ['pixel', 'hunt', 'precision', 'find']
+        'tags': ['pixel', 'hunt', 'precision', 'find'],
+        'difficulty': 5
     },
     
     # Arcade/Action Games
@@ -312,7 +348,8 @@ GAMES_DATA = [
         'endpoint': 'dino_runner.index',
         'icon': '🦕',
         'category': 'arcade',
-        'tags': ['dino', 'runner', 'jumping', 'endless', 'chrome', 'obstacles', 'classic']
+        'tags': ['dino', 'runner', 'jumping', 'endless', 'chrome', 'obstacles', 'classic'],
+        'difficulty': 3
     },
     {
         'name': 'Snake Game',
@@ -320,7 +357,8 @@ GAMES_DATA = [
         'endpoint': 'snake_game.index',
         'icon': '🐍',
         'category': 'arcade',
-        'tags': ['snake', 'classic', 'navigation', 'grow']
+        'tags': ['snake', 'classic', 'navigation', 'grow'],
+        'difficulty': 3
     },
     {
         'name': 'Click Clear Game',
@@ -328,7 +366,8 @@ GAMES_DATA = [
         'endpoint': 'click_clear.index',
         'icon': '💫',
         'category': 'arcade',
-        'tags': ['click', 'clear', 'cleanup', 'debris']
+        'tags': ['click', 'clear', 'cleanup', 'debris'],
+        'difficulty': 2
     },
     {
         'name': 'Space Invaders',
@@ -336,7 +375,8 @@ GAMES_DATA = [
         'endpoint': 'space_invaders.index',
         'icon': '🛸',
         'category': 'arcade',
-        'tags': ['space', 'invaders', 'shooting', 'aliens']
+        'tags': ['space', 'invaders', 'shooting', 'aliens'],
+        'difficulty': 4
     },
     {
         'name': 'Brick Breaker Game',
@@ -344,7 +384,8 @@ GAMES_DATA = [
         'endpoint': 'brick_breaker.index',
         'icon': '🧱',
         'category': 'arcade',
-        'tags': ['brick', 'breaker', 'ball', 'paddle']
+        'tags': ['brick', 'breaker', 'ball', 'paddle'],
+        'difficulty': 3
     },
     {
         'name': 'Cosmic Pong',
@@ -352,7 +393,8 @@ GAMES_DATA = [
         'endpoint': 'pong.index',
         'icon': '🏓',
         'category': 'arcade',
-        'tags': ['pong', 'paddle', 'ball', 'classic']
+        'tags': ['pong', 'paddle', 'ball', 'classic'],
+        'difficulty': 3
     },
     {
         'name': 'Rage Slots',
@@ -360,7 +402,8 @@ GAMES_DATA = [
         'endpoint': 'slots_machine.index',
         'icon': '🎰',
         'category': 'arcade',
-        'tags': ['slots', 'machine', 'gambling', 'rage']
+        'tags': ['slots', 'machine', 'gambling', 'rage'],
+        'difficulty': 2
     },
     
     # Strategy Games
@@ -370,7 +413,8 @@ GAMES_DATA = [
         'endpoint': 'tic_tac_toe.index',
         'icon': '⚡',
         'category': 'strategy',
-        'tags': ['tic', 'tac', 'toe', 'grid', 'strategy']
+        'tags': ['tic', 'tac', 'toe', 'grid', 'strategy'],
+        'difficulty': 2
     },
     {
         'name': 'Rock Paper Scissors',
@@ -378,7 +422,8 @@ GAMES_DATA = [
         'endpoint': 'rock_paper_scissors.index',
         'icon': '⚔️',
         'category': 'strategy',
-        'tags': ['rock', 'paper', 'scissors', 'battle']
+        'tags': ['rock', 'paper', 'scissors', 'battle'],
+        'difficulty': 2
     },
     {
         'name': 'Space Pattern Memory',
@@ -386,7 +431,8 @@ GAMES_DATA = [
         'endpoint': 'space_memory_game.index',
         'icon': '🎴',
         'category': 'strategy',
-        'tags': ['memory', 'pattern', 'sequence', 'cards']
+        'tags': ['memory', 'pattern', 'sequence', 'cards'],
+        'difficulty': 4
     },
     
     # Educational
@@ -396,7 +442,8 @@ GAMES_DATA = [
         'endpoint': 'multiplication_trainer.index',
         'icon': '🏔️',
         'category': 'education',
-        'tags': ['math', 'multiplication', 'training', 'academy']
+        'tags': ['math', 'multiplication', 'training', 'academy'],
+        'difficulty': 3
     },
     {
         'name': 'Coordinate Hunter',
@@ -404,7 +451,8 @@ GAMES_DATA = [
         'endpoint': 'coordinate_game.index',
         'icon': '🎯',
         'category': 'education',
-        'tags': ['coordinates', 'math', 'navigation', 'points']
+        'tags': ['coordinates', 'math', 'navigation', 'points'],
+        'difficulty': 4
     },
     
     # Health/Utility
@@ -414,7 +462,8 @@ GAMES_DATA = [
         'endpoint': 'water_drinker.index',
         'icon': '💧',
         'category': 'health',
-        'tags': ['water', 'hydration', 'health', 'tracker']
+        'tags': ['water', 'hydration', 'health', 'tracker'],
+        'difficulty': 1
     },
     
     # Simulation
@@ -424,7 +473,8 @@ GAMES_DATA = [
         'endpoint': 'tortoise_temp.index',
         'icon': '🐢',
         'category': 'simulation',
-        'tags': ['tortoise', 'temperature', 'pet', 'control']
+        'tags': ['tortoise', 'temperature', 'pet', 'control'],
+        'difficulty': 2
     },
 ]
 
@@ -435,6 +485,13 @@ def get_categories():
     for game in GAMES_DATA:
         categories.add(game['category'])
     return sorted(list(categories))
+
+def get_category_counts():
+    """Get count of games per category"""
+    counts = defaultdict(int)
+    for game in GAMES_DATA:
+        counts[game['category']] += 1
+    return dict(counts)
 
 def get_games_by_category(category=None):
     """Get games filtered by category"""
@@ -468,16 +525,29 @@ def search_games(query):
     
     return results
 
+def get_mock_user_stats():
+    """Generate mock user statistics for demonstration"""
+    # In production, this would come from a database or session
+    return {
+        'games_played': 12,
+        'achievements': 5,
+        'play_time': '2h 34m',
+        'streak': 3,
+        'last_login': None,
+        'favorite_category': 'arcade'
+    }
+
 # ===== ROUTES =====
 
 @test_home.route('/')
 def index():
     """
-    Main test homepage route - displays scrollable game collection
+    Main test homepage route - displays enhanced viral game collection
     """
     categories = get_categories()
+    category_counts = get_category_counts()
     
-    # Get optional category filter from URL parameters
+    # Get optional parameters from URL
     selected_category = request.args.get('category', '')
     search_query = request.args.get('search', '')
     
@@ -493,12 +563,17 @@ def index():
         game['card_id'] = f"card-{i}"
         game['index'] = i
     
+    # Get user statistics (mock data for now)
+    user_stats = get_mock_user_stats()
+    
     return render_template('test_home.html.jinja2',
                          games=games,
                          categories=categories,
+                         category_counts=category_counts,
                          selected_category=selected_category,
                          search_query=search_query,
-                         total_games=len(GAMES_DATA))
+                         total_games=len(GAMES_DATA),
+                         user_stats=user_stats)
 
 @test_home.route('/api/search')
 def api_search():
@@ -531,11 +606,22 @@ def api_search():
 @test_home.route('/api/categories')
 def api_categories():
     """
-    API endpoint to get all categories
+    API endpoint to get all categories with counts
     """
     return jsonify({
         'success': True,
-        'categories': get_categories()
+        'categories': get_categories(),
+        'category_counts': get_category_counts()
+    })
+
+@test_home.route('/api/user/stats')
+def api_user_stats():
+    """
+    API endpoint to get user statistics
+    """
+    return jsonify({
+        'success': True,
+        'stats': get_mock_user_stats()
     })
 
 @test_home.route('/stats')
@@ -544,16 +630,27 @@ def stats():
     Show statistics about the game collection
     """
     categories = get_categories()
+    category_counts = get_category_counts()
+    
     stats_data = {
         'total_games': len(GAMES_DATA),
         'total_categories': len(categories),
-        'category_breakdown': {}
+        'category_breakdown': category_counts,
+        'difficulty_breakdown': {},
+        'average_difficulty': 0
     }
     
-    # Count games per category
-    for category in categories:
-        games_in_category = len(get_games_by_category(category))
-        stats_data['category_breakdown'][category] = games_in_category
+    # Calculate difficulty breakdown
+    difficulty_counts = defaultdict(int)
+    total_difficulty = 0
+    
+    for game in GAMES_DATA:
+        difficulty = game.get('difficulty', 3)
+        difficulty_counts[difficulty] += 1
+        total_difficulty += difficulty
+    
+    stats_data['difficulty_breakdown'] = dict(difficulty_counts)
+    stats_data['average_difficulty'] = round(total_difficulty / len(GAMES_DATA), 1)
     
     return jsonify({
         'success': True,
@@ -562,7 +659,7 @@ def stats():
 
 # ===== HELPER FUNCTIONS FOR EASY MAINTENANCE =====
 
-def add_game(name, description, endpoint, icon, category, tags):
+def add_game(name, description, endpoint, icon, category, tags, difficulty=3):
     """
     Helper function to easily add new games
     (For future use - games should be added to GAMES_DATA list above)
@@ -573,7 +670,8 @@ def add_game(name, description, endpoint, icon, category, tags):
         'endpoint': endpoint,
         'icon': icon,
         'category': category,
-        'tags': tags if isinstance(tags, list) else [tags]
+        'tags': tags if isinstance(tags, list) else [tags],
+        'difficulty': difficulty
     }
     return new_game
 
@@ -591,7 +689,11 @@ def validate_game_data():
         # Validate tags is a list
         if not isinstance(game.get('tags', []), list):
             print(f"Warning: Game '{game.get('name', 'Unknown')}' tags should be a list")
+        
+        # Set default difficulty if missing
+        if 'difficulty' not in game:
+            game['difficulty'] = 3
 
 # Run validation on import (for development)
 if __name__ == '__main__':
-    validate_game_data()
+    validate_game_data()        
