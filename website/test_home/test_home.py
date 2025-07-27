@@ -487,7 +487,13 @@ def index():
     else:
         games = get_games_by_category(selected_category if selected_category else None)
     
-    return render_template('test_home.html',
+    # Add popup data to each game
+    for i, game in enumerate(games):
+        game['popup_id'] = f"popup-{i}"
+        game['card_id'] = f"card-{i}"
+        game['index'] = i
+    
+    return render_template('test_home.html.jinja2',
                          games=games,
                          categories=categories,
                          selected_category=selected_category,
@@ -507,6 +513,12 @@ def api_search():
         games = search_games(query)
     else:
         games = get_games_by_category(category if category else None)
+    
+    # Add popup data to each game for API response
+    for i, game in enumerate(games):
+        game['popup_id'] = f"popup-{i}"
+        game['card_id'] = f"card-{i}" 
+        game['index'] = i
     
     return jsonify({
         'success': True,

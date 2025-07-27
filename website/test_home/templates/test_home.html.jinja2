@@ -137,31 +137,38 @@
         margin: 0;
     }
 
-    /* Enhanced scrollbar styling for games container */
+    /* Enhanced scrollbar styling - more prominent */
     .games-container::-webkit-scrollbar {
-        width: 12px;
+        width: 14px;
     }
 
     .games-container::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.4);
-        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 7px;
         margin: 10px 0;
+        border: 1px solid rgba(0, 255, 136, 0.2);
     }
 
     .games-container::-webkit-scrollbar-thumb {
         background: linear-gradient(180deg, #00ff88, #00cc66);
-        border-radius: 6px;
-        border: 2px solid rgba(0, 0, 0, 0.4);
+        border-radius: 7px;
+        border: 2px solid rgba(0, 0, 0, 0.3);
+        min-height: 50px;
     }
 
     .games-container::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(180deg, #00cc66, #009944);
+        transform: scale(1.1);
+    }
+
+    .games-container::-webkit-scrollbar-thumb:active {
+        background: linear-gradient(180deg, #009944, #007733);
     }
 
     /* For Firefox */
     .games-container {
-        scrollbar-width: thin;
-        scrollbar-color: #00ff88 rgba(0, 0, 0, 0.4);
+        scrollbar-width: auto;
+        scrollbar-color: #00ff88 rgba(0, 0, 0, 0.5);
     }
 
     /* Games grid - maximum 5 cards per row, full width */
@@ -182,7 +189,7 @@
         transition: all 0.3s ease;
         cursor: pointer;
         position: relative;
-        overflow: hidden;
+        overflow: visible; /* Changed from hidden to allow popup */
         text-decoration: none;
         color: inherit;
         display: flex;
@@ -391,6 +398,295 @@
         letter-spacing: 0.5px;
     }
 
+    /* Game popup styling */
+    .game-popup {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        border: 2px solid #00ff88;
+        border-radius: 15px;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-20px);
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+    }
+
+    .game-popup.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .game-popup-content {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 2rem;
+        position: relative;
+    }
+
+    /* Custom scrollbar for popup */
+    .game-popup-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .game-popup-content::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+    }
+
+    .game-popup-content::-webkit-scrollbar-thumb {
+        background: #00ff88;
+        border-radius: 4px;
+    }
+
+    .game-popup-content::-webkit-scrollbar-thumb:hover {
+        background: #00cc66;
+    }
+
+    /* Popup header */
+    .popup-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+        padding-bottom: 1.5rem;
+    }
+
+    .popup-title {
+        color: #00ff88;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .popup-description {
+        color: #cccccc;
+        font-size: 1.1rem;
+        line-height: 1.5;
+    }
+
+    .popup-category {
+        display: inline-block;
+        background: rgba(0, 255, 136, 0.2);
+        color: #00ff88;
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        margin-top: 1rem;
+    }
+
+    /* Big play button */
+    .popup-play-button {
+        display: block;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto 2rem auto;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(45deg, #00ff88, #00cc66);
+        color: #000;
+        font-size: 1.4rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        box-shadow: 0 6px 20px rgba(0, 255, 136, 0.3);
+    }
+
+    .popup-play-button:hover {
+        background: linear-gradient(45deg, #00cc66, #009944);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 255, 136, 0.5);
+    }
+
+    .popup-play-button:active {
+        transform: translateY(-1px);
+    }
+
+    .popup-play-icon {
+        margin-right: 0.5rem;
+        font-size: 1.6rem;
+    }
+
+    /* Close button */
+    .popup-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 0, 0, 0.2);
+        border: 2px solid #ff6b6b;
+        border-radius: 50%;
+        color: #ff6b6b;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .popup-close:hover {
+        background: rgba(255, 0, 0, 0.3);
+        transform: scale(1.1);
+    }
+
+    /* Expandable content area for future features */
+    .popup-expandable {
+        border-top: 1px solid rgba(0, 255, 136, 0.2);
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .popup-expandable h4 {
+        color: #00ff88;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .popup-expandable h4::before {
+        content: '📝';
+        font-size: 1rem;
+    }
+
+    .popup-expandable p {
+        color: #cccccc;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .popup-expandable p:last-child {
+        margin-bottom: 0;
+    }
+
+    .popup-expandable strong {
+        color: #00ff88;
+    }
+
+    /* Future expansion areas */
+    .popup-section {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    .popup-section h5 {
+        color: #00ff88;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    /* Responsive popup */
+    @media (max-width: 768px) {
+        .game-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, -50%) translateY(-20px);
+            width: 90vw;
+            max-width: 500px;
+            margin-top: 0;
+        }
+
+        .game-popup.active {
+            transform: translate(-50%, -50%);
+        }
+    }
+
+    /* Game card modifications for popup */
+    .game-card {
+        position: relative; /* Enable absolute positioning for popup */
+    }
+
+    .game-card.popup-open {
+        z-index: 999;
+        transform: translateY(-3px);
+        border-color: #00ff88;
+        box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+    }
+
+    /* Backdrop for mobile popup */
+    .popup-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+    }
+
+    .popup-backdrop.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Viral Actions - styled like existing action buttons */
+    .viral-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 1rem 0 2rem 0;
+        flex-wrap: wrap;
+    }
+
+    .viral-btn {
+        background: linear-gradient(45deg, #ff6b6b, #ff5252);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .viral-btn:hover {
+        background: linear-gradient(45deg, #ff5252, #f44336);
+        transform: translateY(-2px);
+    }
+
+    .daily-btn {
+        background: linear-gradient(45deg, #ffd700, #ffc107);
+        color: #000;
+        min-width: 250px;
+    }
+
+    .daily-btn:hover {
+        background: linear-gradient(45deg, #ffc107, #ff9800);
+    }
+
+    .viral-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    #dailyGameName {
+        font-weight: bold;
+    }
+
     /* Responsive design - simpler height adjustments */
     @media (max-width: 1400px) {
         .games-grid {
@@ -488,6 +784,16 @@
             flex-direction: column;
             gap: 0.8rem;
         }
+
+        /* Viral actions responsive */
+        .viral-actions {
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .daily-btn {
+            min-width: auto;
+        }
     }
 
     @media (max-width: 480px) {
@@ -541,24 +847,6 @@
             flex-direction: column;
             gap: 1rem;
         }
-    }
-
-    /* Accessibility improvements */
-    .game-card:focus {
-        outline: 2px solid #00ff88;
-        outline-offset: 2px;
-    }
-
-    .search-input:focus,
-    .category-btn:focus,
-    .action-btn:focus {
-        outline: 2px solid #00ff88;
-        outline-offset: 2px;
-    }
-
-    /* Smooth transitions */
-    * {
-        transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
     }
 </style>
 {% endblock %}
@@ -634,19 +922,58 @@
         </button>
     </div>
 
+    <!-- Viral Discovery Buttons -->
+    <div class="viral-actions">
+        <button class="action-btn viral-btn" onclick="playRandomGame()" id="randomGameBtn">
+            🎲 Random Game
+        </button>
+        <button class="action-btn viral-btn daily-btn" onclick="playDailyGame()" id="dailyGameBtn">
+            ⭐ Game of the Day: <span id="dailyGameName">Loading...</span>
+        </button>
+    </div>
+
     <!-- Games Container -->
     <div class="games-container">
         <div class="games-grid" id="gamesGrid">
             {% if games %}
                 {% for game in games %}
-                <a href="{{ url_for(game.endpoint) }}" class="game-card" tabindex="0">
+                <!-- FIXED: Changed from <a> to <div> with onclick handler -->
+                <div class="game-card" tabindex="0" data-game-index="{{ loop.index0 }}" 
+                     onclick="showGamePopup({{ loop.index0 }})" 
+                     onkeypress="if(event.key==='Enter') showGamePopup({{ loop.index0 }})">
                     <div class="game-category">{{ game.category }}</div>
                     <div class="game-header">
                         <div class="game-icon">{{ game.icon }}</div>
                         <h3 class="game-title">{{ game.name }}</h3>
                     </div>
                     <p class="game-description">{{ game.description }}</p>
-                </a>
+                    
+                    <!-- Game Popup -->
+                    <div class="game-popup" id="popup-{{ loop.index0 }}">
+                        <div class="game-popup-content">
+                            <button class="popup-close" onclick="event.stopPropagation(); closeGamePopup({{ loop.index0 }}); return false;" aria-label="Close popup">×</button>
+                            
+                            <div class="popup-header">
+                                <h2 class="popup-title">{{ game.name }}</h2>
+                                <p class="popup-description">{{ game.description }}</p>
+                                <span class="popup-category">{{ game.category }}</span>
+                            </div>
+                            
+                            <a href="{{ url_for(game.endpoint) }}" class="popup-play-button" onclick="event.stopPropagation();">
+                                <span class="popup-play-icon">▶</span>
+                                Play Now
+                            </a>
+                            
+                            <!-- Expandable content area for future features -->
+                            <div class="popup-expandable">
+                                <h4>Game Info</h4>
+                                <p>Click "Play Now" to start this game and enjoy the experience!</p>
+                                <p><strong>Category:</strong> {{ game.category.title() }}</p>
+                                <p><strong>Tags:</strong> {{ game.tags|join(', ') if game.tags else 'Fun, Interactive' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
             {% else %}
                 <div class="no-results">
@@ -667,6 +994,10 @@
 
 let searchTimeout;
 let currentCategory = '{{ selected_category }}';
+let currentOpenPopup = null;
+
+// Store initial games data from server
+window.currentGames = {{ games|tojson if games else [] }};
 
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
@@ -682,11 +1013,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up keyboard navigation
     setupKeyboardNavigation();
     
+    // Set up event listeners
+    setupEventListeners();
+    
     // Focus search on load
     searchInput.focus();
     
-    console.log('Game collection initialized - with scrollable container');
+    console.log('Game collection initialized - Popups should work now!');
+    console.log('Initial games loaded:', window.currentGames.length);
 });
+
+// Export functions for global access
+window.showGamePopup = showGamePopup;
+window.closeGamePopup = closeGamePopup;
+window.closeAllPopups = closeAllPopups;
+window.filterByCategory = filterByCategory;
+window.clearFilters = clearFilters;
+window.performSearch = performSearch;
 
 // ===== SEARCH FUNCTIONALITY =====
 
@@ -709,6 +1052,9 @@ function setupSearch() {
 
 async function performSearch(query) {
     try {
+        // Close any open popups when searching
+        closeAllPopups();
+        
         showLoading();
         
         const params = new URLSearchParams({
@@ -720,6 +1066,7 @@ async function performSearch(query) {
         const data = await response.json();
         
         if (data.success) {
+            window.currentGames = data.games; // Update global games data
             displayGames(data.games);
             updateResultsInfo(data.count, query, currentCategory);
         } else {
@@ -735,6 +1082,9 @@ async function performSearch(query) {
 // ===== CATEGORY FILTERING =====
 
 function filterByCategory(category) {
+    // Close any open popups when filtering
+    closeAllPopups();
+    
     currentCategory = category;
     
     // Update button states
@@ -771,15 +1121,43 @@ function displayGames(games) {
         return;
     }
     
-    const html = games.map(game => `
-        <a href="/${game.endpoint.replace('.', '/')}" class="game-card" tabindex="0">
+    const html = games.map((game, index) => `
+        <div class="game-card" tabindex="0" data-game-index="${index}" 
+             onclick="showGamePopup(${index})" 
+             onkeypress="if(event.key==='Enter') showGamePopup(${index})">
             <div class="game-category">${game.category}</div>
             <div class="game-header">
                 <div class="game-icon">${game.icon}</div>
                 <h3 class="game-title">${game.name}</h3>
             </div>
             <p class="game-description">${game.description}</p>
-        </a>
+            
+            <!-- Game Popup -->
+            <div class="game-popup" id="popup-${index}">
+                <div class="game-popup-content">
+                    <button class="popup-close" onclick="event.stopPropagation(); closeGamePopup(${index}); return false;" aria-label="Close popup">×</button>
+                    
+                    <div class="popup-header">
+                        <h2 class="popup-title">${game.name}</h2>
+                        <p class="popup-description">${game.description}</p>
+                        <span class="popup-category">${game.category}</span>
+                    </div>
+                    
+                    <a href="/${game.endpoint.replace('.', '/')}" class="popup-play-button" onclick="event.stopPropagation();">
+                        <span class="popup-play-icon">▶</span>
+                        Play Now
+                    </a>
+                    
+                    <!-- Expandable content area for future features -->
+                    <div class="popup-expandable">
+                        <h4>Game Info</h4>
+                        <p>Click "Play Now" to start this game and enjoy the experience!</p>
+                        <p><strong>Category:</strong> ${game.category.charAt(0).toUpperCase() + game.category.slice(1)}</p>
+                        <p><strong>Tags:</strong> ${game.tags ? game.tags.join(', ') : 'Fun, Interactive'}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     `).join('');
     
     gamesGrid.innerHTML = html;
@@ -796,6 +1174,8 @@ function showLoading() {
 }
 
 function showNoResults() {
+    closeAllPopups(); // Close any open popups
+    
     gamesGrid.innerHTML = `
         <div class="no-results">
             <div class="no-results-icon">🎮</div>
@@ -807,6 +1187,9 @@ function showNoResults() {
         </div>
     `;
     showingCount.textContent = '0';
+    
+    // Clear games data
+    window.currentGames = [];
 }
 
 function showError(message) {
@@ -838,6 +1221,162 @@ function updateResultsInfo(count, query, category) {
     resultsInfo.innerHTML = text;
 }
 
+// ===== GAME POPUP FUNCTIONALITY =====
+
+function showGamePopup(gameIndex) {
+    console.log('🎮 showGamePopup called with index:', gameIndex);
+    
+    // Close any existing popup
+    if (currentOpenPopup !== null && currentOpenPopup !== gameIndex) {
+        closeAllPopups();
+    }
+    
+    const gameCard = document.querySelector(`[data-game-index="${gameIndex}"]`);
+    const popup = document.getElementById(`popup-${gameIndex}`);
+    
+    if (!gameCard || !popup) {
+        console.error('❌ Game card or popup not found for index:', gameIndex);
+        console.log('Available cards:', document.querySelectorAll('[data-game-index]').length);
+        console.log('Available popups:', document.querySelectorAll('.game-popup').length);
+        return;
+    }
+    
+    console.log('✅ Found elements, showing popup...');
+    
+    // Add classes
+    gameCard.classList.add('popup-open');
+    popup.classList.add('active');
+    
+    // Store current open popup
+    currentOpenPopup = gameIndex;
+    
+    console.log('🚀 Popup should now be visible');
+    
+    // Create backdrop for mobile
+    if (window.innerWidth <= 768) {
+        createPopupBackdrop();
+    }
+    
+    // Scroll popup into view if needed
+    setTimeout(() => {
+        if (window.innerWidth > 768) {
+            popup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, 100);
+    
+    // Track analytics
+    const game = window.currentGames[gameIndex];
+    if (game) {
+        trackGameClick(game.name);
+    }
+}
+
+function closeGamePopup(gameIndex) {
+    console.log('🔄 Closing popup for index:', gameIndex);
+    
+    // Prevent event bubbling and default behavior
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    const gameCard = document.querySelector(`[data-game-index="${gameIndex}"]`);
+    const popup = document.getElementById(`popup-${gameIndex}`);
+    
+    if (gameCard && popup) {
+        gameCard.classList.remove('popup-open');
+        popup.classList.remove('active');
+        console.log('✅ Popup closed successfully');
+    }
+    
+    // Remove backdrop
+    removePopupBackdrop();
+    
+    // Clear current open popup
+    currentOpenPopup = null;
+}
+
+function closeAllPopups() {
+    console.log('🔄 Closing all popups...');
+    
+    // Close currently open popup if any
+    if (currentOpenPopup !== null) {
+        closeGamePopup(currentOpenPopup);
+    }
+    
+    // Fallback: close all popups
+    document.querySelectorAll('.game-popup.active').forEach(popup => {
+        popup.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.game-card.popup-open').forEach(card => {
+        card.classList.remove('popup-open');
+    });
+    
+    removePopupBackdrop();
+    currentOpenPopup = null;
+}
+
+function createPopupBackdrop() {
+    // Remove existing backdrop
+    removePopupBackdrop();
+    
+    const backdrop = document.createElement('div');
+    backdrop.className = 'popup-backdrop';
+    backdrop.id = 'popup-backdrop';
+    backdrop.onclick = closeAllPopups;
+    
+    document.body.appendChild(backdrop);
+    
+    // Activate backdrop
+    setTimeout(() => {
+        backdrop.classList.add('active');
+    }, 10);
+}
+
+function removePopupBackdrop() {
+    const backdrop = document.getElementById('popup-backdrop');
+    if (backdrop) {
+        backdrop.classList.remove('active');
+        setTimeout(() => {
+            backdrop.remove();
+        }, 300);
+    }
+}
+
+// ===== EVENT LISTENERS =====
+
+function setupEventListeners() {
+    // Close popup when clicking outside
+    document.addEventListener('click', function(e) {
+        // Don't close if clicking inside a popup or on a game card
+        if (e.target.closest('.game-popup') || e.target.closest('.game-card')) {
+            return;
+        }
+        
+        closeAllPopups();
+    });
+    
+    // Close popup with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAllPopups();
+        }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (currentOpenPopup !== null) {
+            // Close and reopen popup to adjust positioning
+            const gameIndex = currentOpenPopup;
+            closeAllPopups();
+            setTimeout(() => {
+                showGamePopup(gameIndex);
+            }, 100);
+        }
+    });
+}
+
 // ===== UTILITY FUNCTIONS =====
 
 function clearFilters() {
@@ -849,6 +1388,9 @@ function clearFilters() {
         btn.classList.remove('active');
     });
     document.querySelector('.category-btn').classList.add('active'); // First button (All Games)
+    
+    // Close any open popups
+    closeAllPopups();
     
     // Perform empty search
     performSearch('');
@@ -866,27 +1408,24 @@ function clearFilters() {
 
 function setupKeyboardNavigation() {
     document.addEventListener('keydown', function(e) {
-        // Escape key clears search
+        // Escape key clears search or closes popup
         if (e.key === 'Escape') {
-            if (searchInput.value) {
+            if (currentOpenPopup !== null) {
+                closeAllPopups();
+            } else if (searchInput.value) {
                 searchInput.value = '';
                 performSearch('');
+            } else {
+                searchInput.focus();
             }
-            searchInput.focus();
         }
         
         // Ctrl/Cmd + K focuses search
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
+            closeAllPopups(); // Close any open popups
             searchInput.focus();
             searchInput.select();
-        }
-    });
-    
-    // Add click handlers for game cards keyboard support
-    document.addEventListener('keydown', function(e) {
-        if (e.target.classList.contains('game-card') && e.key === 'Enter') {
-            e.target.click();
         }
     });
 }
@@ -895,22 +1434,136 @@ function setupKeyboardNavigation() {
 
 function trackGameClick(gameName) {
     // Optional: Add analytics tracking here
-    console.log(`Game clicked: ${gameName}`);
+    console.log(`🎯 Game popup opened: ${gameName}`);
 }
 
-// Add click tracking to game cards
+function trackGamePlay(gameName) {
+    // Track when user actually clicks play
+    console.log(`🎮 Game played: ${gameName}`);
+}
+
+// Add click tracking
 document.addEventListener('click', function(e) {
-    if (e.target.closest('.game-card')) {
+    // Track actual game plays
+    if (e.target.classList.contains('popup-play-button')) {
         const gameTitle = e.target.closest('.game-card').querySelector('.game-title');
         if (gameTitle) {
-            trackGameClick(gameTitle.textContent);
+            trackGamePlay(gameTitle.textContent);
         }
     }
 });
 
+console.log('🚀 Game Collection JavaScript loaded successfully!');
+
+// ===== SIMPLIFIED VIRAL FEATURES =====
+
+// Mock daily games rotation
+const dailyGames = [
+    'Cosmic Dino Runner', 'Space Invaders', 'Snake Game', 'Clicker Game', 'Hangman',
+    'Space Wordle', 'Rock Paper Scissors', 'Tic Tac Toe', 'Time Predict Challenge', 
+    'Block Blast', 'Bomb Defuser', 'Wire Matching', 'Shell Game', 'I Spy Game'
+];
+
+// Initialize viral features
+document.addEventListener('DOMContentLoaded', function() {
+    initializeViralFeatures();
+});
+
+function initializeViralFeatures() {
+    console.log('🎮 Initializing simplified viral features...');
+    
+    // Set Game of the Day (based on current date)
+    setGameOfTheDay();
+}
+
+function setGameOfTheDay() {
+    // Use date as seed for consistent daily game
+    const today = new Date();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+    const dailyIndex = dayOfYear % dailyGames.length;
+    const dailyGame = dailyGames[dailyIndex];
+    
+    const element = document.getElementById('dailyGameName');
+    if (element) {
+        element.textContent = dailyGame;
+        element.setAttribute('data-game', dailyGame);
+    }
+}
+
+// ===== VIRAL FEATURE FUNCTIONS =====
+
+function playRandomGame() {
+    console.log('🎲 Playing random game...');
+    
+    if (!window.currentGames || window.currentGames.length === 0) {
+        alert('No games loaded yet! Please wait a moment.');
+        return;
+    }
+    
+    // Add some excitement with animation
+    const button = document.getElementById('randomGameBtn');
+    const originalText = button.textContent;
+    button.textContent = '🎲 Rolling...';
+    button.disabled = true;
+    
+    setTimeout(() => {
+        const randomIndex = Math.floor(Math.random() * window.currentGames.length);
+        const randomGame = window.currentGames[randomIndex];
+        
+        console.log(`🎯 Random game selected: ${randomGame.name}`);
+        
+        // Show popup first, then navigate
+        showGamePopup(randomIndex);
+        
+        // Track the random selection
+        trackRandomGameSelection(randomGame.name);
+        
+        // Reset button
+        button.textContent = originalText;
+        button.disabled = false;
+    }, 1000);
+}
+
+function playDailyGame() {
+    console.log('⭐ Playing daily game...');
+    const dailyGameName = document.getElementById('dailyGameName').getAttribute('data-game');
+    navigateToGameByName(dailyGameName);
+    trackDailyGamePlay(dailyGameName);
+}
+
+// ===== HELPER FUNCTIONS =====
+
+function navigateToGameByName(gameName) {
+    if (!window.currentGames) {
+        alert('Games not loaded yet!');
+        return;
+    }
+    
+    const game = window.currentGames.find(g => g.name === gameName);
+    if (game) {
+        const gameIndex = window.currentGames.indexOf(game);
+        showGamePopup(gameIndex);
+    } else {
+        alert(`Game "${gameName}" not found!`);
+    }
+}
+
+// ===== ANALYTICS TRACKING =====
+
+function trackRandomGameSelection(gameName) {
+    console.log(`📊 Random game selected: ${gameName}`);
+    // In production: send to analytics
+}
+
+function trackDailyGamePlay(gameName) {
+    console.log(`📊 Daily game played: ${gameName}`);
+    // In production: send to analytics
+}
+
 // Export functions for global access
-window.filterByCategory = filterByCategory;
-window.clearFilters = clearFilters;
-window.performSearch = performSearch;
+window.playRandomGame = playRandomGame;
+window.playDailyGame = playDailyGame;
+
+console.log('🎮 Simplified viral features loaded successfully!');
 </script>
 {% endblock %}
