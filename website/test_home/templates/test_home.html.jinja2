@@ -553,7 +553,7 @@
         padding: 1rem;
     }
 
-    /* ===== SOPHISTICATED GAME CARDS ===== */
+    /* ===== SOPHISTICATED GAME CARDS - DIRECT NAVIGATION ===== */
     .game-card {
         background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(10, 10, 15, 0.8));
         backdrop-filter: blur(10px);
@@ -567,6 +567,8 @@
         min-height: 300px;
         display: flex;
         flex-direction: column;
+        text-decoration: none;
+        color: inherit;
     }
 
     .game-card::before {
@@ -590,6 +592,8 @@
         box-shadow: 
             0 20px 60px rgba(0, 255, 136, 0.2),
             0 0 30px rgba(0, 255, 136, 0.1);
+        text-decoration: none;
+        color: inherit;
     }
 
     .game-card:hover .game-icon {
@@ -730,151 +734,6 @@
         box-shadow: 0 0 8px var(--warning-orange);
     }
 
-    /* ===== ENHANCED GAME POPUP ===== */
-    .game-popup {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: linear-gradient(135deg, rgba(10, 10, 15, 0.95), rgba(26, 26, 46, 0.95));
-        backdrop-filter: blur(20px);
-        border: 2px solid var(--primary-neon);
-        border-radius: 15px;
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(-20px);
-        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        margin-top: 1rem;
-        box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.7),
-            0 0 40px rgba(0, 255, 136, 0.3);
-        max-height: 500px;
-        overflow-y: auto;
-    }
-
-    .game-popup.active {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-
-    .popup-content {
-        padding: 2.5rem;
-        position: relative;
-    }
-
-    .popup-header {
-        text-align: center;
-        margin-bottom: 2rem;
-        border-bottom: 1px solid rgba(0, 255, 136, 0.3);
-        padding-bottom: 1.5rem;
-    }
-
-    .popup-title {
-        color: var(--primary-neon);
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
-    }
-
-    .popup-description {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1.1rem;
-        line-height: 1.6;
-        margin-bottom: 1rem;
-    }
-
-    .popup-tags {
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        margin-top: 1rem;
-    }
-
-    .tag {
-        background: rgba(0, 255, 136, 0.2);
-        color: var(--primary-neon);
-        padding: 0.3rem 0.8rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        border: 1px solid rgba(0, 255, 136, 0.3);
-    }
-
-    .popup-play-section {
-        text-align: center;
-        margin: 2rem 0;
-    }
-
-    .popup-play-button {
-        background: linear-gradient(45deg, var(--primary-neon), rgba(0, 255, 136, 0.8));
-        color: var(--space-black);
-        padding: 1.5rem 3rem;
-        font-size: 1.3rem;
-        font-weight: bold;
-        border: none;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .popup-play-button::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-
-    .popup-play-button:hover::before {
-        width: 400px;
-        height: 400px;
-    }
-
-    .popup-play-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 40px rgba(0, 255, 136, 0.4);
-    }
-
-    .popup-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 107, 53, 0.2);
-        border: 2px solid var(--warning-orange);
-        border-radius: 50%;
-        color: var(--warning-orange);
-        font-size: 1.2rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .popup-close:hover {
-        background: rgba(255, 107, 53, 0.4);
-        transform: scale(1.1);
-    }
-
     /* ===== ACHIEVEMENT SYSTEM ===== */
     .achievement-notification {
         position: fixed;
@@ -945,15 +804,6 @@
         .category-chip {
             padding: 0.6rem 1rem;
             font-size: 0.8rem;
-        }
-
-        .popup-content {
-            padding: 1.5rem;
-        }
-
-        .popup-play-button {
-            padding: 1.2rem 2rem;
-            font-size: 1.1rem;
         }
     }
 
@@ -1077,16 +927,16 @@
         </div>
     </div>
 
-    <!-- Enhanced Games Universe -->
+    <!-- Enhanced Games Universe with Direct Navigation -->
     <div class="games-universe">
         <div class="games-grid" id="gamesGrid">
             {% if games %}
                 {% for game in games %}
-                <div class="game-card" 
-                     data-game-index="{{ loop.index0 }}" 
-                     data-category="{{ game.category }}"
-                     onclick="showGamePopup({{ loop.index0 }})"
-                     onkeypress="if(event.key==='Enter') showGamePopup({{ loop.index0 }})">
+                <a href="{{ url_for(game.endpoint) }}" 
+                   class="game-card" 
+                   data-game-index="{{ loop.index0 }}" 
+                   data-category="{{ game.category }}"
+                   onclick="trackGameLaunch('{{ game.name }}')">
                     
                     <div class="game-category">{{ game.category }}</div>
                     
@@ -1109,36 +959,7 @@
                             {% endfor %}
                         </div>
                     </div>
-                    
-                    <!-- Enhanced Game Popup -->
-                    <div class="game-popup" id="popup-{{ loop.index0 }}">
-                        <div class="popup-content">
-                            <button class="popup-close" onclick="event.stopPropagation(); closeGamePopup({{ loop.index0 }})">×</button>
-                            
-                            <div class="popup-header">
-                                <h2 class="popup-title">{{ game.name }}</h2>
-                                <p class="popup-description">{{ game.description }}</p>
-                                <div class="popup-tags">
-                                    <span class="tag">{{ game.category }}</span>
-                                    {% if game.tags %}
-                                        {% for tag in game.tags[:3] %}
-                                        <span class="tag">{{ tag }}</span>
-                                        {% endfor %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="popup-play-section">
-                                <a href="{{ url_for(game.endpoint) }}" 
-                                   class="popup-play-button" 
-                                   onclick="event.stopPropagation(); trackGameLaunch('{{ game.name }}');">
-                                    <span>🚀</span>
-                                    Launch Game
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </a>
                 {% endfor %}
             {% else %}
                 <div class="no-results">
@@ -1164,11 +985,10 @@
 </div>
 
 <script>
-// ===== ENHANCED VIRAL GAME HUB JAVASCRIPT =====
+// ===== SIMPLIFIED VIRAL GAME HUB JAVASCRIPT - DIRECT NAVIGATION =====
 
 let searchTimeout;
 let currentCategory = '{{ selected_category }}';
-let currentOpenPopup = null;
 let userStats = {
     gamesPlayed: {{ user_stats.games_played or 0 }},
     achievements: {{ user_stats.achievements or 0 }},
@@ -1209,10 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeCosmicHub() {
-    // Setup event listeners
-    setupEventListeners();
-    
-    // Initialize user interface elements
+    // Update user interface elements
     updateUserStats();
     
     // Check for daily login bonus
@@ -1319,18 +1136,6 @@ function generateSuggestions(query) {
         }
     });
     
-    // Keyword suggestions
-    const keywords = ['multiplayer', 'single player', 'easy', 'hard', 'casual', 'competitive'];
-    keywords.forEach(keyword => {
-        if (keyword.includes(lowerQuery)) {
-            suggestions.push({
-                text: keyword,
-                type: 'Tag',
-                icon: '🏷️'
-            });
-        }
-    });
-    
     return suggestions.slice(0, 6);
 }
 
@@ -1348,7 +1153,6 @@ function hideAutocomplete() {
 async function performSearch(query) {
     const filteredGames = filterGames(query, currentCategory);
     displayGames(filteredGames);
-    updateResultsInfo(filteredGames.length, query, currentCategory);
 }
 
 function filterGames(query, category) {
@@ -1404,11 +1208,11 @@ function displayGames(games) {
     }
     
     const html = games.map((game, index) => `
-        <div class="game-card" 
-             data-game-index="${index}" 
-             data-category="${game.category}"
-             onclick="showGamePopup(${index})"
-             onkeypress="if(event.key==='Enter') showGamePopup(${index})">
+        <a href="/website/${game.endpoint.replace('.', '/')}" 
+           class="game-card" 
+           data-game-index="${index}" 
+           data-category="${game.category}"
+           onclick="trackGameLaunch('${game.name}')">
             
             <div class="game-category">${game.category}</div>
             
@@ -1428,31 +1232,7 @@ function displayGames(games) {
                     ${generateDifficultyDots(game.difficulty || 2)}
                 </div>
             </div>
-            
-            <div class="game-popup" id="popup-${index}">
-                <div class="popup-content">
-                    <button class="popup-close" onclick="event.stopPropagation(); closeGamePopup(${index})">×</button>
-                    
-                    <div class="popup-header">
-                        <h2 class="popup-title">${game.name}</h2>
-                        <p class="popup-description">${game.description}</p>
-                        <div class="popup-tags">
-                            <span class="tag">${game.category}</span>
-                            ${game.tags ? game.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="popup-play-section">
-                        <a href="/${game.endpoint.replace('.', '/')}" 
-                           class="popup-play-button" 
-                           onclick="event.stopPropagation(); trackGameLaunch('${game.name}');">
-                            <span>🚀</span>
-                            Launch Game
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </a>
     `).join('');
     
     grid.innerHTML = html;
@@ -1481,67 +1261,6 @@ function showNoResults() {
     `;
 }
 
-function updateResultsInfo(count, query, category) {
-    // You can add results info display here if needed
-    console.log(`Showing ${count} games for query: "${query}", category: "${category}"`);
-}
-
-// ===== GAME POPUP SYSTEM =====
-function showGamePopup(gameIndex) {
-    console.log('🎮 Opening game popup:', gameIndex);
-    
-    if (currentOpenPopup !== null && currentOpenPopup !== gameIndex) {
-        closeAllPopups();
-    }
-    
-    const gameCard = document.querySelector(`[data-game-index="${gameIndex}"]`);
-    const popup = document.getElementById(`popup-${gameIndex}`);
-    
-    if (!gameCard || !popup) {
-        console.error('Game card or popup not found');
-        return;
-    }
-    
-    gameCard.classList.add('popup-open');
-    popup.classList.add('active');
-    currentOpenPopup = gameIndex;
-    
-    // Track popup view
-    const games = window.currentFilteredGames || window.currentGames;
-    if (games[gameIndex]) {
-        trackEvent('popup_viewed', { game: games[gameIndex].name });
-    }
-}
-
-function closeGamePopup(gameIndex) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-    
-    const gameCard = document.querySelector(`[data-game-index="${gameIndex}"]`);
-    const popup = document.getElementById(`popup-${gameIndex}`);
-    
-    if (gameCard && popup) {
-        gameCard.classList.remove('popup-open');
-        popup.classList.remove('active');
-    }
-    
-    currentOpenPopup = null;
-}
-
-function closeAllPopups() {
-    document.querySelectorAll('.game-popup.active').forEach(popup => {
-        popup.classList.remove('active');
-    });
-    
-    document.querySelectorAll('.game-card.popup-open').forEach(card => {
-        card.classList.remove('popup-open');
-    });
-    
-    currentOpenPopup = null;
-}
-
 // ===== VIRAL DISCOVERY FEATURES =====
 function playRandomGame() {
     const button = document.getElementById('randomBtn');
@@ -1558,9 +1277,11 @@ function playRandomGame() {
         }
         
         const randomIndex = Math.floor(Math.random() * games.length);
-        showGamePopup(randomIndex);
+        const randomGame = games[randomIndex];
         
-        // Track achievement
+        // Navigate directly to the random game
+        window.location.href = `/website/${randomGame.endpoint.replace('.', '/')}`;
+        
         trackRandomGameUsage();
         
         button.textContent = originalText;
@@ -1585,8 +1306,8 @@ function initializeDailyGame() {
 function playDailyGame() {
     const game = window.currentGames.find(g => g.name === window.currentDailyGame);
     if (game) {
-        const index = window.currentGames.indexOf(game);
-        showGamePopup(index);
+        // Navigate directly to daily game
+        window.location.href = `/website/${game.endpoint.replace('.', '/')}`;
         
         // Track daily game achievement
         unlockAchievement('daily_player');
@@ -1594,7 +1315,6 @@ function playDailyGame() {
 }
 
 function showAchievements() {
-    // Simple achievement display
     const unlockedCount = getUserProgress().achievements.length;
     const totalCount = Object.keys(ACHIEVEMENTS).length;
     
@@ -1613,10 +1333,6 @@ function loadUserProgress() {
         userStats = { ...userStats, ...progress };
         updateUserStats();
     }
-}
-
-function saveUserProgress() {
-    localStorage.setItem('summerlockin_progress', JSON.stringify(userStats));
 }
 
 function getUserProgress() {
@@ -1745,11 +1461,6 @@ function checkDailyBonus() {
         }
         
         updateUserStats();
-        
-        // Show daily bonus notification
-        setTimeout(() => {
-            showAchievementNotification('daily_bonus');
-        }, 1000);
     }
 }
 
@@ -1763,7 +1474,6 @@ function clearFilters() {
     });
     document.querySelector('.category-chip').classList.add('active');
     
-    closeAllPopups();
     performSearch('');
     hideAutocomplete();
     
@@ -1775,13 +1485,9 @@ function clearFilters() {
 
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', function(e) {
-        // Escape - close popups or clear search
+        // Escape - clear search
         if (e.key === 'Escape') {
-            if (currentOpenPopup !== null) {
-                closeAllPopups();
-            } else {
-                clearFilters();
-            }
+            clearFilters();
         }
         
         // Ctrl/Cmd + K - focus search
@@ -1804,34 +1510,12 @@ function setupKeyboardShortcuts() {
     });
 }
 
-function setupEventListeners() {
-    // Close popups when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.game-popup') && !e.target.closest('.game-card')) {
-            closeAllPopups();
-        }
-    });
-    
-    // Handle window resize
-    window.addEventListener('resize', function() {
-        if (currentOpenPopup !== null) {
-            // Reposition popup if needed
-            const gameIndex = currentOpenPopup;
-            closeAllPopups();
-            setTimeout(() => showGamePopup(gameIndex), 100);
-        }
-    });
-}
-
 function trackEvent(eventName, data = {}) {
     console.log(`📊 Event: ${eventName}`, data);
     // In production: send to analytics
 }
 
 // Export global functions
-window.showGamePopup = showGamePopup;
-window.closeGamePopup = closeGamePopup;
-window.closeAllPopups = closeAllPopups;
 window.filterByCategory = filterByCategory;
 window.clearFilters = clearFilters;
 window.playRandomGame = playRandomGame;
@@ -1840,6 +1524,6 @@ window.showAchievements = showAchievements;
 window.showLeaderboards = showLeaderboards;
 window.trackGameLaunch = trackGameLaunch;
 
-console.log('🌌 Cosmic Game Hub fully loaded and operational!');
+console.log('🌌 Cosmic Game Hub fully loaded and operational with direct navigation!');
 </script>
 {% endblock %}

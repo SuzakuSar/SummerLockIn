@@ -2,11 +2,13 @@
 Enhanced Test Homepage Blueprint for SUMMERLOCKIN Project
 Features a scrollable game collection with viral engagement features
 Designed for easy maintenance and game additions with user progress tracking
+Updated for direct navigation (no popups)
 """
 
 from flask import Blueprint, render_template, jsonify, request, session
 import json
 from collections import defaultdict
+import datetime
 
 # Create blueprint with template folder
 test_home = Blueprint('test_home', __name__, template_folder='templates')
@@ -478,7 +480,8 @@ GAMES_DATA = [
     },
 ]
 
-# Categories for filtering (auto-generated from games data)
+# ===== HELPER FUNCTIONS =====
+
 def get_categories():
     """Get all unique categories from games data"""
     categories = set()
@@ -496,13 +499,14 @@ def get_category_counts():
 def get_games_by_category(category=None):
     """Get games filtered by category"""
     if not category:
-        return GAMES_DATA
-    return [game for game in GAMES_DATA if game['category'] == category]
+        # Return clean copy of games data for direct navigation
+        return [dict(game) for game in GAMES_DATA]
+    return [dict(game) for game in GAMES_DATA if game['category'] == category]
 
 def search_games(query):
     """Search games by name, description, or tags"""
     if not query:
-        return GAMES_DATA
+        return [dict(game) for game in GAMES_DATA]
     
     query = query.lower()
     results = []
@@ -510,17 +514,17 @@ def search_games(query):
     for game in GAMES_DATA:
         # Search in name
         if query in game['name'].lower():
-            results.append(game)
+            results.append(dict(game))
             continue
             
         # Search in description
         if query in game['description'].lower():
-            results.append(game)
+            results.append(dict(game))
             continue
             
         # Search in tags
         if any(query in tag.lower() for tag in game['tags']):
-            results.append(game)
+            results.append(dict(game))
             continue
     
     return results
@@ -537,12 +541,30 @@ def get_mock_user_stats():
         'favorite_category': 'arcade'
     }
 
+def get_random_game():
+    """Get a random game from the collection"""
+    import random
+    return dict(random.choice(GAMES_DATA))
+
+def get_daily_game():
+    """Get the daily featured game based on current date"""
+    import datetime
+    
+    # Use date to consistently pick the same game for the day
+    today = datetime.date.today()
+    day_of_year = today.timetuple().tm_yday
+    
+    # Cycle through games based on day of year
+    game_index = day_of_year % len(GAMES_DATA)
+    return dict(GAMES_DATA[game_index])
+
 # ===== ROUTES =====
 
 @test_home.route('/')
 def index():
     """
     Main test homepage route - displays enhanced viral game collection
+    with direct navigation to games
     """
     categories = get_categories()
     category_counts = get_category_counts()
@@ -557,14 +579,11 @@ def index():
     else:
         games = get_games_by_category(selected_category if selected_category else None)
     
-    # Add popup data to each game
-    for i, game in enumerate(games):
-        game['popup_id'] = f"popup-{i}"
-        game['card_id'] = f"card-{i}"
-        game['index'] = i
-    
     # Get user statistics (mock data for now)
     user_stats = get_mock_user_stats()
+    
+    # Add current daily game info
+    daily_game = get_daily_game()
     
     return render_template('test_home.html.jinja2',
                          games=games,
@@ -573,7 +592,8 @@ def index():
                          selected_category=selected_category,
                          search_query=search_query,
                          total_games=len(GAMES_DATA),
-                         user_stats=user_stats)
+                         user_stats=user_stats,
+                         daily_game=daily_game)
 
 @test_home.route('/api/search')
 def api_search():
@@ -588,12 +608,6 @@ def api_search():
         games = search_games(query)
     else:
         games = get_games_by_category(category if category else None)
-    
-    # Add popup data to each game for API response
-    for i, game in enumerate(games):
-        game['popup_id'] = f"popup-{i}"
-        game['card_id'] = f"card-{i}" 
-        game['index'] = i
     
     return jsonify({
         'success': True,
@@ -622,6 +636,29 @@ def api_user_stats():
     return jsonify({
         'success': True,
         'stats': get_mock_user_stats()
+    })
+
+@test_home.route('/api/random-game')
+def api_random_game():
+    """
+    API endpoint to get a random game
+    """
+    random_game = get_random_game()
+    return jsonify({
+        'success': True,
+        'game': random_game
+    })
+
+@test_home.route('/api/daily-game')
+def api_daily_game():
+    """
+    API endpoint to get the daily featured game
+    """
+    daily_game = get_daily_game()
+    return jsonify({
+        'success': True,
+        'game': daily_game,
+        'date': str(datetime.date.today())
     })
 
 @test_home.route('/stats')
@@ -657,7 +694,7 @@ def stats():
         'stats': stats_data
     })
 
-# ===== HELPER FUNCTIONS FOR EASY MAINTENANCE =====
+# ===== UTILITY FUNCTIONS FOR EASY MAINTENANCE =====
 
 def add_game(name, description, endpoint, icon, category, tags, difficulty=3):
     """
@@ -694,6 +731,5 @@ def validate_game_data():
         if 'difficulty' not in game:
             game['difficulty'] = 3
 
-# Run validation on import (for development)
-if __name__ == '__main__':
-    validate_game_data()        
+# Run validation when module loads
+validate_game_data()
